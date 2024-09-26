@@ -1,0 +1,92 @@
+/* Overall layout container */
+.layout-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f5f5f5; /* Background for the entire layout */
+}
+
+/* Top Navbar */
+.top-navbar {
+  background-color: #d1be8d; /* Beige color for the navbar */
+  height: 50px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.top-navbar ul {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 20px;
+}
+
+.top-navbar ul li {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* Sub Navbar (Search bar, Toggle) */
+.sub-navbar {
+  background-color: #f5f5f5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+.search-bar input {
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  margin-right: 10px;
+}
+
+.search-bar button {
+  padding: 8px 12px;
+  background-color: #d1be8d;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.toggle-container {
+  display: flex;
+  align-items: center;
+}
+
+.toggle-container input {
+  margin-left: 5px;
+}
+
+/* Content Area */
+.content-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+  padding: 20px;
+  background-color: #f5f5f5;
+  position: relative;
+}
+
+/* Black bezels on the sides */
+.content-container::before,
+.content-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100px; /* Width of the black bezels */
+  background-color: #000;
+}
+
+.content-container::before {
+  left: 0;
+}
+
+.content-container::after {
+  right: 0;
+}
