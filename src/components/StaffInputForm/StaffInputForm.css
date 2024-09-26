@@ -1,0 +1,109 @@
+/* Container for the staff input form */
+.staff-input-form-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Vertically center the form */
+    background-color: #f5f5f5;
+  }
+  
+  /* Styling the form */
+  .staff-input-form {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 15px; /* Rounded corners */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow */
+    max-width: 400px; /* Ensure the form has a fixed max width */
+    width: 100%; /* Make the form responsive */
+    text-align: center;
+  }
+  
+  /* Form heading */
+  .staff-input-form h1 {
+    font-size: 24px;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+  }
+  
+  /* Form group to control spacing */
+  .form-group {
+    position: relative;
+    margin-bottom: 1.5rem;
+    text-align: left;
+    width: 100%; /* Ensure the form group takes the full width */
+  }
+  
+  /* Styling for the inputs */
+  .staff-input-form input,
+  .staff-input-form textarea {
+    width: 100%; /* Ensure input field takes full width of parent */
+    padding: 0.75rem 1rem; /* Adjust padding */
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+    font-size: 1rem;
+    box-sizing: border-box; /* Ensure padding and border are included in the element's width */
+    transition: all 0.3s ease;
+  }
+  
+  /* Focus state for inputs */
+  .staff-input-form input:focus,
+  .staff-input-form textarea:focus {
+    border-color: #2225c1; /* Change border color on focus */
+    background-color: white; /* Make background white on focus */
+    outline: none;
+  }
+  
+  /* Submit button */
+  .staff-input-form button {
+    width: 100%;
+    padding: 0.8rem;
+    background-color: #ddd;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.125rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  /* Button hover state */
+  .staff-input-form button:hover {
+    background-color: #bcbcbc;
+  }
+  
+  /* Button disabled state */
+  .staff-input-form button:disabled {
+    background-color: #ddd;
+  }
+  
+  /* Button active state */
+  .staff-input-form button:active {
+    background-color: #bbb;
+  }
+  
+  /* Form labels */
+  .staff-input-form label {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    display: block;
+    text-align: left;
+  }
+  
+  /* Textarea styling */
+  .staff-input-form textarea {
+    resize: vertical; /* Allow vertical resizing */
+    min-height: 100px;
+  }
+  
+  /* Additional group for icons within the input */
+  .form-group .input-icon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #666;
+  }
+  
