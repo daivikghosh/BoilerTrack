@@ -1,6 +1,12 @@
-{
-  "name": "group-19/boilertrack",
-  "image": "mcr.microsoft.com/devcontainers/python:3",
+    {
+  "name": "BoilerTrack",
+  "dockerFile": "Dockerfile",
+  "context": "..",
+  "appPort": [
+    "3000:3000",
+    "5000:5000"
+  ],
+  "onCreateCommand": ".devcontainer/on-create-command.sh",
   "customizations": {
     "vscode": {
       "settings": {
@@ -13,5 +19,26 @@
       }
     }
   },
-  "onCreateCommand": ".devcontainer/on-create-command.sh"
+  "forwardPorts": [3000, 5000]
 }
+
+
+
+
+// {
+//   "name": "group-19/boilertrack",
+//   "image": "mcr.microsoft.com/devcontainers/python:3",
+//   "onCreateCommand": ".devcontainer/on-create-command.sh",
+//   "customizations": {
+//     "vscode": {
+//       "settings": {
+//         "python.defaultInterpreterPath": "${workspaceFolder}/.venv",
+//         "python.terminal.activateEnvInCurrentTerminal": true,
+//         "python.terminal.launchArgs": [
+//           "-X",
+//           "dev"
+//         ]
+//       }
+//     }
+//   } 
+// }
