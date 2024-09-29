@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./LoginForm.css"; // Link to your CSS for styling
 
-const LoginForm = ({ onSignupClick }) => {
+const LoginForm = ({ onSignupClick, onForgotPasswordClick }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -68,7 +68,9 @@ const LoginForm = ({ onSignupClick }) => {
 
         {/* Forgot password link */}
         <div className="forgot-password">
-          <a href="#">Forgot your password?</a>
+          <a href="#" onClick={onForgotPasswordClick}>
+            Forgot your password?
+          </a>
         </div>
 
         {/* Sign up link */}
