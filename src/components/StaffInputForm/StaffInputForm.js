@@ -49,7 +49,7 @@ function StaffInputForm() {
             <form onSubmit={handleSubmit}>
                 <div className="file-upload">
                     <label htmlFor="image-upload" className="custom-file-upload">
-                        <img src="image-icon-placeholder.png" alt="Upload Icon" />
+                        <img src={process.env.PUBLIC_URL + '/uploadsymbol.webp'} alt="Upload Icon" />
                         <span>Choose File</span>
                     </label>
                     <input id="image-upload" type="file" onChange={handleFileChange} accept="image/*" />
@@ -83,10 +83,10 @@ function StaffInputForm() {
 
                 <div className="form-input">
                     <label>Description</label>
-                    <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Enter item description" />
+                    <input type="text" name="description" value={formData.description} onChange={handleChange} placeholder="Enter item description" />
                 </div>
 
-                <button type="submit" className="upload-button">Upload</button>
+                <button type="submit" className="upload-button">Submit</button>
             </form>
         </div>
     );
