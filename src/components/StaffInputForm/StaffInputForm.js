@@ -31,7 +31,7 @@ function StaffInputForm() {
         }
 
         try {
-            const response = await axios.post('http://localhost:5000/items', data, {
+            const response = await axios.post('/items', data, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             console.log(response.data);
