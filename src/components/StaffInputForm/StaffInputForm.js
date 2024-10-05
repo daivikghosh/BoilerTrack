@@ -83,7 +83,7 @@ function StaffInputForm() {
 
                 <div className="form-input">
                     <label>Description</label>
-                    <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Enter item description" />
+                    <input type="text" name="description" value={formData.description} onChange={handleChange} placeholder="Enter item description" />
                 </div>
 
                 <button type="submit" className="upload-button">Submit</button>
