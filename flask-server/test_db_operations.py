@@ -5,7 +5,7 @@ def get_item_by_id(ItemID):
     """
     Helper function to retrieve an item from the database by ItemID.
     """
-    conn = sqlite3.connect('ItemListings.db')
+    conn = sqlite3.connect('databases/ItemListings.db')
     cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM FOUNDITEMS WHERE ItemID = ?", (ItemID,))
