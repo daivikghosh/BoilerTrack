@@ -3,13 +3,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import os
-
-
-
-
 from AddFoundItemPic import *
-
-
 
 
 app = Flask(__name__)
@@ -60,16 +54,16 @@ def add_item():
         turned_in_at = request.form.get('turnedInAt')
         description = request.form.get('description')
         
-        
-        
-        
-        insertItem(1, item_name + ", " + color + ", " + brand, found_at, turned_in_at)
-        
-        
-        
+        insertItem(item_name, color, brand, found_at, turned_in_at, description, file_path)
         
         app.logger.info(f"New item added: {item_name}, {color}, {brand}, {found_at}, {turned_in_at}, {description}")
         app.logger.info(f"Image saved at: {file_path}")
+        
+        
+        #ADD Code here to delete the recently uploaded pic coz its already in the db
+        #Do this after - Shlok
+        #os.remove(file_path)
+        
         
         return jsonify({'message': 'Item added successfully', 'filename': filename}), 200
     
