@@ -51,9 +51,9 @@ const ItemView = () => {
     <div className="item-view-container">
       <div className="item-view-card">
         {/* Display the fetched image */}
-        {item && item.ImageBase64 && (
+        {item && item.ImageURL && (
           <img
-            src={`data:image/jpeg;base64,${item.ImageBase64}`}
+            src={`data:image/jpeg;base64,${item.ImageURL}`}
             alt={item.ItemName}
             className="item-view-image"
           />
