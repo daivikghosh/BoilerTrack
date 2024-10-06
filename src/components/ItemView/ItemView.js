@@ -1,21 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import axios from "axios";
 import "./ItemView.css";
 
 const ItemView = () => {
+  // const id = 1; // Hardcoded item ID for testing
+  const { id } = useParams(); // Get the item ID from the URL
+  const [item, setItem] = useState(null);
   const [file, setFile] = useState(null);
   const [comments, setComments] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const item = {
-    image:
-      "https://fnac.sa/cdn/shop/files/51IF7maXR1L._AC_SL1000.jpg?v=1705660809", // Temporary image URL
-    name: "Samsung Galaxy A14",
-    brand: "Samsung",
-    color: "Light Green",
-    description: "Brand new Samsung Galaxy A14 found in Purdue Campus.",
-    category: "Electronics",
-    dateFound: "September 28, 2024",
-    location: "Purdue Campus Library",
-  }; //test item
+  useEffect(() => {
+    const fetchItem = async () => {
+      try {
+        const response = await axios.get(`/item/${id}`);
+        setItem(response.data);
+        setLoading(false);
+      } catch (err) {
+        setError("Error fetching item details");
+        setLoading(false);
+      }
+    };
+
+    fetchItem();
+  }, [id]);
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -29,25 +39,32 @@ const ItemView = () => {
     console.log("Submitted proof and comments:", { file, comments });
   };
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
+
   return (
     <div className="item-view-container">
       <div className="item-view-card">
-        <img src={item.image} alt={item.name} className="item-view-image" />
-        <h2>{item.name}</h2>
+        {/* Display the fetched image */}
+        {item && item.ImageBase64 && (
+          <img
+            src={`data:image/jpeg;base64,${item.ImageBase64}`}
+            alt={item.ItemName}
+            className="item-view-image"
+          />
+        )}
+        <h2>{item?.ItemName}</h2>
         <div className="item-details">
-          <p>
-            <strong>Brand:</strong> {item.brand}
-          </p>
-          <p>
-            <strong>Color:</strong> {item.color}
-          </p>
-          <p>
-            <strong>Found at:</strong> {item.location}
-          </p>
-          <p>
-            <strong>Date Found:</strong> {item.dateFound}
-          </p>
-          <p className="item-description">{item.description}</p>
+          <p><strong>Brand:</strong> {item?.Brand}</p>
+          <p><strong>Color:</strong> {item?.Color}</p>
+          <p><strong>Found at:</strong> {item?.LocationFound}</p>
+          <p><strong>Turned In At:</strong> {item?.LocationTurnedIn}</p>
+          <p className="item-description">{item?.Description}</p>
         </div>
         <div className="upload-section">
           <label htmlFor="file-upload" className="file-upload-label">
