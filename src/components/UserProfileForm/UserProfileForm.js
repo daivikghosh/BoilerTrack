@@ -37,3 +37,5 @@ const UserProfileForm = ({ name, setName, pronoun, setPronoun, isEditing, handle
     </>
   );
 };
+
+export default UserProfileForm;

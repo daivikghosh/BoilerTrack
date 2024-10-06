@@ -5,6 +5,7 @@ import ImageUpload from "./pages/ImageUpload";
 import Layout from "./components/Layout/Layout.js";
 import ItemView from "./components/ItemView/ItemView.js";
 import StaffInputForm from "./components/StaffInputForm/StaffInputForm.js";
+import UserProfilePage from "./pages/UserProfilePage.js";
 
 const App = () => {
   return (
@@ -12,9 +13,9 @@ const App = () => {
       <Routes>
         <Route path="/" element={<LoginSignupPage />} />{" "}
         <Route path="/UploadImage" element={<ImageUpload />} />{" "}
-        <Route path="/ItemView" element={<ItemView />} /> //test
-        <Route path="/StaffInputForm" element={<StaffInputForm />} /> //test
-        <Route path="/UserProfile" element={<UserProfile />} />
+        <Route path="/ItemView" element={<ItemView />} />{" "}
+        <Route path="/StaffInputForm" element={<StaffInputForm />} />{" "}
+        <Route path="/UserProfile" element={<UserProfilePage />} />{" "}
       </Routes>
     </Router>
   );
