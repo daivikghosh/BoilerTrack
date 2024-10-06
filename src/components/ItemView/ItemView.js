@@ -1,21 +1,43 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom"; // Use params to get the item ID
 import "./ItemView.css";
 
+// Simulating a fake GET request data (you can replace this with real data fetching)
+const fakeItemsFromDB = [
+  {
+    id: 1,
+    description: "Lost Wallet",
+    size: "Small",
+    color: "Black",
+    shape: "Rectangle",
+    additional_notes: "Found near library",
+    status: "available",
+    image: "https://via.placeholder.com/150?text=Lost+Wallet", // Temporary image URL
+  },
+  {
+    id: 2,
+    description: "Lost Keychain",
+    size: "Small",
+    color: "Blue",
+    shape: "Round",
+    additional_notes: "Found near gym",
+    status: "claimed",
+    image: "https://via.placeholder.com/150?text=Lost+Keychain", // Temporary image URL
+  },
+  // Additional items...
+];
+
 const ItemView = () => {
+  const { id } = useParams(); // Get the item ID from the URL
   const [file, setFile] = useState(null);
   const [comments, setComments] = useState("");
+  const [item, setItem] = useState(null); // State to hold the item details
 
-  const item = {
-    image:
-      "https://fnac.sa/cdn/shop/files/51IF7maXR1L._AC_SL1000.jpg?v=1705660809", // Temporary image URL
-    name: "Samsung Galaxy A14",
-    brand: "Samsung",
-    color: "Light Green",
-    description: "Brand new Samsung Galaxy A14 found in Purdue Campus.",
-    category: "Electronics",
-    dateFound: "September 28, 2024",
-    location: "Purdue Campus Library",
-  }; //test item
+  // Find the item based on the ID from the URL
+  useEffect(() => {
+    const foundItem = fakeItemsFromDB.find((item) => item.id === parseInt(id));
+    setItem(foundItem); // Set the item details
+  }, [id]);
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -29,25 +51,32 @@ const ItemView = () => {
     console.log("Submitted proof and comments:", { file, comments });
   };
 
+  if (!item) {
+    return <p>Loading...</p>; // Loading state or handle case where item is not found
+  }
+
   return (
     <div className="item-view-container">
       <div className="item-view-card">
-        <img src={item.image} alt={item.name} className="item-view-image" />
-        <h2>{item.name}</h2>
+        <img
+          src={item.image}
+          alt={item.description}
+          className="item-view-image"
+        />
+        <h2>{item.description}</h2>
         <div className="item-details">
           <p>
-            <strong>Brand:</strong> {item.brand}
+            <strong>Size:</strong> {item.size}
           </p>
           <p>
             <strong>Color:</strong> {item.color}
           </p>
           <p>
-            <strong>Found at:</strong> {item.location}
+            <strong>Shape:</strong> {item.shape}
           </p>
           <p>
-            <strong>Date Found:</strong> {item.dateFound}
+            <strong>Additional Notes:</strong> {item.additional_notes}
           </p>
-          <p className="item-description">{item.description}</p>
         </div>
         <div className="upload-section">
           <label htmlFor="file-upload" className="file-upload-label">
