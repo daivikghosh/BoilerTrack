@@ -4,6 +4,14 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import os
 
+
+
+
+from AddFoundItemPic import *
+
+
+
+
 app = Flask(__name__)
 CORS(app)
 
@@ -51,6 +59,14 @@ def add_item():
         found_at = request.form.get('foundAt')
         turned_in_at = request.form.get('turnedInAt')
         description = request.form.get('description')
+        
+        
+        
+        
+        insertItem(1, item_name + ", " + color + ", " + brand, found_at, turned_in_at, filename)
+        
+        
+        
         
         app.logger.info(f"New item added: {item_name}, {color}, {brand}, {found_at}, {turned_in_at}, {description}")
         app.logger.info(f"Image saved at: {file_path}")
