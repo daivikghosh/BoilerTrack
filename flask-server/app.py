@@ -63,7 +63,7 @@ def add_item():
         
         
         
-        insertItem(1, item_name + ", " + color + ", " + brand, found_at, turned_in_at, filename)
+        insertItem(1, item_name + ", " + color + ", " + brand, found_at, turned_in_at)
         
         
         
