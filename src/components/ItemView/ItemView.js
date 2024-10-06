@@ -1,30 +1,54 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom"; // Use params to get the item ID
+import { useParams } from "react-router-dom";
 import "./ItemView.css";
 
-// Simulating a fake GET request data (you can replace this with real data fetching)
+// Simulating a fake GET request data
 const fakeItemsFromDB = [
   {
-    id: 1,
-    description: "Lost Wallet",
-    size: "Small",
-    color: "Black",
-    shape: "Rectangle",
-    additional_notes: "Found near library",
-    status: "available",
-    image: "https://via.placeholder.com/150?text=Lost+Wallet", // Temporary image URL
+    ItemID: 1,
+    ItemName: "Samsung Phone",
+    Color: "Black",
+    Brand: "Samsung A24",
+    LocationFound: "WALC Printing Station",
+    Description: "Android phone, pink wallpaper, three cameras",
+    Photo: "https://via.placeholder.com/150?text=Samsung+Phone",
   },
   {
-    id: 2,
-    description: "Lost Keychain",
-    size: "Small",
-    color: "Blue",
-    shape: "Round",
-    additional_notes: "Found near gym",
-    status: "claimed",
-    image: "https://via.placeholder.com/150?text=Lost+Keychain", // Temporary image URL
+    ItemID: 2,
+    ItemName: "Apple Watch",
+    Color: "White",
+    Brand: "Apple",
+    LocationFound: "PMU food court",
+    Description: "Watch, white band",
+    Photo: "https://via.placeholder.com/150?text=Apple+Watch",
   },
-  // Additional items...
+  {
+    ItemID: 3,
+    ItemName: "Lenovo ThinkPad",
+    Color: "Black",
+    Brand: "Lenovo",
+    LocationFound: "Earhart Dining Court",
+    Description: "Laptop, blue sticker, Purdue sticker",
+    Photo: "https://via.placeholder.com/150?text=Lenovo+ThinkPad",
+  },
+  {
+    ItemID: 4,
+    ItemName: "Wallet",
+    Color: "White",
+    Brand: "MK",
+    LocationFound: "Earhart Dining Court",
+    Description: "Leather, blue keychain",
+    Photo: "https://via.placeholder.com/150?text=Wallet",
+  },
+  {
+    ItemID: 5,
+    ItemName: "Keychain",
+    Color: "pink",
+    Brand: "unknown",
+    LocationFound: "Earhart Dining Court",
+    Description: "airtag",
+    Photo: "https://via.placeholder.com/150?text=Keychain",
+  },
 ];
 
 const ItemView = () => {
@@ -35,7 +59,9 @@ const ItemView = () => {
 
   // Find the item based on the ID from the URL
   useEffect(() => {
-    const foundItem = fakeItemsFromDB.find((item) => item.id === parseInt(id));
+    const foundItem = fakeItemsFromDB.find(
+      (item) => item.ItemID === parseInt(id)
+    );
     setItem(foundItem); // Set the item details
   }, [id]);
 
@@ -58,24 +84,20 @@ const ItemView = () => {
   return (
     <div className="item-view-container">
       <div className="item-view-card">
-        <img
-          src={item.image}
-          alt={item.description}
-          className="item-view-image"
-        />
-        <h2>{item.description}</h2>
+        <img src={item.Photo} alt={item.ItemName} className="item-view-image" />
+        <h2>{item.ItemName}</h2>
         <div className="item-details">
           <p>
-            <strong>Size:</strong> {item.size}
+            <strong>Brand:</strong> {item.Brand}
           </p>
           <p>
-            <strong>Color:</strong> {item.color}
+            <strong>Color:</strong> {item.Color}
           </p>
           <p>
-            <strong>Shape:</strong> {item.shape}
+            <strong>Location Found:</strong> {item.LocationFound}
           </p>
           <p>
-            <strong>Additional Notes:</strong> {item.additional_notes}
+            <strong>Description:</strong> {item.Description}
           </p>
         </div>
         <div className="upload-section">

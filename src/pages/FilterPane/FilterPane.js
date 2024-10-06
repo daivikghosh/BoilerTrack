@@ -2,25 +2,19 @@ import React, { useState } from "react";
 
 function FilterPane({ onFilterChange }) {
   const [includePast, setIncludePast] = useState(false);
-  const [claimStatus, setClaimStatus] = useState("all");
-  const [colors, setColors] = useState([]);
+  const [categories, setCategories] = useState([]); // Only categories
 
   const handleIncludePastChange = () => {
     setIncludePast(!includePast);
-    onFilterChange({ includePast: !includePast, claimStatus, colors });
+    onFilterChange({ includePast: !includePast, categories });
   };
 
-  const handleClaimStatusChange = (status) => {
-    setClaimStatus(status);
-    onFilterChange({ includePast, claimStatus: status, colors });
-  };
-
-  const handleColorChange = (color) => {
-    const updatedColors = colors.includes(color)
-      ? colors.filter((c) => c !== color)
-      : [...colors, color];
-    setColors(updatedColors);
-    onFilterChange({ includePast, claimStatus, colors: updatedColors });
+  const handleCategoryChange = (category) => {
+    const updatedCategories = categories.includes(category)
+      ? categories.filter((c) => c !== category)
+      : [...categories, category];
+    setCategories(updatedCategories);
+    onFilterChange({ includePast, categories: updatedCategories });
   };
 
   return (
@@ -40,54 +34,19 @@ function FilterPane({ onFilterChange }) {
         <span>Include past items</span>
       </div>
 
-      {/* Claim Status Filter */}
+      {/* Category Filters */}
       <div className="filter-option">
-        <h4>Claim Status</h4>
-        <div>
-          <input
-            type="radio"
-            name="claim-status"
-            id="all-status"
-            checked={claimStatus === "all"}
-            onChange={() => handleClaimStatusChange("all")}
-          />
-          <label htmlFor="all-status">All</label>
-        </div>
-        <div>
-          <input
-            type="radio"
-            name="claim-status"
-            id="claimed-status"
-            checked={claimStatus === "claimed"}
-            onChange={() => handleClaimStatusChange("claimed")}
-          />
-          <label htmlFor="claimed-status">Claimed</label>
-        </div>
-        <div>
-          <input
-            type="radio"
-            name="claim-status"
-            id="unclaimed-status"
-            checked={claimStatus === "unclaimed"}
-            onChange={() => handleClaimStatusChange("unclaimed")}
-          />
-          <label htmlFor="unclaimed-status">Unclaimed</label>
-        </div>
-      </div>
-
-      {/* Color Filters */}
-      <div className="filter-option">
-        <h4>Filter by Color</h4>
-        {["red", "orange", "yellow", "green", "blue"].map((color) => (
-          <div key={color}>
+        <h4>Filter by Category</h4>
+        {["bottle", "laptop", "headphone", "wallet"].map((category) => (
+          <div key={category}>
             <input
               type="checkbox"
-              id={color}
-              value={color}
-              checked={colors.includes(color)}
-              onChange={() => handleColorChange(color)}
+              id={category}
+              value={category}
+              checked={categories.includes(category)}
+              onChange={() => handleCategoryChange(category)}
             />
-            <label htmlFor={color}>{color}</label>
+            <label htmlFor={category}>{category}</label>
           </div>
         ))}
       </div>

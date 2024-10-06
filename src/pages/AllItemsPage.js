@@ -1,36 +1,61 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom"; // Import Link from react-router-dom
+import { Link } from "react-router-dom";
 import FilterPane from "./FilterPane/FilterPane.js";
 import "./AllItemsPage.css";
 
-// Simulating a fake GET request data in the correct format from your database
+//test data
 const fakeItemsFromDB = [
   {
-    id: 1,
-    description: "Lost Wallet",
-    size: "Small",
-    color: "Black",
-    shape: "Rectangle",
-    additional_notes: "Found near library",
-    status: "available",
+    ItemID: 1,
+    ItemName: "Samsung Phone",
+    Color: "Black",
+    Brand: "Samsung A24",
+    LocationFound: "WALC Printing Station",
+    Description: "Android phone, pink wallpaper, three cameras",
+    Photo: "https://via.placeholder.com/150?text=Samsung+Phone",
   },
   {
-    id: 2,
-    description: "Lost Keychain",
-    size: "Small",
-    color: "Blue",
-    shape: "Round",
-    additional_notes: "Found near gym",
-    status: "claimed",
+    ItemID: 2,
+    ItemName: "Apple Watch",
+    Color: "White",
+    Brand: "Apple",
+    LocationFound: "PMU food court",
+    Description: "Watch, white band",
+    Photo: "https://via.placeholder.com/150?text=Apple+Watch",
   },
-  // more items...
+  {
+    ItemID: 3,
+    ItemName: "Lenovo ThinkPad",
+    Color: "Black",
+    Brand: "Lenovo",
+    LocationFound: "Earhart Dining Court",
+    Description: "Laptop, blue sticker, Purdue sticker",
+    Photo: "https://via.placeholder.com/150?text=Lenovo+ThinkPad",
+  },
+  {
+    ItemID: 4,
+    ItemName: "Wallet",
+    Color: "White",
+    Brand: "MK",
+    LocationFound: "Earhart Dining Court",
+    Description: "Leather, blue keychain",
+    Photo: "https://via.placeholder.com/150?text=Wallet",
+  },
+  {
+    ItemID: 5,
+    ItemName: "Keychain",
+    Color: "pink",
+    Brand: "unknown",
+    LocationFound: "Earhart Dining Court",
+    Description: "airtag",
+    Photo: "https://via.placeholder.com/150?text=Keychain",
+  },
 ];
 
 function AllItemsPage() {
   const [filter, setFilter] = useState({
     includePast: false,
-    claimStatus: "all",
-    colors: [],
+    categories: [], // Only filtering by categories now
   });
   const [search, setSearch] = useState("");
   const [items, setItems] = useState([]); // Initially empty, no data yet
@@ -39,7 +64,7 @@ function AllItemsPage() {
   // Simulate fetching items from a database
   useEffect(() => {
     setItems(fakeItemsFromDB);
-    setFilteredItems(fakeItemsFromDB);
+    setFilteredItems(fakeItemsFromDB); // Initially show all items
   }, []);
 
   const handleFilterChange = (newFilter) => {
@@ -50,25 +75,19 @@ function AllItemsPage() {
   useEffect(() => {
     let filtered = [...items];
 
-    if (filter.claimStatus !== "all") {
+    // Apply category filter (if categories are selected)
+    if (filter.categories.length > 0) {
       filtered = filtered.filter((item) =>
-        filter.claimStatus === "claimed"
-          ? item.status === "claimed"
-          : item.status === "available"
-      );
-    }
-
-    if (filter.colors.length > 0) {
-      filtered = filtered.filter((item) =>
-        filter.colors.some(
-          (color) => item.color.toLowerCase() === color.toLowerCase()
+        filter.categories.some((category) =>
+          item.ItemName.toLowerCase().includes(category.toLowerCase())
         )
       );
     }
 
+    // Apply search filter
     if (search) {
       filtered = filtered.filter((item) =>
-        item.description.toLowerCase().includes(search.toLowerCase())
+        item.ItemName.toLowerCase().includes(search.toLowerCase())
       );
     }
 
@@ -93,16 +112,15 @@ function AllItemsPage() {
         <div className="items-container">
           {filteredItems.length > 0 ? (
             filteredItems.map((item) => (
-              <div key={item.id} className="item-card">
+              <div key={item.ItemID} className="item-card">
                 <img
-                  src={`https://via.placeholder.com/150?text=${item.description}`}
-                  alt={item.description}
+                  src={item.Photo}
+                  alt={item.ItemName}
                   className="item-image"
                 />
-                <h3>{item.description}</h3>
-                <p>{item.additional_notes}</p>
-                {/* Pass item.id in the URL */}
-                <Link to={`/item-view/${item.id}`}>
+                <h3>{item.ItemName}</h3>
+                <p>{item.Description}</p>
+                <Link to={`/item-view/${item.ItemID}`}>
                   <button className="view-button">View</button>
                 </Link>
               </div>
