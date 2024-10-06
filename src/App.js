@@ -14,6 +14,7 @@ const App = () => {
         <Route path="/UploadImage" element={<ImageUpload />} />{" "}
         <Route path="/ItemView" element={<ItemView />} /> //test
         <Route path="/StaffInputForm" element={<StaffInputForm />} /> //test
+        <Route path="/UserProfile" element={<UserProfile />} />
       </Routes>
     </Router>
   );
