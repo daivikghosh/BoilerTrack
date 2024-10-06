@@ -4,6 +4,7 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import os
 from AddFoundItemPic import *
+import base64
 
 
 app = Flask(__name__)
@@ -19,6 +20,25 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def get_all_items():
+    """Fetch all items from the database."""
+    conn = sqlite3.connect('databases/ItemListings.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM FOUNDITEMS")
+    items = cursor.fetchall()
+    conn.close()
+    return items
+
+def get_item_by_id(item_id):
+    """Fetch a single item from the database by its ID."""
+    conn = sqlite3.connect('databases/ItemListings.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM FOUNDITEMS WHERE ItemID = ?", (item_id,))
+    item = cursor.fetchone()
+    conn.close()
+    return item
+
 
 @app.route('/')
 def home():
@@ -69,6 +89,49 @@ def add_item():
     
     app.logger.warning("Invalid file type")
     return jsonify({'error': 'Invalid file type'}), 400
+
+# endpoint to get all items
+@app.route('/items', methods=['GET'])
+def view_all_items():
+    app.logger.info("Fetching all items")
+    items = get_all_items()
+    items_list = [{
+        'ItemID': item[0],
+        'ItemName': item[1],
+        'Color': item[2],
+        'Brand': item[3],
+        'LocationFound': item[4],
+        'LocationTurnedIn': item[5],
+        'Description': item[6],
+        'ImageURL': base64.b64encode(item[7]).decode('utf-8') if isinstance(item[7], bytes) else item[7]
+    } for item in items]
+    # for image display in frontend: <img src={`data:image/jpeg;base64,${base64ImageData}`} alt="Item" />
+
+    
+    return jsonify(items_list), 200
+ 
+# New endpoint to get a specific item by its ID
+@app.route('/item/<int:item_id>', methods=['GET'])
+def view_item(item_id):
+    app.logger.info(f"Fetching details for item ID: {item_id}")
+    item = get_item_by_id(item_id)
+    
+    if item:
+        item_data = {
+            'ItemID': item[0],
+            'ItemName': item[1],
+            'Color': item[2],
+            'Brand': item[3],
+            'LocationFound': item[4],
+            'LocationTurnedIn': item[5],
+            'Description': item[6],
+            'ImageURL': base64.b64encode(item[7]).decode('utf-8') if isinstance(item[7], bytes) else item[7]
+        }
+        return jsonify(item_data), 200
+    else:
+        app.logger.warning(f"Item with ID {item_id} not found")
+        return jsonify({'error': 'Item not found'}), 404
+
 
 if __name__ == '__main__':
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
