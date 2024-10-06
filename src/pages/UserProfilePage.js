@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import UserProfileForm from '../components/UserProfileForm/UserProfileForm.js';
+import UserProfileForm from "../components/UserProfileForm/UserProfileForm.js";
 
-const UserProfile = () => {
+const UserProfilePage = () => {
     const [name, setName] = useState('');
     const [pronoun, setPronoun] = useState('');
     const [isEditing, setIsEditing] = useState(false);
@@ -30,4 +30,4 @@ const UserProfile = () => {
     );
   };
   
-  export default UserProfile;
+  export default UserProfilePage;
