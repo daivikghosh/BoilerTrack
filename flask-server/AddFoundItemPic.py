@@ -6,83 +6,32 @@ def convertToBinaryData(filename):
         blobData = file.read()
     return blobData
 
-def insertItem(ItemID,Keywords,LocationFound,LocationTurnedIn):
+def insertItem(ItemName,Color,Brand,LocationFound,LocationTurnedIn,Description,Photo):
     try:
-        sqliteConnection = sqlite3.connect('ItemListings.db')
+        sqliteConnection = sqlite3.connect('databases/ItemListings.db')
         cursor = sqliteConnection.cursor()
-        print("Connected to SQLite")
         
         cursor.execute('''CREATE TABLE IF NOT EXISTS FOUNDITEMS
-         (ItemID            INT     PRIMARY KEY     NOT NULL,
-         Keywords           TEXT    NOT NULL,
-         LocationFound      TEXT    NOT NULL,
-         LocationTurnedIn   TEXT    NOT NULL);''')
+         (ItemID            INTEGER PRIMARY KEY,
+         ItemName           TEXT    NOT NULL,
+         Color              TEXT,
+         Brand              TEXT,
+         LocationFound      TEXT,
+         LocationTurnedIn   TEXT,
+         Description        TEXT,
+         Photo              BLOB);''')
         
         print("Table created successfully")
         
         sqlite_insert_query = """ INSERT INTO FOUNDITEMS
-                                  (ItemID,Keywords,LocationFound,LocationTurnedIn) VALUES (?, ?, ?, ?)"""
-
-        # binaryPhoto = convertToBinaryData(Photo)
-        # Convert data into tuple format
-        data_tuple = (ItemID,Keywords,LocationFound,LocationTurnedIn)
-        cursor.execute(sqlite_insert_query, data_tuple)
-        sqliteConnection.commit()
-        print("Item inserted successfully")
-        cursor.close()
-
-    except sqlite3.Error as error:
-        print("Failed to insert data into sqlite table", error)
-    finally:
-        if sqliteConnection:
-            sqliteConnection.close()
-            print("the sqlite connection is closed")
-
-
-
-
-
-
-
-
-
-'''
-import sqlite3
-
-def convertToBinaryData(filename):
-    # Convert digital data to binary format
-    with open(filename, 'rb') as file:
-        blobData = file.read()
-    return blobData
-
-def insertItem(ItemID,Keywords,LocationFound,LocationTurnedIn,Photo):
-    try:
-        sqliteConnection = sqlite3.connect('ItemListings.db')
-        cursor = sqliteConnection.cursor()
-        print("Connected to SQLite")
-        
-'''
-        
-#        cursor.execute('''CREATE TABLE IF NOT EXISTS FOUNDITEMS
-#         (ItemID            INT     PRIMARY KEY     NOT NULL,
-#         Keywords           TEXT    NOT NULL,
-#         LocationFound      TEXT    NOT NULL,
-#         LocationTurnedIn   TEXT    NOT NULL,
-#         Photo              BLOB    NOT NULL);''')
-        
-'''
-        
-        print("Table created successfully")
-        
-        sqlite_insert_query = """ INSERT INTO FOUNDITEMS
-                                  (ItemID,Keywords,LocationFound,LocationTurnedIn,Photo) VALUES (?, ?, ?, ?, ?)"""
+                                  (ItemName,Color,Brand,LocationFound,LocationTurnedIn,Description,Photo) VALUES (?, ?, ?, ?, ?, ?, ?)"""
 
         binaryPhoto = convertToBinaryData(Photo)
         # Convert data into tuple format
-        data_tuple = (ItemID,Keywords,LocationFound,LocationTurnedIn,binaryPhoto)
+        data_tuple = (ItemName,Color,Brand,LocationFound,LocationTurnedIn,Description,binaryPhoto)
         cursor.execute(sqlite_insert_query, data_tuple)
         sqliteConnection.commit()
-        print("Item inserted successfully")
+        print("Item inserted into db successfully")
         cursor.close()
 
     except sqlite3.Error as error:
@@ -91,4 +40,7 @@ def insertItem(ItemID,Keywords,LocationFound,LocationTurnedIn,Photo):
         if sqliteConnection:
             sqliteConnection.close()
             print("the sqlite connection is closed")
-'''
+
+
+#insertItem("C", "Rainbow", "NA", "WALC", "HICKS", "Flag")
+#insertItem("B", "Blue", "Sony", "HICKS", "HICKS", "NAusdfkubfdvsguk, asrufyhkdfhg")
