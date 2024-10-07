@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginSignupPage from "./pages/LoginSignupPage";
 import ImageUpload from "./pages/ImageUpload";
@@ -13,15 +13,14 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<LoginSignupPage />} />{" "}
-        <Route path="/UploadImage" element={<ImageUpload />} />{" "}
-        <Route path="/ItemView" element={<ItemView />} />{" "}
-        <Route path="/StaffInputForm" element={<StaffInputForm />} />{" "}
-        <Route path="/UserProfile" element={<UserProfilePage />} />{" "}
-        <Route path="/close-account" element={<CloseAccountForm />} /> //test
+        <Route path="/" element={<LoginSignupPage />} />
+        <Route path="/UploadImage" element={<ImageUpload />} />
+        <Route path="/ItemView" element={<ItemView />} />
+        <Route path="/StaffInputForm" element={<StaffInputForm />} />
+        <Route path="/UserProfile" element={<UserProfilePage />} />
+        <Route path="/close-account" element={<CloseAccountForm />} />
         <Route path="/all-items" element={<AllItemsPage />} />
         <Route path="/item-view/:id" element={<ItemView />} />
-        {/* Route for ItemView */}
       </Routes>
     </Router>
   );

@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./LoginForm.css"; // Link to your CSS for styling
 
 const LoginForm = ({ onSignupClick, onForgotPasswordClick }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate(); // Initialize the useNavigate hook
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,6 +31,7 @@ const LoginForm = ({ onSignupClick, onForgotPasswordClick }) => {
         const data = await response.json();
         console.log("Login successful: ", data);
         alert("Login successful!");
+        navigate('/all-items'); // Redirect to the all-items page
       } else {
         const errorData = await response.json();
         setError(errorData.error);
