@@ -4,13 +4,14 @@ import "./CreateAccountForm.css"; // Link to your CSS for styling
 const CreateAccountForm = ({ onLoginClick }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!email || !password) {
-      setError("Please fill in both fields.");
+    if (!email || !password || !name) {
+      setError("Please fill in all fields.");
       return;
     }
 
@@ -21,15 +22,47 @@ const CreateAccountForm = ({ onLoginClick }) => {
     }
 
     setError(""); // Clear errors
-    console.log("New account created: ", { email, password });
-    setEmail("");
-    setPassword("");
+
+    try {
+      const response = await fetch('/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, name, isStudent: true, isStaff: false }),
+      });
+
+      if (response.ok) {
+        console.log("New account created: ", { email, password, name });
+        setEmail("");
+        setPassword("");
+        setName("");
+        alert("Account created successfully!");
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error + (errorData.details ? `: ${errorData.details}` : ''));
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setError('An error occurred while creating the account.');
+    }
   };
 
   return (
     <div className="create-account-form-container">
       <form className="create-account-form" onSubmit={handleSubmit}>
         <h2>Create Account</h2>
+        <div className="form-group">
+          <label htmlFor="name">Name:</label>
+          <input
+            type="text"
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Enter your name"
+            required
+          />
+        </div>
         <div className="form-group">
           <label htmlFor="email">Email:</label>
           <input
