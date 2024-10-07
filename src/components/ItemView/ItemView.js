@@ -1,68 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import axios from "axios";
 import "./ItemView.css";
 
-// Simulating a fake GET request data
-const fakeItemsFromDB = [
-  {
-    ItemID: 1,
-    ItemName: "Samsung Phone",
-    Color: "Black",
-    Brand: "Samsung A24",
-    LocationFound: "WALC Printing Station",
-    Description: "Android phone, pink wallpaper, three cameras",
-    Photo: "https://via.placeholder.com/150?text=Samsung+Phone",
-  },
-  {
-    ItemID: 2,
-    ItemName: "Apple Watch",
-    Color: "White",
-    Brand: "Apple",
-    LocationFound: "PMU food court",
-    Description: "Watch, white band",
-    Photo: "https://via.placeholder.com/150?text=Apple+Watch",
-  },
-  {
-    ItemID: 3,
-    ItemName: "Lenovo ThinkPad",
-    Color: "Black",
-    Brand: "Lenovo",
-    LocationFound: "Earhart Dining Court",
-    Description: "Laptop, blue sticker, Purdue sticker",
-    Photo: "https://via.placeholder.com/150?text=Lenovo+ThinkPad",
-  },
-  {
-    ItemID: 4,
-    ItemName: "Wallet",
-    Color: "White",
-    Brand: "MK",
-    LocationFound: "Earhart Dining Court",
-    Description: "Leather, blue keychain",
-    Photo: "https://via.placeholder.com/150?text=Wallet",
-  },
-  {
-    ItemID: 5,
-    ItemName: "Keychain",
-    Color: "pink",
-    Brand: "unknown",
-    LocationFound: "Earhart Dining Court",
-    Description: "airtag",
-    Photo: "https://via.placeholder.com/150?text=Keychain",
-  },
-];
-
 const ItemView = () => {
+  // const id = 1; // Hardcoded item ID for testing
   const { id } = useParams(); // Get the item ID from the URL
+  const [item, setItem] = useState(null);
   const [file, setFile] = useState(null);
   const [comments, setComments] = useState("");
-  const [item, setItem] = useState(null); // State to hold the item details
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Find the item based on the ID from the URL
   useEffect(() => {
-    const foundItem = fakeItemsFromDB.find(
-      (item) => item.ItemID === parseInt(id)
-    );
-    setItem(foundItem); // Set the item details
+    const fetchItem = async () => {
+      try {
+        const response = await axios.get(`/item/${id}`);
+        setItem(response.data);
+        setLoading(false);
+      } catch (err) {
+        setError("Error fetching item details");
+        setLoading(false);
+      }
+    };
+
+    fetchItem();
   }, [id]);
 
   const handleFileChange = (e) => {
@@ -77,28 +39,32 @@ const ItemView = () => {
     console.log("Submitted proof and comments:", { file, comments });
   };
 
-  if (!item) {
-    return <p>Loading...</p>; // Loading state or handle case where item is not found
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
   }
 
   return (
     <div className="item-view-container">
       <div className="item-view-card">
-        <img src={item.Photo} alt={item.ItemName} className="item-view-image" />
-        <h2>{item.ItemName}</h2>
+        {/* Display the fetched image */}
+        {item && item.ImageURL && (
+          <img
+            src={`data:image/jpeg;base64,${item.ImageURL}`}
+            alt={item.ItemName}
+            className="item-view-image"
+          />
+        )}
+        <h2>{item?.ItemName}</h2>
         <div className="item-details">
-          <p>
-            <strong>Brand:</strong> {item.Brand}
-          </p>
-          <p>
-            <strong>Color:</strong> {item.Color}
-          </p>
-          <p>
-            <strong>Location Found:</strong> {item.LocationFound}
-          </p>
-          <p>
-            <strong>Description:</strong> {item.Description}
-          </p>
+          <p><strong>Brand:</strong> {item?.Brand}</p>
+          <p><strong>Color:</strong> {item?.Color}</p>
+          <p><strong>Found at:</strong> {item?.LocationFound}</p>
+          <p><strong>Turned In At:</strong> {item?.LocationTurnedIn}</p>
+          <p className="item-description">{item?.Description}</p>
         </div>
         <div className="upload-section">
           <label htmlFor="file-upload" className="file-upload-label">

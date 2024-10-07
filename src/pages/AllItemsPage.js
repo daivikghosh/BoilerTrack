@@ -1,56 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
 import FilterPane from "./FilterPane/FilterPane.js";
 import "./AllItemsPage.css";
-
-//test data
-const fakeItemsFromDB = [
-  {
-    ItemID: 1,
-    ItemName: "Samsung Phone",
-    Color: "Black",
-    Brand: "Samsung A24",
-    LocationFound: "WALC Printing Station",
-    Description: "Android phone, pink wallpaper, three cameras",
-    Photo: "https://via.placeholder.com/150?text=Samsung+Phone",
-  },
-  {
-    ItemID: 2,
-    ItemName: "Apple Watch",
-    Color: "White",
-    Brand: "Apple",
-    LocationFound: "PMU food court",
-    Description: "Watch, white band",
-    Photo: "https://via.placeholder.com/150?text=Apple+Watch",
-  },
-  {
-    ItemID: 3,
-    ItemName: "Lenovo ThinkPad",
-    Color: "Black",
-    Brand: "Lenovo",
-    LocationFound: "Earhart Dining Court",
-    Description: "Laptop, blue sticker, Purdue sticker",
-    Photo: "https://via.placeholder.com/150?text=Lenovo+ThinkPad",
-  },
-  {
-    ItemID: 4,
-    ItemName: "Wallet",
-    Color: "White",
-    Brand: "MK",
-    LocationFound: "Earhart Dining Court",
-    Description: "Leather, blue keychain",
-    Photo: "https://via.placeholder.com/150?text=Wallet",
-  },
-  {
-    ItemID: 5,
-    ItemName: "Keychain",
-    Color: "pink",
-    Brand: "unknown",
-    LocationFound: "Earhart Dining Court",
-    Description: "airtag",
-    Photo: "https://via.placeholder.com/150?text=Keychain",
-  },
-];
 
 function AllItemsPage() {
   const [filter, setFilter] = useState({
@@ -61,10 +13,19 @@ function AllItemsPage() {
   const [items, setItems] = useState([]); // Initially empty, no data yet
   const [filteredItems, setFilteredItems] = useState([]);
 
-  // Simulate fetching items from a database
+  // Fetch items from the backend API
   useEffect(() => {
-    setItems(fakeItemsFromDB);
-    setFilteredItems(fakeItemsFromDB); // Initially show all items
+    const fetchItems = async () => {
+      try {
+        const response = await axios.get("/items"); // this needs to be /items, it cannot be the full path
+        setItems(response.data);
+        setFilteredItems(response.data); // Initially show all items
+      } catch (error) {
+        console.error("Error fetching items:", error);
+      }
+    };
+
+    fetchItems();
   }, []);
 
   const handleFilterChange = (newFilter) => {
@@ -114,13 +75,13 @@ function AllItemsPage() {
             filteredItems.map((item) => (
               <div key={item.ItemID} className="item-card">
                 <img
-                  src={item.Photo}
+                  src={`data:image/jpeg;base64,${item.ImageURL}`}
                   alt={item.ItemName}
                   className="item-image"
                 />
                 <h3>{item.ItemName}</h3>
                 <p>{item.Description}</p>
-                <Link to={`/item-view/${item.ItemID}`}>
+                <Link to={`/item/${item.ItemID}`}>
                   <button className="view-button">View</button>
                 </Link>
               </div>
