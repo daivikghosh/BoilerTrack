@@ -1,0 +1,102 @@
+/* Container for the close account form */
+.close-account-form-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* Styling the close account form */
+.close-account-form {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+
+.close-account-form h2 {
+  font-size: 24px;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+/* Form group styling */
+.form-group {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+  display: block;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #2225c1;
+  background-color: white;
+  outline: none;
+}
+
+.form-group.inline {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap; /* Allow the label to wrap inside the container if needed */
+  width: 100%; /* Ensure the form group doesn't exceed the form width */
+}
+
+.form-group.inline input[type="checkbox"] {
+  margin-right: 0.5rem;
+  flex-shrink: 0; /* Prevent the checkbox from shrinking */
+}
+
+.form-group.inline label {
+  font-size: 0.875rem;
+  /* Allow the label to wrap if it's too long */
+  text-align: left; /* Align the label text properly */
+}
+
+/* Button styling */
+button {
+  width: 100%;
+  padding: 0.8rem;
+  background-color: #000;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.125rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #333;
+}
+
+button:disabled {
+  background-color: #ddd;
+}
+
+button:active {
+  background-color: #444;
+}
