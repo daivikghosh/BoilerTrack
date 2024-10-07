@@ -20,10 +20,6 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
     
-# Copy package.json and package-lock.json for React frontend and install dependencies
-COPY ./frontend/package*.json /app/frontend/
-RUN cd /app/frontend && npm install 
 RUN echo 'source /workspaces/CS-307-Group-19/backend/.venv/bin/activate' >> /home/vscode/.bashrc
 
-# Expose ports for Flask and React (optional)
 EXPOSE 5000 3000
