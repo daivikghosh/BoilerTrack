@@ -1,24 +1,25 @@
-    {
+{
   "name": "BoilerTrack",
   "dockerFile": "Dockerfile",
   "context": "..",
-  "appPort": [
-    "3000:3000",
-    "5000:5000"
-  ],
+  "appPort": ["3000:3000", "5000:5000"],
+
   "onCreateCommand": ".devcontainer/on-create-command.sh",
   "customizations": {
     "vscode": {
       "settings": {
         "python.defaultInterpreterPath": "${workspaceFolder}/.venv",
         "python.terminal.activateEnvInCurrentTerminal": true,
-        "python.terminal.launchArgs": [
-          "-X",
-          "dev"
-        ]
-      }
+        "python.terminal.launchArgs": ["-X", "dev"]
+      },
+      "extensions": [
+        "esbenp.prettier-vscode", // Prettier extension
+        "ms-azuretools.vscode-docker", // Docker extension
+        "ms-python.black-formatter", //python formatter
+        "ms-python.isort", //python import sorter
+        "VisualStudioExptTeam.vscodeintellicode" //intellicode
+      ]
     }
   },
   "forwardPorts": [3000, 5000]
 }
-
