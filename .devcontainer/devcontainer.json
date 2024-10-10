@@ -4,11 +4,16 @@
   "context": "..",
   "appPort": ["3000:3000", "5000:5000"],
 
-  "onCreateCommand": ".devcontainer/on-create-command.sh",
+  "onCreateCommand": {
+    "setup": "bash ${containerWorkspaceFolder}/.devcontainer/on-create-command.sh"
+  },
+  "postStartCommand": {
+    "git": "git config --global --add safe.directory ${containerWorkspaceFolder}"
+  },
   "customizations": {
     "vscode": {
       "settings": {
-        "python.defaultInterpreterPath": "${workspaceFolder}/.venv",
+        "python.defaultInterpreterPath": "${workspaceFolder}/flask-server/.venv",
         "python.terminal.activateEnvInCurrentTerminal": true,
         "python.terminal.launchArgs": ["-X", "dev"]
       },
