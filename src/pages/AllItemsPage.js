@@ -7,7 +7,8 @@ import "./AllItemsPage.css";
 function AllItemsPage() {
   const [filter, setFilter] = useState({
     includePast: false,
-    categories: [], // Only filtering by categories now
+    categories: [],
+    keywords: [], // Added keywords to the filter state
   });
   const [search, setSearch] = useState("");
   const [items, setItems] = useState([]); // Initially empty, no data yet
@@ -29,7 +30,8 @@ function AllItemsPage() {
   }, []);
 
   const handleFilterChange = (newFilter) => {
-    setFilter(newFilter);
+    // setFilter(newFilter);
+    setFilter({ ...filter, ...newFilter });
   };
 
   // Apply filters and search
@@ -49,6 +51,14 @@ function AllItemsPage() {
     if (search) {
       filtered = filtered.filter((item) =>
         item.ItemName.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    // Apply keyword filter
+    if (filter.keywords && filter.keywords.length > 0) {
+      filtered = filtered.filter((item) =>
+        filter.keywords.some((keyword) =>
+          item.Description.toLowerCase().includes(keyword.toLowerCase())
+        )
       );
     }
 
