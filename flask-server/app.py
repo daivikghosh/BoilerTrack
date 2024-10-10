@@ -131,6 +131,36 @@ def view_item(item_id):
     else:
         app.logger.warning(f"Item with ID {item_id} not found")
         return jsonify({'error': 'Item not found'}), 404
+    
+# archive item
+@app.route('/item/archive/<int:item_id>', methods=['POST'])
+def archive_item_endpoint(item_id):
+    try:
+        conn = sqlite3.connect('databases/ItemListings.db')
+        cursor = conn.cursor()
+        cursor.execute("UPDATE FOUNDITEMS SET Archived = 1 WHERE ItemID = ?", (item_id,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({'message': 'Item archived successfully'}), 200
+    except Exception as e:
+        app.logger.error(f"Error archiving item: {e}")
+        return jsonify({'error': 'Failed to archive item'}), 500
+
+# endpoint to unarchive item
+@app.route('/item/unarchive/<int:item_id>', methods=['POST'])
+def unarchive_item_endpoint(item_id):
+    try:
+        conn = sqlite3.connect('databases/ItemListings.db')
+        cursor = conn.cursor()
+        cursor.execute("UPDATE FOUNDITEMS SET Archived = 0 WHERE ItemID = ?", (item_id,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({'message': 'Item unarchived successfully'}), 200
+    except Exception as e:
+        app.logger.error(f"Error unarchiving item: {e}")
+        return jsonify({'error': 'Failed to unarchive item'}), 500
 
 
 if __name__ == '__main__':

@@ -3,23 +3,20 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import "./ItemView.css";
 
-// STAFF VIEW
-
 const ItemView = () => {
+  // const id = 1; // Hardcoded item ID for testing
   const { id } = useParams(); // Get the item ID from the URL
   const [item, setItem] = useState(null);
   const [file, setFile] = useState(null);
   const [comments, setComments] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isArchived, setIsArchived] = useState(false);
 
   useEffect(() => {
     const fetchItem = async () => {
       try {
         const response = await axios.get(`/item/${id}`);
         setItem(response.data);
-        setIsArchived(response.data.Archived === 1);
         setLoading(false);
       } catch (err) {
         setError("Error fetching item details");
@@ -40,20 +37,6 @@ const ItemView = () => {
 
   const handleSubmit = () => {
     console.log("Submitted proof and comments:", { file, comments });
-  };
-
-  const handleArchiveToggle = async () => {
-    try {
-      if (isArchived) {
-        await axios.post(`/item/unarchive/${id}`);
-        setIsArchived(false);
-      } else {
-        await axios.post(`/item/archive/${id}`);
-        setIsArchived(true);
-      }
-    } catch (err) {
-      console.error("Error archiving/unarchiving item:", err);
-    }
   };
 
   if (loading) {
@@ -103,14 +86,9 @@ const ItemView = () => {
           />
           <p className="char-limit">Max. 2000 characters</p>
         </div>
-        <div className="button-container">
         <button className="claim-button" onClick={handleSubmit}>
           Claim
         </button>
-        <button className="archive-button" onClick={handleArchiveToggle}>
-          {isArchived ? "Undo Move to Central Lost and Found Facility" : "Transfer to Central Lost and Found Facility"}
-        </button>
-        </div>
       </div>
     </div>
   );

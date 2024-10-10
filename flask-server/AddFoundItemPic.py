@@ -19,13 +19,14 @@ def insertItem(ItemName,Color,Brand,LocationFound,LocationTurnedIn,Description,P
          LocationFound      TEXT,
          LocationTurnedIn   TEXT,
          Description        TEXT,
-         Photo              BLOB);''')
+         Photo              BLOB,
+         Archived           INTEGER DEFAULT 0);''')
         
         print("Table created successfully")
         
         sqlite_insert_query = """ INSERT INTO FOUNDITEMS
-                                  (ItemName,Color,Brand,LocationFound,LocationTurnedIn,Description,Photo) VALUES (?, ?, ?, ?, ?, ?, ?)"""
-
+                                  (ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, Photo, Archived) 
+                                  VALUES (?, ?, ?, ?, ?, ?, ?, 0)"""
         binaryPhoto = convertToBinaryData(Photo)
         # Convert data into tuple format
         data_tuple = (ItemName,Color,Brand,LocationFound,LocationTurnedIn,Description,binaryPhoto)
@@ -42,5 +43,8 @@ def insertItem(ItemName,Color,Brand,LocationFound,LocationTurnedIn,Description,P
             print("the sqlite connection is closed")
 
 
-#insertItem("C", "Rainbow", "NA", "WALC", "HICKS", "Flag")
-#insertItem("B", "Blue", "Sony", "HICKS", "HICKS", "NAusdfkubfdvsguk, asrufyhkdfhg")
+# insertItem("C", "Rainbow", "NA", "WALC", "HICKS", "Flag")
+# insertItem("B", "Blue", "Sony", "HICKS", "HICKS", "NAusdfkubfdvsguk, asrufyhkdfhg")
+
+
+
