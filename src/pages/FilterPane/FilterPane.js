@@ -1,8 +1,11 @@
 import React, { useState } from "react";
+import "./FilterPane.css";
 
 function FilterPane({ onFilterChange }) {
   const [includePast, setIncludePast] = useState(false);
-  const [categories, setCategories] = useState([]); // Only categories
+  const [categories, setCategories] = useState([]);
+  const [keyword, setKeyword] = useState("");
+  const [keywords, setKeywords] = useState([]);
 
   const handleIncludePastChange = () => {
     setIncludePast(!includePast);
@@ -15,6 +18,25 @@ function FilterPane({ onFilterChange }) {
       : [...categories, category];
     setCategories(updatedCategories);
     onFilterChange({ includePast, categories: updatedCategories });
+  };
+
+  const handleKeywordChange = (e) => {
+    setKeyword(e.target.value);
+  };
+
+  const handleAddKeyword = (e) => {
+    if (
+      e.key === "Enter" &&
+      keyword.trim() !== "" &&
+      !keywords.includes(keyword)
+    ) {
+      setKeywords([...keywords, keyword.trim()]);
+      setKeyword("");
+    }
+  };
+
+  const handleRemoveKeyword = (keywordToRemove) => {
+    setKeywords(keywords.filter((kw) => kw !== keywordToRemove));
   };
 
   return (
@@ -50,9 +72,28 @@ function FilterPane({ onFilterChange }) {
           </div>
         ))}
       </div>
+
+      {/* Keyword Search Bar */}
+      <div className="filter-option">
+        <h4>Search by Keywords</h4>
+        <input
+          type="text"
+          placeholder="Add a keyword and press Enter"
+          value={keyword}
+          onChange={handleKeywordChange}
+          onKeyDown={handleAddKeyword}
+          style={{ width: "100%" }}
+        />
+        <div className="keyword-list">
+          {keywords.map((kw) => (
+            <span key={kw} className="keyword-tag">
+              {kw} <button onClick={() => handleRemoveKeyword(kw)}>x</button>
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
-
 
 export default FilterPane;
