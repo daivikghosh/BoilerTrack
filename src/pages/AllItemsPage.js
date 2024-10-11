@@ -208,6 +208,9 @@ function AllItemsPage() {
           className="search-bar"
         />
       </div>
+      <Link to="/StaffInputForm" className="add-item-button">
+          Add New Item
+      </Link>
 
       <div className="main-content">
         <FilterPane onFilterChange={handleFilterChange} />
