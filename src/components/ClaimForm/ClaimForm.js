@@ -80,7 +80,7 @@ const ClaimForm = () => {
       setComments("");
     } catch (err) {
 
-      console.log("Claim submitted:", response.data);
+      console.log("Claim submitted");
       alert("Claim submitted successfully!");
 
       // SHLOK - need to recheck why it defaults to err
