@@ -234,6 +234,9 @@ function AllItemsPage() {
                 <Link to={`/item/${item.ItemID}`}>
                   <button className="view-button">View</button>
                 </Link>
+                <Link to={`/modify-item/${item.ItemID}`}>
+                  <button className="modify-button">Modify</button>
+                </Link>
               </div>
             ))
           ) : (

@@ -53,7 +53,7 @@ def get_all_items():
 
 def get_item_by_id(item_id):
     """Fetch a single item from the database by its ID."""
-    conn = create_connection(ITEMS_DB)
+    conn = create_connection_items(ITEMS_DB)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM FOUNDITEMS WHERE ItemID = ?", (item_id,))
     item = cursor.fetchone()
@@ -111,7 +111,6 @@ def add_item():
     
     app.logger.warning("Invalid file type")
     return jsonify({'error': 'Invalid file type'}), 400
-
 
 @app.route('/signup', methods=['POST'])
 def signup():
@@ -283,6 +282,59 @@ def unarchive_item_endpoint(item_id):
     except Exception as e:
         app.logger.error(f"Error unarchiving item: {e}")
         return jsonify({'error': 'Failed to unarchive item'}), 500
+    
+@app.route('/item/<int:item_id>', methods=['PUT'])
+def update_item(item_id):
+    app.logger.info(f"Received PUT request to update item {item_id}")
+    
+    if 'image' in request.files:
+        file = request.files['image']
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+        else:
+            return jsonify({'error': 'Invalid file type'}), 400
+    else:
+        file_path = None
+    
+    item_name = request.form.get('itemName')
+    color = request.form.get('color')
+    brand = request.form.get('brand')
+    found_at = request.form.get('foundAt')
+    turned_in_at = request.form.get('turnedInAt')
+    description = request.form.get('description')
+    
+    try:
+        conn = create_connection_items(ITEMS_DB)
+        cursor = conn.cursor()
+        
+        if file_path:
+            with open(file_path, 'rb') as file:
+                image_data = file.read()
+            cursor.execute('''
+                UPDATE FOUNDITEMS 
+                SET ItemName=?, Color=?, Brand=?, LocationFound=?, LocationTurnedIn=?, Description=?, Image=?
+                WHERE ItemID=?
+            ''', (item_name, color, brand, found_at, turned_in_at, description, image_data, item_id))
+        else:
+            cursor.execute('''
+                UPDATE FOUNDITEMS 
+                SET ItemName=?, Color=?, Brand=?, LocationFound=?, LocationTurnedIn=?, Description=?
+                WHERE ItemID=?
+            ''', (item_name, color, brand, found_at, turned_in_at, description, item_id))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        if file_path:
+            os.remove(file_path)
+        
+        return jsonify({'message': 'Item updated successfully'}), 200
+    except Exception as e:
+        app.logger.error(f"Error updating item: {str(e)}")
+        return jsonify({'error': 'Failed to update item in database'}), 500
 
 
 
