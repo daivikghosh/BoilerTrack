@@ -9,7 +9,8 @@ function AllItemsPage() {
     includePast: false,
     categories: [],
     keywords: [],
-    sortAlphabetically: false, // Added state for sorting alphabetically
+    sortAlphabetically: false,
+    locations: [], // Added locations to filter state
   });
   const [search, setSearch] = useState("");
   const [items, setItems] = useState([]);
@@ -120,6 +121,13 @@ function AllItemsPage() {
         filter.categories.some((category) =>
           item.ItemName.toLowerCase().includes(category.toLowerCase())
         )
+      );
+    }
+
+    // Apply location filter
+    if (filter.locations && filter.locations.length > 0) {
+      filtered = filtered.filter((item) =>
+        filter.locations.includes(item.LocationFound)
       );
     }
 
