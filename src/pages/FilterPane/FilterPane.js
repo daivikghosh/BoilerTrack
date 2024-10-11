@@ -9,7 +9,7 @@ function FilterPane({ onFilterChange }) {
 
   const handleIncludePastChange = () => {
     setIncludePast(!includePast);
-    onFilterChange({ includePast: !includePast, categories });
+    onFilterChange({ includePast: !includePast, categories, keywords });
   };
 
   const handleCategoryChange = (category) => {
@@ -17,7 +17,7 @@ function FilterPane({ onFilterChange }) {
       ? categories.filter((c) => c !== category)
       : [...categories, category];
     setCategories(updatedCategories);
-    onFilterChange({ includePast, categories: updatedCategories });
+    onFilterChange({ includePast, categories: updatedCategories, keywords });
   };
 
   const handleKeywordChange = (e) => {
@@ -30,13 +30,17 @@ function FilterPane({ onFilterChange }) {
       keyword.trim() !== "" &&
       !keywords.includes(keyword)
     ) {
-      setKeywords([...keywords, keyword.trim()]);
+      const updatedKeywords = [...keywords, keyword.trim()];
+      setKeywords(updatedKeywords);
       setKeyword("");
+      onFilterChange({ includePast, categories, keywords: updatedKeywords });
     }
   };
 
   const handleRemoveKeyword = (keywordToRemove) => {
-    setKeywords(keywords.filter((kw) => kw !== keywordToRemove));
+    const updatedKeywords = keywords.filter((kw) => kw !== keywordToRemove);
+    setKeywords(updatedKeywords);
+    onFilterChange({ includePast, categories, keywords: updatedKeywords });
   };
 
   return (

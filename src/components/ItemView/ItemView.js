@@ -8,11 +8,21 @@ import "./ItemView.css";
 const ItemView = () => {
   const { id } = useParams(); // Get the item ID from the URL
   const [item, setItem] = useState(null);
-  const [file, setFile] = useState(null);
-  const [comments, setComments] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isArchived, setIsArchived] = useState(false);
+
+  // Fake item data for testing
+  const fakeItem = {
+    ItemID: 2,
+    ItemName: "Headphones",
+    Color: "Red",
+    Brand: "Sony",
+    LocationFound: "Gym",
+    LocationTurnedIn: "Front Desk",
+    Description: "Red Sony headphones found at the gym front desk.",
+    ImageURL: "", // Add a base64 image string if you want to display an image
+  };
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -22,25 +32,14 @@ const ItemView = () => {
         setIsArchived(response.data.Archived === 1);
         setLoading(false);
       } catch (err) {
-        setError("Error fetching item details");
+        console.error("Error fetching item details, using fake data:", err);
+        setItem(fakeItem); // Use fakeItem data if backend fails
         setLoading(false);
       }
     };
 
     fetchItem();
   }, [id]);
-
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
-  };
-
-  const handleCommentChange = (e) => {
-    setComments(e.target.value);
-  };
-
-  const handleSubmit = () => {
-    console.log("Submitted proof and comments:", { file, comments });
-  };
 
   const handleArchiveToggle = async () => {
     try {
@@ -77,39 +76,26 @@ const ItemView = () => {
         )}
         <h2>{item?.ItemName}</h2>
         <div className="item-details">
-          <p><strong>Brand:</strong> {item?.Brand}</p>
-          <p><strong>Color:</strong> {item?.Color}</p>
-          <p><strong>Found at:</strong> {item?.LocationFound}</p>
-          <p><strong>Turned In At:</strong> {item?.LocationTurnedIn}</p>
+          <p>
+            <strong>Brand:</strong> {item?.Brand}
+          </p>
+          <p>
+            <strong>Color:</strong> {item?.Color}
+          </p>
+          <p>
+            <strong>Found at:</strong> {item?.LocationFound}
+          </p>
+          <p>
+            <strong>Turned In At:</strong> {item?.LocationTurnedIn}
+          </p>
           <p className="item-description">{item?.Description}</p>
         </div>
-        <div className="upload-section">
-          <label htmlFor="file-upload" className="file-upload-label">
-            Upload proof
-            <input type="file" id="file-upload" onChange={handleFileChange} />
-          </label>
-          <div className="file-upload-text">
-            {file ? file.name : "File / upload"}
-          </div>
-        </div>
-        <div className="comment-section">
-          <label htmlFor="comments">Explain</label>
-          <textarea
-            id="comments"
-            placeholder="Your comments"
-            value={comments}
-            onChange={handleCommentChange}
-            maxLength={2000}
-          />
-          <p className="char-limit">Max. 2000 characters</p>
-        </div>
         <div className="button-container">
-        <button className="claim-button" onClick={handleSubmit}>
-          Claim
-        </button>
-        <button className="archive-button" onClick={handleArchiveToggle}>
-          {isArchived ? "Undo Move to Central Lost and Found Facility" : "Transfer to Central Lost and Found Facility"}
-        </button>
+          <button className="archive-button" onClick={handleArchiveToggle}>
+            {isArchived
+              ? "Undo Move to Central Lost and Found Facility"
+              : "Transfer to Central Lost and Found Facility"}
+          </button>
         </div>
       </div>
     </div>
