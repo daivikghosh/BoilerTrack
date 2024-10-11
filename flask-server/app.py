@@ -35,7 +35,7 @@ def allowed_file(filename):
 
 def get_all_items():
     """Fetch all items from the database."""
-    conn = sqlite3.connect('databases/ItemListings.db')
+    conn = sqlite3.connect('../databases/ItemListings.db')
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM FOUNDITEMS")
     items = cursor.fetchall()
