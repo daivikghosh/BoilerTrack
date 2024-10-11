@@ -5,6 +5,7 @@ from werkzeug.utils import secure_filename
 import sqlite3
 import os
 from AddFoundItemPic import *
+from AddClaimRequest import *
 import base64
 
 app = Flask(__name__)
@@ -283,6 +284,46 @@ def unarchive_item_endpoint(item_id):
     except Exception as e:
         app.logger.error(f"Error unarchiving item: {e}")
         return jsonify({'error': 'Failed to unarchive item'}), 500
+
+
+
+@app.route('/claim-item', methods=['POST'])
+def send_request():
+    app.logger.info("Received POST request to /items")
+    app.logger.debug(f"Request form data: {request.form}")
+    app.logger.debug(f"Request files: {request.files}")
+
+    if 'file' not in request.files:
+        app.logger.warning("No image file in request")
+        return jsonify({'error': 'No image file provided'}), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        app.logger.warning("Empty filename")
+        return jsonify({'error': 'No selected file'}), 400
+    
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        
+        # Get other form data
+        itemid = request.form.get('itemId')
+        comments = request.form.get('comments')
+        
+        try:
+            insertclaim(itemid, comments, file_path)
+            
+            # Remove the file after it's been inserted into the database
+            os.remove(file_path)
+            
+        except Exception as e:
+            app.logger.error(f"Error inserting item: {str(e)}")
+            return jsonify({'error': 'Failed to add item to database'}), 500
+    
+    app.logger.warning("Invalid file type")
+    return jsonify({'error': 'Invalid file type'}), 400
 
 
 
