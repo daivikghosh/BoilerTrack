@@ -136,3 +136,28 @@ input:checked + .slider:before {
   margin: 0;
   cursor: pointer;
 }
+
+/* Styles for react-calendar */
+.react-calendar {
+  width: 100%;
+  border: none;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.react-calendar__tile--now {
+  background: #ffff76;
+}
+
+.react-calendar__tile--active {
+  background: #2196F3;
+  color: white;
+}
+
+.selected-date {
+  background: #2196F3 !important;
+  color: white !important;
+}
+
+.react-calendar__tile {
+  max-width: initial !important;
+}

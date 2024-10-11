@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
 import "./FilterPane.css";
 
 function FilterPane({ onFilterChange }) {
@@ -8,10 +10,11 @@ function FilterPane({ onFilterChange }) {
   const [keywords, setKeywords] = useState([]);
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false); // New state for location dropdown
-  const [locations, setLocations] = useState([]); // State for selected locations
+  const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
+  const [locations, setLocations] = useState([]);
+  const [selectedDates, setSelectedDates] = useState([]); // State for selected dates
   const dropdownRef = useRef(null);
-  const locationDropdownRef = useRef(null); // Ref for location dropdown
+  const locationDropdownRef = useRef(null);
 
   useEffect(() => {
     // Close dropdowns when clicking outside
@@ -19,7 +22,10 @@ function FilterPane({ onFilterChange }) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
-      if (locationDropdownRef.current && !locationDropdownRef.current.contains(event.target)) {
+      if (
+        locationDropdownRef.current &&
+        !locationDropdownRef.current.contains(event.target)
+      ) {
         setIsLocationDropdownOpen(false);
       }
     };
@@ -37,6 +43,7 @@ function FilterPane({ onFilterChange }) {
       keywords,
       sortAlphabetically,
       locations,
+      dates: selectedDates,
     });
   };
 
@@ -51,6 +58,7 @@ function FilterPane({ onFilterChange }) {
       keywords,
       sortAlphabetically,
       locations,
+      dates: selectedDates,
     });
   };
 
@@ -65,6 +73,7 @@ function FilterPane({ onFilterChange }) {
       keywords,
       sortAlphabetically,
       locations: updatedLocations,
+      dates: selectedDates,
     });
   };
 
@@ -87,6 +96,7 @@ function FilterPane({ onFilterChange }) {
         keywords: updatedKeywords,
         sortAlphabetically,
         locations,
+        dates: selectedDates,
       });
     }
   };
@@ -100,6 +110,7 @@ function FilterPane({ onFilterChange }) {
       keywords: updatedKeywords,
       sortAlphabetically,
       locations,
+      dates: selectedDates,
     });
   };
 
@@ -111,6 +122,28 @@ function FilterPane({ onFilterChange }) {
       keywords,
       sortAlphabetically: !sortAlphabetically,
       locations,
+      dates: selectedDates,
+    });
+  };
+
+  const handleDateClick = (date) => {
+    const dateString = date.toISOString().split('T')[0]; // Get date string in 'YYYY-MM-DD' format
+    let updatedDates;
+    if (selectedDates.includes(dateString)) {
+      // Date is already selected, remove it
+      updatedDates = selectedDates.filter((d) => d !== dateString);
+    } else {
+      // Add date to selectedDates
+      updatedDates = [...selectedDates, dateString];
+    }
+    setSelectedDates(updatedDates);
+    onFilterChange({
+      includePast,
+      categories,
+      keywords,
+      sortAlphabetically,
+      locations,
+      dates: updatedDates,
     });
   };
 
@@ -180,7 +213,9 @@ function FilterPane({ onFilterChange }) {
         <div className="dropdown" ref={locationDropdownRef}>
           <div
             className="dropdown-header"
-            onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
+            onClick={() =>
+              setIsLocationDropdownOpen(!isLocationDropdownOpen)
+            }
           >
             {locations.length > 0 ? locations.join(", ") : "Select Locations"}
           </div>
@@ -229,6 +264,19 @@ function FilterPane({ onFilterChange }) {
             </span>
           ))}
         </div>
+      </div>
+
+      {/* Date Filter with Calendar */}
+      <div className="filter-option">
+        <h4>Filter by Date Found</h4>
+        <Calendar
+          onClickDay={handleDateClick}
+          tileClassName={({ date, view }) => {
+            if (selectedDates.includes(date.toISOString().split('T')[0])) {
+              return 'selected-date';
+            }
+          }}
+        />
       </div>
     </div>
   );
