@@ -2,14 +2,12 @@ import sqlite3
 import os
 
 def create_user_database():
-    # Get the absolute path to the Databases directory
+    # Get the absolute path to the databases directory
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    db_path = os.path.join(base_dir, '../Databases/Accounts.db')
+    db_path = os.path.join(base_dir, '../databases/Accounts.db')
 
-    # Ensure the Databases directory exists
+    # Ensure the databases directory exists
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
-
-    print(f"Creating database at: {db_path}")
 
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()

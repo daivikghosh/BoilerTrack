@@ -18,7 +18,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Get the absolute path to the Databases directory
 base_dir = os.path.dirname(os.path.abspath(__file__))
-DATABASE = os.path.join(base_dir, '../Databases/Accounts.db')
+DATABASE = os.path.join(base_dir, '../databases/Accounts.db')
 
 def create_connection():
     conn = None
