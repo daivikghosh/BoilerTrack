@@ -23,6 +23,9 @@ base_dir = os.path.dirname(os.path.abspath(__file__))
 ITEMS_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'ItemListings.db')
 DATABASE = os.path.join(os.path.dirname(base_dir), 'Databases', 'Accounts.db')
 
+#trying error of no image avail
+DEFAULT_IMAGE_PATH = 'uploads\TestImage.png'
+
 def create_connection():
     conn = None
     try:
@@ -213,26 +216,82 @@ def user_profile():
     finally:
         conn.close()
 
-# endpoint to get all items
+# # endpoint to get all items
+# @app.route('/items', methods=['GET'])
+# def view_all_items():
+#     app.logger.info("Fetching all items")
+#     items = get_all_items()
+#     items_list = [{
+#         'ItemID': item[0],
+#         'ItemName': item[1],
+#         'Color': item[2],
+#         'Brand': item[3],
+#         'LocationFound': item[4],
+#         'LocationTurnedIn': item[5],
+#         'Description': item[6],
+#         'ImageURL': base64.b64encode(item[7]).decode('utf-8') if isinstance(item[7], bytes) else item[7]
+#     } for item in items]
+#     # for image display in frontend: <img src={`data:image/jpeg;base64,${base64ImageData}`} alt="Item" />
+
+    
+#     return jsonify(items_list), 200
+
+
+# Function to read and encode an image file to base64
+def get_image_base64(image_path):
+    with open(image_path, 'rb') as image_file:
+        return base64.b64encode(image_file.read()).decode('utf-8')
+
+# Endpoint to get all items
 @app.route('/items', methods=['GET'])
 def view_all_items():
     app.logger.info("Fetching all items")
     items = get_all_items()
-    items_list = [{
-        'ItemID': item[0],
-        'ItemName': item[1],
-        'Color': item[2],
-        'Brand': item[3],
-        'LocationFound': item[4],
-        'LocationTurnedIn': item[5],
-        'Description': item[6],
-        'ImageURL': base64.b64encode(item[7]).decode('utf-8') if isinstance(item[7], bytes) else item[7]
-    } for item in items]
-    # for image display in frontend: <img src={`data:image/jpeg;base64,${base64ImageData}`} alt="Item" />
-
+    items_list = []
+    
+    for item in items:
+        if isinstance(item[7], bytes):  # Image exists and is in bytes
+            image_data = base64.b64encode(item[7]).decode('utf-8')
+        elif item[7] is None:  # Image is NULL or None, use the placeholder
+            image_data = get_image_base64(DEFAULT_IMAGE_PATH)
+        else:
+            image_data = item[7]  # If already in the correct format
+        
+        items_list.append({
+            'ItemID': item[0],
+            'ItemName': item[1],
+            'Color': item[2],
+            'Brand': item[3],
+            'LocationFound': item[4],
+            'LocationTurnedIn': item[5],
+            'Description': item[6],
+            'ImageURL': image_data
+        })
     
     return jsonify(items_list), 200
  
+# # New endpoint to get a specific item by its ID
+# @app.route('/item/<int:item_id>', methods=['GET'])
+# def view_item(item_id):
+#     app.logger.info(f"Fetching details for item ID: {item_id}")
+#     item = get_item_by_id(item_id)
+    
+#     if item:
+#         item_data = {
+#             'ItemID': item[0],
+#             'ItemName': item[1],
+#             'Color': item[2],
+#             'Brand': item[3],
+#             'LocationFound': item[4],
+#             'LocationTurnedIn': item[5],
+#             'Description': item[6],
+#             'ImageURL': base64.b64encode(item[7]).decode('utf-8') if isinstance(item[7], bytes) else item[7]
+#         }
+#         return jsonify(item_data), 200
+#     else:
+#         app.logger.warning(f"Item with ID {item_id} not found")
+#         return jsonify({'error': 'Item not found'}), 404
+
 # New endpoint to get a specific item by its ID
 @app.route('/item/<int:item_id>', methods=['GET'])
 def view_item(item_id):
@@ -240,6 +299,14 @@ def view_item(item_id):
     item = get_item_by_id(item_id)
     
     if item:
+        # Check if the image is bytes, None, or already present in the correct format
+        if isinstance(item[7], bytes):  # Image exists and is in bytes
+            image_data = base64.b64encode(item[7]).decode('utf-8')
+        elif item[7] is None:  # Image is NULL or None, use the placeholder
+            image_data = get_image_base64(DEFAULT_IMAGE_PATH)
+        else:
+            image_data = item[7]  # If already in the correct format
+        
         item_data = {
             'ItemID': item[0],
             'ItemName': item[1],
@@ -248,12 +315,14 @@ def view_item(item_id):
             'LocationFound': item[4],
             'LocationTurnedIn': item[5],
             'Description': item[6],
-            'ImageURL': base64.b64encode(item[7]).decode('utf-8') if isinstance(item[7], bytes) else item[7]
+            'ImageURL': image_data
         }
         return jsonify(item_data), 200
     else:
         app.logger.warning(f"Item with ID {item_id} not found")
         return jsonify({'error': 'Item not found'}), 404
+
+
     
 # archive item
 @app.route('/item/archive/<int:item_id>', methods=['POST'])
