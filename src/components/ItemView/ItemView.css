@@ -116,3 +116,10 @@ input[type="file"] {
 .claim-button:active {
   background-color: #a37e55;
 }
+
+.button-container {
+  margin-top: 20px; /* Adds space between the buttons */
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Space between the buttons */
+}

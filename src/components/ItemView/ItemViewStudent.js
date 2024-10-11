@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./ItemView.css";
 
-// STAFF VIEW
-
-const ItemView = () => {
+const ItemViewStudent = () => {
   const { id } = useParams(); // Get the item ID from the URL
   const [item, setItem] = useState(null);
+  const [file, setFile] = useState(null);
+  const [comments, setComments] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isArchived, setIsArchived] = useState(false);
+  const navigate = useNavigate(); // Initialize useNavigate for routing
 
   // Fake item data for testing
   const fakeItem = {
@@ -24,12 +24,15 @@ const ItemView = () => {
     ImageURL: "", // Add a base64 image string if you want to display an image
   };
 
+  const handleClaimClick = () => {
+    navigate(`/claim/${id}`); // Navigate to the claim form when the Claim button is clicked
+  };
+
   useEffect(() => {
     const fetchItem = async () => {
       try {
         const response = await axios.get(`/item/${id}`);
         setItem(response.data);
-        setIsArchived(response.data.Archived === 1);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching item details, using fake data:", err);
@@ -41,18 +44,16 @@ const ItemView = () => {
     fetchItem();
   }, [id]);
 
-  const handleArchiveToggle = async () => {
-    try {
-      if (isArchived) {
-        await axios.post(`/item/unarchive/${id}`);
-        setIsArchived(false);
-      } else {
-        await axios.post(`/item/archive/${id}`);
-        setIsArchived(true);
-      }
-    } catch (err) {
-      console.error("Error archiving/unarchiving item:", err);
-    }
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
+
+  const handleCommentChange = (e) => {
+    setComments(e.target.value);
+  };
+
+  const handleSubmit = () => {
+    console.log("Submitted proof and comments:", { file, comments });
   };
 
   if (loading) {
@@ -90,16 +91,32 @@ const ItemView = () => {
           </p>
           <p className="item-description">{item?.Description}</p>
         </div>
-        <div className="button-container">
-          <button className="archive-button" onClick={handleArchiveToggle}>
-            {isArchived
-              ? "Undo Move to Central Lost and Found Facility"
-              : "Transfer to Central Lost and Found Facility"}
-          </button>
+        <div className="upload-section">
+          <label htmlFor="file-upload" className="file-upload-label">
+            Upload proof
+            <input type="file" id="file-upload" onChange={handleFileChange} />
+          </label>
+          <div className="file-upload-text">
+            {file ? file.name : "File / upload"}
+          </div>
         </div>
+        <div className="comment-section">
+          <label htmlFor="comments">Explain</label>
+          <textarea
+            id="comments"
+            placeholder="Your comments"
+            value={comments}
+            onChange={handleCommentChange}
+            maxLength={2000}
+          />
+          <p className="char-limit">Max. 2000 characters</p>
+        </div>
+        <button className="claim-button" onClick={handleClaimClick}>
+          Claim
+        </button>
       </div>
     </div>
   );
 };
 
-export default ItemView;
+export default ItemViewStudent;
