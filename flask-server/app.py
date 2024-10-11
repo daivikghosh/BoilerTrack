@@ -16,7 +16,7 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 logging.basicConfig(level=logging.DEBUG)
 
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = '../uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -281,7 +281,7 @@ def view_item(item_id):
 @app.route('/item/archive/<int:item_id>', methods=['POST'])
 def archive_item_endpoint(item_id):
     try:
-        conn = sqlite3.connect('databases/ItemListings.db')
+        conn = sqlite3.connect(ITEMS_DB)
         cursor = conn.cursor()
         cursor.execute("UPDATE FOUNDITEMS SET Archived = 1 WHERE ItemID = ?", (item_id,))
         conn.commit()
@@ -296,7 +296,7 @@ def archive_item_endpoint(item_id):
 @app.route('/item/unarchive/<int:item_id>', methods=['POST'])
 def unarchive_item_endpoint(item_id):
     try:
-        conn = sqlite3.connect('databases/ItemListings.db')
+        conn = sqlite3.connect(ITEMS_DB)
         cursor = conn.cursor()
         cursor.execute("UPDATE FOUNDITEMS SET Archived = 0 WHERE ItemID = ?", (item_id,))
         conn.commit()
