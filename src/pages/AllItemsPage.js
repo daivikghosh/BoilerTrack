@@ -16,6 +16,7 @@ function AllItemsPage() {
   const [search, setSearch] = useState("");
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
+  const [pinnedItems, setPinnedItems] = useState([]); // New state for pinned items
 
   const fakeItems = [
     {
@@ -119,13 +120,24 @@ function AllItemsPage() {
     setFilter({ ...filter, ...newFilter });
   };
 
+  const handlePinItem = (itemID) => {
+    if (pinnedItems.includes(itemID)) {
+      setPinnedItems(pinnedItems.filter((id) => id !== itemID)); // Unpin the item
+    } else {
+      setPinnedItems([...pinnedItems, itemID]); // Pin the item
+    }
+  };
+
   // Apply filters and search
   useEffect(() => {
-    let filtered = [...items];
+    let nonPinnedItems = items.filter(
+      (item) => !pinnedItems.includes(item.ItemID)
+    );
+    let pinned = items.filter((item) => pinnedItems.includes(item.ItemID));
 
-    // Apply category filter (if categories are selected)
+    // Apply category filter to non-pinned items
     if (filter.categories.length > 0) {
-      filtered = filtered.filter((item) =>
+      nonPinnedItems = nonPinnedItems.filter((item) =>
         filter.categories.some((category) =>
           item.ItemName.toLowerCase().includes(category.toLowerCase())
         )
@@ -148,27 +160,28 @@ function AllItemsPage() {
 
     // Apply search filter
     if (search) {
-      filtered = filtered.filter((item) =>
+      nonPinnedItems = nonPinnedItems.filter((item) =>
         item.ItemName.toLowerCase().includes(search.toLowerCase())
       );
     }
 
-    // Apply keyword filter
+    // Apply keyword filter to non-pinned items
     if (filter.keywords && filter.keywords.length > 0) {
-      filtered = filtered.filter((item) =>
+      nonPinnedItems = nonPinnedItems.filter((item) =>
         filter.keywords.some((keyword) =>
           item.Description.toLowerCase().includes(keyword.toLowerCase())
         )
       );
     }
 
-    // Sort items alphabetically if the checkbox is checked
+    // Sort non-pinned items alphabetically if the checkbox is checked
     if (filter.sortAlphabetically) {
-      filtered.sort((a, b) => a.ItemName.localeCompare(b.ItemName));
+      nonPinnedItems.sort((a, b) => a.ItemName.localeCompare(b.ItemName));
     }
 
-    setFilteredItems(filtered);
-  }, [filter, search, items]);
+    // Combine pinned items (always at the top) with filtered non-pinned items
+    setFilteredItems([...pinned, ...nonPinnedItems]);
+  }, [filter, search, items, pinnedItems]);
 
   return (
     <div className="all-items-page">
@@ -196,6 +209,14 @@ function AllItemsPage() {
                 />
                 <h3>{item.ItemName}</h3>
                 <p>{item.Description}</p>
+                <button
+                  className={`pin-button ${
+                    pinnedItems.includes(item.ItemID) ? "pinned" : ""
+                  }`}
+                  onClick={() => handlePinItem(item.ItemID)}
+                >
+                  {pinnedItems.includes(item.ItemID) ? "Unpin" : "Pin"}
+                </button>
                 <Link to={`/item/${item.ItemID}`}>
                   <button className="view-button">View</button>
                 </Link>

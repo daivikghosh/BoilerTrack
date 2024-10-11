@@ -30,6 +30,7 @@ const LoginForm = ({ onSignupClick, onForgotPasswordClick }) => {
       if (response.ok) {
         const data = await response.json();
         console.log("Login successful: ", data);
+        localStorage.setItem('userEmail', email);
         alert("Login successful!");
         navigate('/all-items'); // Redirect to the all-items page
       } else {
