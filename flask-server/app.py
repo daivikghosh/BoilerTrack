@@ -287,54 +287,52 @@ def unarchive_item_endpoint(item_id):
 def update_item(item_id):
     app.logger.info(f"Received PUT request to update item {item_id}")
     
-    if 'image' in request.files:
-        file = request.files['image']
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(file_path)
-        else:
-            return jsonify({'error': 'Invalid file type'}), 400
-    else:
-        file_path = None
-    
-    item_name = request.form.get('itemName')
-    color = request.form.get('color')
-    brand = request.form.get('brand')
-    found_at = request.form.get('foundAt')
-    turned_in_at = request.form.get('turnedInAt')
-    description = request.form.get('description')
-    
+    conn = create_connection_items(ITEMS_DB)
+    cursor = conn.cursor()
+
     try:
-        conn = create_connection_items(ITEMS_DB)
-        cursor = conn.cursor()
-        
-        if file_path:
-            with open(file_path, 'rb') as file:
-                image_data = file.read()
-            cursor.execute('''
-                UPDATE FOUNDITEMS 
-                SET ItemName=?, Color=?, Brand=?, LocationFound=?, LocationTurnedIn=?, Description=?, Image=?
-                WHERE ItemID=?
-            ''', (item_name, color, brand, found_at, turned_in_at, description, image_data, item_id))
+        # Fetch the current item data
+        cursor.execute("SELECT * FROM FOUNDITEMS WHERE ItemID = ?", (item_id,))
+        current_item = cursor.fetchone()
+
+        if not current_item:
+            return jsonify({'error': 'Item not found'}), 404
+
+        # Update fields
+        item_name = request.form.get('itemName', current_item[1])
+        color = request.form.get('color', current_item[2])
+        brand = request.form.get('brand', current_item[3])
+        found_at = request.form.get('foundAt', current_item[4])
+        turned_in_at = request.form.get('turnedInAt', current_item[5])
+        description = request.form.get('description', current_item[6])
+
+        # Handle image update
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and allowed_file(file.filename):
+                image_data = file.read()  # Keep as binary data
+            else:
+                return jsonify({'error': 'Invalid file type'}), 400
         else:
-            cursor.execute('''
-                UPDATE FOUNDITEMS 
-                SET ItemName=?, Color=?, Brand=?, LocationFound=?, LocationTurnedIn=?, Description=?
-                WHERE ItemID=?
-            ''', (item_name, color, brand, found_at, turned_in_at, description, item_id))
+            image_data = current_item[7]  # Keep the current image if no new image is provided
+
+        # Update the database
+        cursor.execute('''
+            UPDATE FOUNDITEMS 
+            SET ItemName=?, Color=?, Brand=?, LocationFound=?, LocationTurnedIn=?, Description=?, Photo=?
+            WHERE ItemID=?
+        ''', (item_name, color, brand, found_at, turned_in_at, description, image_data, item_id))
         
         conn.commit()
-        cursor.close()
-        conn.close()
-        
-        if file_path:
-            os.remove(file_path)
-        
         return jsonify({'message': 'Item updated successfully'}), 200
+
     except Exception as e:
         app.logger.error(f"Error updating item: {str(e)}")
         return jsonify({'error': 'Failed to update item in database'}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
 
 
 

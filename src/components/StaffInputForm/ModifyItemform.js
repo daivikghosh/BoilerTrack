@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './StaffInputForm.css'; // Assuming we're still using the same CSS
+import './StaffInputForm.css';
 
 function ModifyItemForm() {
-    const { id } = useParams(); // Get the item ID from the URL
+    const { id } = useParams();
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
@@ -19,6 +19,7 @@ function ModifyItemForm() {
     const [selectedFile, setSelectedFile] = useState(null);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(true);
+    const [currentImage, setCurrentImage] = useState(null);
 
     useEffect(() => {
         const fetchItemData = async () => {
@@ -33,13 +34,14 @@ function ModifyItemForm() {
                     turnedInAt: itemData.LocationTurnedIn,
                     description: itemData.Description,
                 });
+                setCurrentImage(itemData.Photo);
                 setLoading(false);
             } catch (error) {
                 console.error('Error fetching item data:', error);
                 setLoading(false);
             }
         };
-
+    
         fetchItemData();
     }, [id]);
 
@@ -87,7 +89,7 @@ function ModifyItemForm() {
             });
             console.log(response.data);
             alert('Item updated successfully!');
-            navigate('/all-items'); // Redirect to the all items page after successful update
+            navigate('/all-items');
         } catch (error) {
             console.error('There was an error updating the item!', error);
         }
@@ -108,6 +110,12 @@ function ModifyItemForm() {
                     </label>
                     <input id="image-upload" type="file" onChange={handleFileChange} accept="image/*" />
                     {selectedFile && <p>{selectedFile.name}</p>}
+                    {!selectedFile && currentImage && (
+    <div>
+        <p>Current Image:</p>
+        <img src={`data:image/jpeg;base64,${currentImage}`} alt="Current Item" style={{maxWidth: '200px'}} />
+    </div>
+)}
                 </div>
 
                 <div className="form-input">
