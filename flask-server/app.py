@@ -53,7 +53,7 @@ def get_all_items():
 
 def get_item_by_id(item_id):
     """Fetch a single item from the database by its ID."""
-    conn = create_connection(ITEMS_DB)
+    conn = create_connection_items(ITEMS_DB)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM FOUNDITEMS WHERE ItemID = ?", (item_id,))
     item = cursor.fetchone()
