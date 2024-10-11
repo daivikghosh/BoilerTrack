@@ -6,6 +6,10 @@ import sqlite3
 import os
 from AddFoundItemPic import *
 import base64
+from apscheduler.scheduler.background import BackgroundScheduler
+import time
+from database_cleaner import delete_deleted_items
+from timeit import default_timer as timer
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -41,6 +45,25 @@ def create_connection_items(db_path):
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def clear_deleted_entries():
+    app.logger.info(f"Clearing deleted items from database at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+    start = timer()
+    delete_deleted_items(DATABASE, "UserListing")
+    end = timer()
+    app.logger.info(f"Clearing deleted users took {end-start}")
+    
+    start = timer()
+    delete_deleted_items(ITEMS_DB, "FOUNDITEMS")
+    end = timer()
+    app.logger.info(f"Clearing deleted items took {end-start}")
+
+
+# initialize scheduler for deleted items clearing task
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=clear_deleted_entries, trigger="cron", seconds="0 0 * * SUN")  # Runs every sunday at midnight
+scheduler.start()
+
 
 def get_all_items():
     """Fetch all items from the database."""
@@ -284,7 +307,13 @@ def unarchive_item_endpoint(item_id):
         app.logger.error(f"Error unarchiving item: {e}")
         return jsonify({'error': 'Failed to unarchive item'}), 500
 
+@app.before_first_request()
+def before_first_request():
+    scheduler.start()
 
+@app.teardown_appcontext
+def shutdown_scheduler(exception=None):
+    scheduler.shutdown()
 
 if __name__ == '__main__':
     if not os.path.exists(os.path.dirname(DATABASE)):
