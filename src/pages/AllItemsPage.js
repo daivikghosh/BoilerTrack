@@ -29,7 +29,7 @@ function AllItemsPage() {
       Description:
         "A blue stainless steel water bottle found near the library.",
       ImageURL: "", // Base64 image string if needed
-      DateFound: "2023-10-01",
+      DateFound: "2024-10-01",
     },
     {
       ItemID: 2,
@@ -40,7 +40,7 @@ function AllItemsPage() {
       LocationTurnedIn: "Security Desk",
       Description: "Dell laptop with a black cover left in the study hall.",
       ImageURL: "",
-      DateFound: "2023-10-02",
+      DateFound: "2024-10-02",
     },
     {
       ItemID: 3,
@@ -51,7 +51,7 @@ function AllItemsPage() {
       LocationTurnedIn: "Front Desk",
       Description: "Red Sony headphones found at the gym front desk.",
       ImageURL: "",
-      DateFound: "2023-10-03",
+      DateFound: "2024-10-03",
     },
     {
       ItemID: 4,
@@ -62,7 +62,7 @@ function AllItemsPage() {
       LocationTurnedIn: "Lost and Found Office",
       Description: "Black leather wallet found near the cafeteria.",
       ImageURL: "",
-      DateFound: "2023-10-04",
+      DateFound: "2024-10-04",
     },
     {
       ItemID: 5,
@@ -73,7 +73,7 @@ function AllItemsPage() {
       LocationTurnedIn: "IT Help Desk",
       Description: "MacBook Pro found in the computer lab.",
       ImageURL: "",
-      DateFound: "2023-10-05",
+      DateFound: "2024-10-05",
     },
     {
       ItemID: 6,
@@ -84,7 +84,7 @@ function AllItemsPage() {
       LocationTurnedIn: "Library Desk",
       Description: "White Bose headphones left in the library.",
       ImageURL: "",
-      DateFound: "2023-10-06",
+      DateFound: "2024-10-06",
     },
     {
       ItemID: 7,
@@ -95,7 +95,7 @@ function AllItemsPage() {
       LocationTurnedIn: "Gym Front Desk",
       Description: "Plastic water bottle found in the gym locker room.",
       ImageURL: "",
-      DateFound: "2023-10-07",
+      DateFound: "2024-10-07",
     },
   ];
 
@@ -134,18 +134,6 @@ function AllItemsPage() {
       (item) => !pinnedItems.includes(item.ItemID)
     );
     let pinned = items.filter((item) => pinnedItems.includes(item.ItemID));
-    let filtered = [...items];
-
-    // Apply category filter (if categories are selected)
-    /*
-    if (filter.categories.length > 0) {
-      filtered = filtered.filter((item) =>
-        filter.categories.some((category) =>
-          item.ItemName.toLowerCase().includes(category.toLowerCase())
-        )
-      );
-    }
-      */
 
     // Apply category filter to non-pinned items
     if (filter.categories.length > 0) {
@@ -158,21 +146,19 @@ function AllItemsPage() {
 
     // Apply location filter
     if (filter.locations && filter.locations.length > 0) {
-      filtered = filtered.filter((item) =>
+      nonPinnedItems = nonPinnedItems.filter((item) =>
         filter.locations.includes(item.LocationFound)
       );
     }
 
-    
-    // Apply date filter
+    // Apply date filter to non-pinned items
     if (filter.dates && filter.dates.length > 0) {
-      filtered = filtered.filter((item) =>
+      nonPinnedItems = nonPinnedItems.filter((item) =>
         filter.dates.includes(item.DateFound)
       );
     }
 
-    // Apply search filter
-    
+    // Apply search filter to non-pinned items
     if (search) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
         item.ItemName.toLowerCase().includes(search.toLowerCase())

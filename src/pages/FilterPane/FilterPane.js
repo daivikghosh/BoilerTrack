@@ -127,7 +127,7 @@ function FilterPane({ onFilterChange }) {
   };
 
   const handleDateClick = (date) => {
-    const dateString = date.toISOString().split('T')[0]; // Get date string in 'YYYY-MM-DD' format
+    const dateString = date.toISOString().split("T")[0]; // Get date string in 'YYYY-MM-DD' format
     let updatedDates;
     if (selectedDates.includes(dateString)) {
       // Date is already selected, remove it
@@ -190,8 +190,7 @@ function FilterPane({ onFilterChange }) {
         <div className="keyword-list">
           {keywords.map((kw) => (
             <span key={kw} className="keyword-tag">
-              {kw}{" "}
-              <button onClick={() => handleRemoveKeyword(kw)}>x</button>
+              {kw} <button onClick={() => handleRemoveKeyword(kw)}>x</button>
             </span>
           ))}
         </div>
@@ -234,9 +233,7 @@ function FilterPane({ onFilterChange }) {
         <div className="dropdown" ref={locationDropdownRef}>
           <div
             className="dropdown-header"
-            onClick={() =>
-              setIsLocationDropdownOpen(!isLocationDropdownOpen)
-            }
+            onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
           >
             {locations.length > 0 ? locations.join(", ") : "Select Locations"}
           </div>
@@ -272,8 +269,8 @@ function FilterPane({ onFilterChange }) {
         <Calendar
           onClickDay={handleDateClick}
           tileClassName={({ date, view }) => {
-            if (selectedDates.includes(date.toISOString().split('T')[0])) {
-              return 'selected-date';
+            if (selectedDates.includes(date.toISOString().split("T")[0])) {
+              return "selected-date";
             }
           }}
         />
