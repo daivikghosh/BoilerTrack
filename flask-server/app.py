@@ -20,11 +20,20 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Get the absolute path to the Databases directory
 base_dir = os.path.dirname(os.path.abspath(__file__))
 DATABASE = os.path.join(base_dir, '../databases/Accounts.db')
+ITEMS_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'ItemListings.db')
 
 def create_connection():
     conn = None
     try:
         conn = sqlite3.connect(DATABASE)
+    except sqlite3.Error as e:
+        print(e)
+    return conn
+
+def create_connection_items(db_path):
+    conn = None
+    try:
+        conn = sqlite3.connect(db_path)
     except sqlite3.Error as e:
         print(e)
     return conn
@@ -35,7 +44,7 @@ def allowed_file(filename):
 
 def get_all_items():
     """Fetch all items from the database."""
-    conn = sqlite3.connect('../databases/ItemListings.db')
+    conn = create_connection_items(ITEMS_DB)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM FOUNDITEMS")
     items = cursor.fetchall()
@@ -44,7 +53,7 @@ def get_all_items():
 
 def get_item_by_id(item_id):
     """Fetch a single item from the database by its ID."""
-    conn = sqlite3.connect('databases/ItemListings.db')
+    conn = create_connection(ITEMS_DB)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM FOUNDITEMS WHERE ItemID = ?", (item_id,))
     item = cursor.fetchone()
@@ -86,16 +95,19 @@ def add_item():
         turned_in_at = request.form.get('turnedInAt')
         description = request.form.get('description')
         
-        insertItem(item_name, color, brand, found_at, turned_in_at, description, file_path)
-        
-        app.logger.info(f"New item added: {item_name}, {color}, {brand}, {found_at}, {turned_in_at}, {description}")
-        app.logger.info(f"Image saved at: {file_path}")
-        
-        # ADD Code here to delete the recently uploaded pic coz its already in the db
-        # Do this after - Shlok
-        # os.remove(file_path)
-        
-        return jsonify({'message': 'Item added successfully', 'filename': filename}), 200
+        try:
+            insertItem(item_name, color, brand, found_at, turned_in_at, description, file_path)
+            
+            app.logger.info(f"New item added: {item_name}, {color}, {brand}, {found_at}, {turned_in_at}, {description}")
+            app.logger.info(f"Image saved at: {file_path}")
+            
+            # Remove the file after it's been inserted into the database
+            os.remove(file_path)
+            
+            return jsonify({'message': 'Item added successfully', 'filename': filename}), 200
+        except Exception as e:
+            app.logger.error(f"Error inserting item: {str(e)}")
+            return jsonify({'error': 'Failed to add item to database'}), 500
     
     app.logger.warning("Invalid file type")
     return jsonify({'error': 'Invalid file type'}), 400
