@@ -134,6 +134,18 @@ function AllItemsPage() {
       (item) => !pinnedItems.includes(item.ItemID)
     );
     let pinned = items.filter((item) => pinnedItems.includes(item.ItemID));
+    let filtered = [...items];
+
+    // Apply category filter (if categories are selected)
+    /*
+    if (filter.categories.length > 0) {
+      filtered = filtered.filter((item) =>
+        filter.categories.some((category) =>
+          item.ItemName.toLowerCase().includes(category.toLowerCase())
+        )
+      );
+    }
+      */
 
     // Apply category filter to non-pinned items
     if (filter.categories.length > 0) {
@@ -151,6 +163,7 @@ function AllItemsPage() {
       );
     }
 
+    
     // Apply date filter
     if (filter.dates && filter.dates.length > 0) {
       filtered = filtered.filter((item) =>
@@ -159,6 +172,7 @@ function AllItemsPage() {
     }
 
     // Apply search filter
+    
     if (search) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
         item.ItemName.toLowerCase().includes(search.toLowerCase())
