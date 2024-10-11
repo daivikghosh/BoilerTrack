@@ -9,7 +9,9 @@ function AllItemsPage() {
     includePast: false,
     categories: [],
     keywords: [],
-    sortAlphabetically: false, // Added state for sorting alphabetically
+    sortAlphabetically: false,
+    locations: [],
+    dates: [], // Added dates to filter state
   });
   const [search, setSearch] = useState("");
   const [items, setItems] = useState([]);
@@ -27,6 +29,7 @@ function AllItemsPage() {
       Description:
         "A blue stainless steel water bottle found near the library.",
       ImageURL: "", // Base64 image string if needed
+      DateFound: "2023-10-01",
     },
     {
       ItemID: 2,
@@ -37,6 +40,7 @@ function AllItemsPage() {
       LocationTurnedIn: "Security Desk",
       Description: "Dell laptop with a black cover left in the study hall.",
       ImageURL: "",
+      DateFound: "2023-10-02",
     },
     {
       ItemID: 3,
@@ -47,6 +51,7 @@ function AllItemsPage() {
       LocationTurnedIn: "Front Desk",
       Description: "Red Sony headphones found at the gym front desk.",
       ImageURL: "",
+      DateFound: "2023-10-03",
     },
     {
       ItemID: 4,
@@ -57,6 +62,7 @@ function AllItemsPage() {
       LocationTurnedIn: "Lost and Found Office",
       Description: "Black leather wallet found near the cafeteria.",
       ImageURL: "",
+      DateFound: "2023-10-04",
     },
     {
       ItemID: 5,
@@ -67,6 +73,7 @@ function AllItemsPage() {
       LocationTurnedIn: "IT Help Desk",
       Description: "MacBook Pro found in the computer lab.",
       ImageURL: "",
+      DateFound: "2023-10-05",
     },
     {
       ItemID: 6,
@@ -77,6 +84,7 @@ function AllItemsPage() {
       LocationTurnedIn: "Library Desk",
       Description: "White Bose headphones left in the library.",
       ImageURL: "",
+      DateFound: "2023-10-06",
     },
     {
       ItemID: 7,
@@ -87,6 +95,7 @@ function AllItemsPage() {
       LocationTurnedIn: "Gym Front Desk",
       Description: "Plastic water bottle found in the gym locker room.",
       ImageURL: "",
+      DateFound: "2023-10-07",
     },
   ];
 
@@ -135,7 +144,21 @@ function AllItemsPage() {
       );
     }
 
-    // Apply search filter to non-pinned items
+    // Apply location filter
+    if (filter.locations && filter.locations.length > 0) {
+      filtered = filtered.filter((item) =>
+        filter.locations.includes(item.LocationFound)
+      );
+    }
+
+    // Apply date filter
+    if (filter.dates && filter.dates.length > 0) {
+      filtered = filtered.filter((item) =>
+        filter.dates.includes(item.DateFound)
+      );
+    }
+
+    // Apply search filter
     if (search) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
         item.ItemName.toLowerCase().includes(search.toLowerCase())
