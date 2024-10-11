@@ -19,7 +19,9 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Get the absolute path to the Databases directory
 base_dir = os.path.dirname(os.path.abspath(__file__))
-DATABASE = os.path.join(base_dir, '../databases/Accounts.db')
+
+# Go up one level to the parent directory and then to the Databases folder
+DATABASE = os.path.join(os.path.dirname(base_dir), 'Databases', 'Accounts.db')
 
 def create_connection():
     conn = None
@@ -153,6 +155,52 @@ def login():
         return jsonify({'message': 'Login successful', 'user': {'email': user[1], 'name': user[3], 'isStudent': bool(user[4]), 'isStaff': bool(user[5])}}), 200
     else:
         return jsonify({'error': 'Invalid email or password'}), 401
+    
+@app.route('/profile', methods=['GET', 'POST'])
+def user_profile():
+    if request.method == 'GET':
+        email = request.args.get('email')
+    else:  # POST
+        data = request.json
+        email = data.get('email')
+
+    logging.debug(f"Received request for email: {email}")
+
+    if not email:
+        logging.error("Email is required but not provided")
+        return jsonify({'error': 'Email is required'}), 400
+
+    conn = create_connection()
+    cursor = conn.cursor()
+
+    try:
+        if request.method == 'GET':
+            logging.debug(f"Fetching profile for email: {email}")
+            cursor.execute("SELECT Name, Pronouns FROM UserListing WHERE Email = ?", (email,))
+            user = cursor.fetchone()
+            if user:
+                return jsonify({'name': user[0], 'pronouns': user[1]}), 200
+            else:
+                logging.warning(f"User not found for email: {email}")
+                return jsonify({'error': 'User not found'}), 404
+
+        elif request.method == 'POST':
+            name = data.get('name')
+            pronouns = data.get('pronouns')
+            logging.debug(f"Updating profile for email: {email}, name: {name}, pronouns: {pronouns}")
+            cursor.execute("UPDATE UserListing SET Name = ?, Pronouns = ? WHERE Email = ?", (name, pronouns, email))
+            conn.commit()
+            if cursor.rowcount == 0:
+                logging.warning(f"No rows updated for email: {email}")
+                return jsonify({'error': 'User not found or no changes made'}), 404
+            return jsonify({'message': 'Profile updated successfully'}), 200
+
+    except sqlite3.Error as e:
+        logging.error(f"Database error: {e}")
+        return jsonify({'error': 'Database error occurred'}), 500
+
+    finally:
+        conn.close()
 
 # endpoint to get all items
 @app.route('/items', methods=['GET'])
