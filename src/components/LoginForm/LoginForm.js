@@ -1,40 +1,45 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./LoginForm.css"; // Link to your CSS for styling
 
 const LoginForm = ({ onSignupClick, onForgotPasswordClick }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [passwordShown, setPasswordShown] = useState(false);
+  const navigate = useNavigate(); // Initialize the useNavigate hook
 
-  const togglePasswordVisibility = () => {
-    setPasswordShown(!passwordShown);
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic validation for email and password
     if (!email || !password) {
       setError("Please fill in both fields.");
       return;
     }
 
-    // Email format validation
-    const emailPattern = /^[a-zA-Z0-9._%+-]+@purdue\.edu$/;
-    if (!emailPattern.test(email)) {
-      setError("Please enter a valid Purdue email.");
-      return;
+    setError(""); // Clear errors
+
+    try {
+      const response = await fetch('/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Login successful: ", data);
+        alert("Login successful!");
+        navigate('/all-items'); // Redirect to the all-items page
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setError('An error occurred while logging in.');
     }
-
-    setError(""); // Clear errors if validation passes
-
-    // Mock API call or actual API call here
-    console.log("Submitted: ", { email, password });
-
-    // Reset fields after submission
-    setEmail("");
-    setPassword("");
   };
 
   return (
@@ -48,7 +53,7 @@ const LoginForm = ({ onSignupClick, onForgotPasswordClick }) => {
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your Purdue email"
+            placeholder="Enter your email"
             required
           />
         </div>
@@ -66,18 +71,15 @@ const LoginForm = ({ onSignupClick, onForgotPasswordClick }) => {
         {error && <p className="error">{error}</p>}
         <button type="submit">Login</button>
 
-        {/* Forgot password link */}
-        <div className="forgot-password">
-          <a href="#" onClick={onForgotPasswordClick}>
-            Forgot your password?
+        <div className="signup-link">
+          Don't have an account?{" "}
+          <a href="#" onClick={onSignupClick}>
+            Sign Up
           </a>
         </div>
-
-        {/* Sign up link */}
-        <div className="signup-link">
-          Don’t have an account?{" "}
-          <a href="#" onClick={onSignupClick}>
-            Sign up
+        <div className="forgot-password-link">
+          <a href="#" onClick={onForgotPasswordClick}>
+            Forgot Password?
           </a>
         </div>
       </form>
