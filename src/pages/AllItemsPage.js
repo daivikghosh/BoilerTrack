@@ -8,21 +8,98 @@ function AllItemsPage() {
   const [filter, setFilter] = useState({
     includePast: false,
     categories: [],
-    keywords: [], // Added keywords to the filter state
+    keywords: [],
+    sortAlphabetically: false, // Added state for sorting alphabetically
   });
   const [search, setSearch] = useState("");
-  const [items, setItems] = useState([]); // Initially empty, no data yet
+  const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
+
+  const fakeItems = [
+    {
+      ItemID: 1,
+      ItemName: "Water Bottle",
+      Color: "Blue",
+      Brand: "Hydro Flask",
+      LocationFound: "Library",
+      LocationTurnedIn: "Reception",
+      Description:
+        "A blue stainless steel water bottle found near the library.",
+      ImageURL: "", // Base64 image string if needed
+    },
+    {
+      ItemID: 2,
+      ItemName: "Laptop",
+      Color: "Black",
+      Brand: "Dell",
+      LocationFound: "Study Hall",
+      LocationTurnedIn: "Security Desk",
+      Description: "Dell laptop with a black cover left in the study hall.",
+      ImageURL: "",
+    },
+    {
+      ItemID: 3,
+      ItemName: "Headphones",
+      Color: "Red",
+      Brand: "Sony",
+      LocationFound: "Gym",
+      LocationTurnedIn: "Front Desk",
+      Description: "Red Sony headphones found at the gym front desk.",
+      ImageURL: "",
+    },
+    {
+      ItemID: 4,
+      ItemName: "Wallet",
+      Color: "Black",
+      Brand: "Gucci",
+      LocationFound: "Cafeteria",
+      LocationTurnedIn: "Lost and Found Office",
+      Description: "Black leather wallet found near the cafeteria.",
+      ImageURL: "",
+    },
+    {
+      ItemID: 5,
+      ItemName: "Laptop",
+      Color: "Silver",
+      Brand: "Apple",
+      LocationFound: "Computer Lab",
+      LocationTurnedIn: "IT Help Desk",
+      Description: "MacBook Pro found in the computer lab.",
+      ImageURL: "",
+    },
+    {
+      ItemID: 6,
+      ItemName: "Headphones",
+      Color: "White",
+      Brand: "Bose",
+      LocationFound: "Library",
+      LocationTurnedIn: "Library Desk",
+      Description: "White Bose headphones left in the library.",
+      ImageURL: "",
+    },
+    {
+      ItemID: 7,
+      ItemName: "Water Bottle",
+      Color: "Green",
+      Brand: "Nalgene",
+      LocationFound: "Gym Locker Room",
+      LocationTurnedIn: "Gym Front Desk",
+      Description: "Plastic water bottle found in the gym locker room.",
+      ImageURL: "",
+    },
+  ];
 
   // Fetch items from the backend API
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await axios.get("/items"); // this needs to be /items, it cannot be the full path
+        const response = await axios.get("/items");
         setItems(response.data);
-        setFilteredItems(response.data); // Initially show all items
+        setFilteredItems(response.data);
       } catch (error) {
         console.error("Error fetching items:", error);
+        setItems(fakeItems);
+        setFilteredItems(fakeItems);
       }
     };
 
@@ -30,7 +107,6 @@ function AllItemsPage() {
   }, []);
 
   const handleFilterChange = (newFilter) => {
-    // setFilter(newFilter);
     setFilter({ ...filter, ...newFilter });
   };
 
@@ -53,6 +129,7 @@ function AllItemsPage() {
         item.ItemName.toLowerCase().includes(search.toLowerCase())
       );
     }
+
     // Apply keyword filter
     if (filter.keywords && filter.keywords.length > 0) {
       filtered = filtered.filter((item) =>
@@ -60,6 +137,11 @@ function AllItemsPage() {
           item.Description.toLowerCase().includes(keyword.toLowerCase())
         )
       );
+    }
+
+    // Sort items alphabetically if the checkbox is checked
+    if (filter.sortAlphabetically) {
+      filtered.sort((a, b) => a.ItemName.localeCompare(b.ItemName));
     }
 
     setFilteredItems(filtered);

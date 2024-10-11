@@ -6,10 +6,16 @@ function FilterPane({ onFilterChange }) {
   const [categories, setCategories] = useState([]);
   const [keyword, setKeyword] = useState("");
   const [keywords, setKeywords] = useState([]);
+  const [sortAlphabetically, setSortAlphabetically] = useState(false); // New state for sorting
 
   const handleIncludePastChange = () => {
     setIncludePast(!includePast);
-    onFilterChange({ includePast: !includePast, categories, keywords });
+    onFilterChange({
+      includePast: !includePast,
+      categories,
+      keywords,
+      sortAlphabetically,
+    });
   };
 
   const handleCategoryChange = (category) => {
@@ -17,7 +23,12 @@ function FilterPane({ onFilterChange }) {
       ? categories.filter((c) => c !== category)
       : [...categories, category];
     setCategories(updatedCategories);
-    onFilterChange({ includePast, categories: updatedCategories, keywords });
+    onFilterChange({
+      includePast,
+      categories: updatedCategories,
+      keywords,
+      sortAlphabetically,
+    });
   };
 
   const handleKeywordChange = (e) => {
@@ -33,14 +44,34 @@ function FilterPane({ onFilterChange }) {
       const updatedKeywords = [...keywords, keyword.trim()];
       setKeywords(updatedKeywords);
       setKeyword("");
-      onFilterChange({ includePast, categories, keywords: updatedKeywords });
+      onFilterChange({
+        includePast,
+        categories,
+        keywords: updatedKeywords,
+        sortAlphabetically,
+      });
     }
   };
 
   const handleRemoveKeyword = (keywordToRemove) => {
     const updatedKeywords = keywords.filter((kw) => kw !== keywordToRemove);
     setKeywords(updatedKeywords);
-    onFilterChange({ includePast, categories, keywords: updatedKeywords });
+    onFilterChange({
+      includePast,
+      categories,
+      keywords: updatedKeywords,
+      sortAlphabetically,
+    });
+  };
+
+  const handleSortChange = () => {
+    setSortAlphabetically(!sortAlphabetically);
+    onFilterChange({
+      includePast,
+      categories,
+      keywords,
+      sortAlphabetically: !sortAlphabetically,
+    });
   };
 
   return (
@@ -58,6 +89,18 @@ function FilterPane({ onFilterChange }) {
           <span className="slider"></span>
         </label>
         <span>Include past items</span>
+      </div>
+
+      {/* Sort Alphabetically */}
+      <div className="filter-option">
+        <label>
+          <input
+            type="checkbox"
+            checked={sortAlphabetically}
+            onChange={handleSortChange}
+          />
+          Sort items alphabetically
+        </label>
       </div>
 
       {/* Category Filters */}
