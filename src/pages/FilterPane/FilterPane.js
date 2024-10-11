@@ -176,6 +176,27 @@ function FilterPane({ onFilterChange }) {
         </label>
       </div>
 
+      {/* Keyword Search Bar */}
+      <div className="filter-option">
+        <h4>Search by Keywords</h4>
+        <input
+          type="text"
+          placeholder="Add a keyword and press Enter"
+          value={keyword}
+          onChange={handleKeywordChange}
+          onKeyDown={handleAddKeyword}
+          style={{ width: "100%" }}
+        />
+        <div className="keyword-list">
+          {keywords.map((kw) => (
+            <span key={kw} className="keyword-tag">
+              {kw}{" "}
+              <button onClick={() => handleRemoveKeyword(kw)}>x</button>
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* Category Filters with Dropdown */}
       <div className="filter-option">
         <h4>Filter by Category</h4>
@@ -242,27 +263,6 @@ function FilterPane({ onFilterChange }) {
               ))}
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Keyword Search Bar */}
-      <div className="filter-option">
-        <h4>Search by Keywords</h4>
-        <input
-          type="text"
-          placeholder="Add a keyword and press Enter"
-          value={keyword}
-          onChange={handleKeywordChange}
-          onKeyDown={handleAddKeyword}
-          style={{ width: "100%" }}
-        />
-        <div className="keyword-list">
-          {keywords.map((kw) => (
-            <span key={kw} className="keyword-tag">
-              {kw}{" "}
-              <button onClick={() => handleRemoveKeyword(kw)}>x</button>
-            </span>
-          ))}
         </div>
       </div>
 
