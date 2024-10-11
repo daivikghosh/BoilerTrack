@@ -134,18 +134,6 @@ function AllItemsPage() {
       (item) => !pinnedItems.includes(item.ItemID)
     );
     let pinned = items.filter((item) => pinnedItems.includes(item.ItemID));
-    let filtered = [...items];
-
-    // Apply category filter (if categories are selected)
-    /*
-    if (filter.categories.length > 0) {
-      filtered = filtered.filter((item) =>
-        filter.categories.some((category) =>
-          item.ItemName.toLowerCase().includes(category.toLowerCase())
-        )
-      );
-    }
-      */
 
     // Apply category filter to non-pinned items
     if (filter.categories.length > 0) {
@@ -158,7 +146,7 @@ function AllItemsPage() {
 
     // Apply location filter
     if (filter.locations && filter.locations.length > 0) {
-      filtered = filtered.filter((item) =>
+      nonPinnedItems = nonPinnedItems.filter((item) =>
         filter.locations.includes(item.LocationFound)
       );
     }
@@ -166,7 +154,7 @@ function AllItemsPage() {
     
     // Apply date filter
     if (filter.dates && filter.dates.length > 0) {
-      filtered = filtered.filter((item) =>
+      nonPinnedItems = nonPinnedItems.filter((item) =>
         filter.dates.includes(item.DateFound)
       );
     }
