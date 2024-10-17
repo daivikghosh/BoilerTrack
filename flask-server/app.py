@@ -24,7 +24,7 @@ ITEMS_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'ItemListings.db
 DATABASE = os.path.join(os.path.dirname(base_dir), 'Databases', 'Accounts.db')
 
 #trying error of no image avail
-DEFAULT_IMAGE_PATH = 'uploads\TestImage.png'
+DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
 
 def create_connection():
     conn = None
@@ -314,7 +314,8 @@ def view_item(item_id):
             'LocationFound': item[4],
             'LocationTurnedIn': item[5],
             'Description': item[6],
-            'ImageURL': image_data
+            'ImageURL': image_data,
+            'Archived': bool(item[8])
         }
         return jsonify(item_data), 200
     else:
