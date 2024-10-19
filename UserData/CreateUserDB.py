@@ -22,7 +22,8 @@ def create_user_database():
             Password    TEXT    NOT NULL,
             Name        TEXT    NOT NULL,
             isStudent   INTEGER,
-            isStaff     INTEGER
+            isStaff     INTEGER,
+            isDeleted   INTEGER DEFAULT 0
         )
     ''')
 
