@@ -14,6 +14,8 @@ from apscheduler.triggers.cron import CronTrigger
 
 from database_cleaner import delete_deleted_items
 from AddFoundItemPic import *
+from AddClaimRequest import *
+import base64
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -29,9 +31,8 @@ ITEMS_DB = os.path.join(os.path.dirname(base_dir),
                         'Databases', 'ItemListings.db')
 DATABASE = os.path.join(os.path.dirname(base_dir), 'Databases', 'Accounts.db')
 
-UPLOAD_FOLDER = os.path.join(os.path.dirname(base_dir), 'uploads')
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
+#trying error of no image avail
+DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
 
 def create_connection():
     conn = None
@@ -152,7 +153,6 @@ def add_item():
     app.logger.warning("Invalid file type")
     return jsonify({'error': 'Invalid file type'}), 400
 
-
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
@@ -257,26 +257,81 @@ def user_profile():
     finally:
         conn.close()
 
-# endpoint to get all items
+# # endpoint to get all items
+# @app.route('/items', methods=['GET'])
+# def view_all_items():
+#     app.logger.info("Fetching all items")
+#     items = get_all_items()
+#     items_list = [{
+#         'ItemID': item[0],
+#         'ItemName': item[1],
+#         'Color': item[2],
+#         'Brand': item[3],
+#         'LocationFound': item[4],
+#         'LocationTurnedIn': item[5],
+#         'Description': item[6],
+#         'ImageURL': base64.b64encode(item[7]).decode('utf-8') if isinstance(item[7], bytes) else item[7]
+#     } for item in items]
+#     # for image display in frontend: <img src={`data:image/jpeg;base64,${base64ImageData}`} alt="Item" />
+
+    
+#     return jsonify(items_list), 200
 
 
+# Function to read and encode an image file to base64
+def get_image_base64(image_path):
+    with open(image_path, 'rb') as image_file:
+        return base64.b64encode(image_file.read()).decode('utf-8')
+
+# Endpoint to get all items
 @app.route('/items', methods=['GET'])
 def view_all_items():
     app.logger.info("Fetching all items")
     items = get_all_items()
-    items_list = [{
-        'ItemID': item[0],
-        'ItemName': item[1],
-        'Color': item[2],
-        'Brand': item[3],
-        'LocationFound': item[4],
-        'LocationTurnedIn': item[5],
-        'Description': item[6],
-        'ImageURL': base64.b64encode(item[7]).decode('utf-8') if isinstance(item[7], bytes) else item[7]
-    } for item in items]
-    # for image display in frontend: <img src={`data:image/jpeg;base64,${base64ImageData}`} alt="Item" />
-
+    items_list = []
+    
+    for item in items:
+        if isinstance(item[7], bytes):  # Image exists and is in bytes
+            image_data = base64.b64encode(item[7]).decode('utf-8')
+        elif item[7] is None:  # Image is NULL or None, use the placeholder
+            image_data = get_image_base64(DEFAULT_IMAGE_PATH)
+        else:
+            image_data = item[7]  # If already in the correct format
+        
+        items_list.append({
+            'ItemID': item[0],
+            'ItemName': item[1],
+            'Color': item[2],
+            'Brand': item[3],
+            'LocationFound': item[4],
+            'LocationTurnedIn': item[5],
+            'Description': item[6],
+            'ImageURL': image_data
+        })
+    
     return jsonify(items_list), 200
+ 
+# # New endpoint to get a specific item by its ID
+# @app.route('/item/<int:item_id>', methods=['GET'])
+# def view_item(item_id):
+#     app.logger.info(f"Fetching details for item ID: {item_id}")
+#     item = get_item_by_id(item_id)
+    
+#     if item:
+#         item_data = {
+#             'ItemID': item[0],
+#             'ItemName': item[1],
+#             'Color': item[2],
+#             'Brand': item[3],
+#             'LocationFound': item[4],
+#             'LocationTurnedIn': item[5],
+#             'Description': item[6],
+#             'ImageURL': base64.b64encode(item[7]).decode('utf-8') if isinstance(item[7], bytes) else item[7]
+#         }
+#         return jsonify(item_data), 200
+#     else:
+#         app.logger.warning(f"Item with ID {item_id} not found")
+#         return jsonify({'error': 'Item not found'}), 404
 
 # New endpoint to get a specific item by its ID
 
@@ -287,6 +342,14 @@ def view_item(item_id):
     item = get_item_by_id(item_id)
 
     if item:
+        # Check if the image is bytes, None, or already present in the correct format
+        if isinstance(item[7], bytes):  # Image exists and is in bytes
+            image_data = base64.b64encode(item[7]).decode('utf-8')
+        elif item[7] is None:  # Image is NULL or None, use the placeholder
+            image_data = get_image_base64(DEFAULT_IMAGE_PATH)
+        else:
+            image_data = item[7]  # If already in the correct format
+        
         item_data = {
             'ItemID': item[0],
             'ItemName': item[1],
@@ -295,13 +358,16 @@ def view_item(item_id):
             'LocationFound': item[4],
             'LocationTurnedIn': item[5],
             'Description': item[6],
-            'ImageURL': base64.b64encode(item[7]).decode('utf-8') if isinstance(item[7], bytes) else item[7]
+            'ImageURL': image_data,
+            'Archived': bool(item[8])
         }
         return jsonify(item_data), 200
     else:
         app.logger.warning(f"Item with ID {item_id} not found")
         return jsonify({'error': 'Item not found'}), 404
 
+
+    
 # archive item
 
 
@@ -337,11 +403,98 @@ def unarchive_item_endpoint(item_id):
     except Exception as e:
         app.logger.error(f"Error unarchiving item: {e}")
         return jsonify({'error': 'Failed to unarchive item'}), 500
+    
+@app.route('/item/<int:item_id>', methods=['PUT'])
+def update_item(item_id):
+    app.logger.info(f"Received PUT request to update item {item_id}")
+    
+    conn = create_connection_items(ITEMS_DB)
+    cursor = conn.cursor()
+
+    try:
+        # Fetch the current item data
+        cursor.execute("SELECT * FROM FOUNDITEMS WHERE ItemID = ?", (item_id,))
+        current_item = cursor.fetchone()
+
+        if not current_item:
+            return jsonify({'error': 'Item not found'}), 404
+
+        # Update fields
+        item_name = request.form.get('itemName', current_item[1])
+        color = request.form.get('color', current_item[2])
+        brand = request.form.get('brand', current_item[3])
+        found_at = request.form.get('foundAt', current_item[4])
+        turned_in_at = request.form.get('turnedInAt', current_item[5])
+        description = request.form.get('description', current_item[6])
+
+        # Handle image update
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and allowed_file(file.filename):
+                image_data = file.read()  # Keep as binary data
+            else:
+                return jsonify({'error': 'Invalid file type'}), 400
+        else:
+            image_data = current_item[7]  # Keep the current image if no new image is provided
+
+        # Update the database
+        cursor.execute('''
+            UPDATE FOUNDITEMS 
+            SET ItemName=?, Color=?, Brand=?, LocationFound=?, LocationTurnedIn=?, Description=?, Photo=?
+            WHERE ItemID=?
+        ''', (item_name, color, brand, found_at, turned_in_at, description, image_data, item_id))
+        
+        conn.commit()
+        return jsonify({'message': 'Item updated successfully'}), 200
+
+    except Exception as e:
+        app.logger.error(f"Error updating item: {str(e)}")
+        return jsonify({'error': 'Failed to update item in database'}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
 
 
-# @app.teardown_appcontext
-# def shutdown_scheduler(exception=None):
-#     scheduler.shutdown()
+
+@app.route('/claim-item', methods=['POST'])
+def send_request():
+    app.logger.info("Received POST request to /items")
+    app.logger.debug(f"Request form data: {request.form}")
+    app.logger.debug(f"Request files: {request.files}")
+
+    if 'file' not in request.files:
+        app.logger.warning("No image file in request")
+        return jsonify({'error': 'No image file provided'}), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        app.logger.warning("Empty filename")
+        return jsonify({'error': 'No selected file'}), 400
+    
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        
+        # Get other form data
+        itemid = request.form.get('itemId')
+        comments = request.form.get('comments')
+        
+        try:
+            insertclaim(itemid, comments, file_path)
+            
+            # Remove the file after it's been inserted into the database
+            os.remove(file_path)
+            
+        except Exception as e:
+            app.logger.error(f"Error inserting item: {str(e)}")
+            return jsonify({'error': 'Failed to add item to database'}), 500
+    
+    app.logger.warning("Invalid file type")
+    return jsonify({'error': 'Invalid file type'}), 400
+
 
 
 if __name__ == '__main__':
