@@ -22,7 +22,8 @@
         "ms-azuretools.vscode-docker", // Docker extension
         "ms-python.black-formatter", //python formatter
         "ms-python.isort", //python import sorter
-        "VisualStudioExptTeam.vscodeintellicode" //intellicode
+        "VisualStudioExptTeam.vscodeintellicode", //intellicode
+        "JuanGerardoMedellinIbarra.sqlite-viewer-browser" //sqlite bworser
       ]
     }
   },
