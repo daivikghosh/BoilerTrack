@@ -29,15 +29,15 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 base_dir = os.path.dirname(os.path.abspath(__file__))
 ITEMS_DB = os.path.join(os.path.dirname(base_dir),
                         'Databases', 'ItemListings.db')
-DATABASE = os.path.join(os.path.dirname(base_dir), 'Databases', 'Accounts.db')
+USERS_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'Accounts.db')
 
 #trying error of no image avail
 DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
 
-def create_connection():
+def create_connection_users():
     conn = None
     try:
-        conn = sqlite3.connect(DATABASE)
+        conn = sqlite3.connect(USERS_DB)
     except sqlite3.Error as e:
         print(e)
     return conn
@@ -61,7 +61,7 @@ def clear_deleted_entries():
     app.logger.info(
         f"Clearing deleted items from database at {time.strftime('%Y-%m-%d %H:%M:%S')}")
     start = timer()
-    delete_deleted_items(DATABASE, "UserListing")
+    delete_deleted_items(USERS_DB, "UserListing")
     end = timer()
     app.logger.info(f"Clearing deleted users took {end-start}")
 
@@ -161,18 +161,19 @@ def signup():
     name = data.get('name')
     is_student = data.get('isStudent', False)
     is_staff = data.get('isStaff', False)
+    is_deleted = 0
 
     if not email or not password or not name:
         return jsonify({'error': 'Missing required fields'}), 400
 
-    conn = create_connection()
+    conn = create_connection_users()
     cursor = conn.cursor()
 
     try:
         cursor.execute('''
-            INSERT INTO UserListing (Email, Password, Name, isStudent, isStaff)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (email, password, name, int(is_student), int(is_staff)))
+            INSERT INTO UserListing (Email, Password, Name, isStudent, isStaff, isDeleted)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (email, password, name, int(is_student), int(is_staff), int(is_deleted)))
         conn.commit()
     except sqlite3.IntegrityError as e:
         return jsonify({'error': 'Email already exists', 'details': str(e)}), 400
@@ -193,11 +194,11 @@ def login():
     if not email or not password:
         return jsonify({'error': 'Missing required fields'}), 400
 
-    conn = create_connection()
+    conn = create_connection_users()
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT * FROM UserListing WHERE Email = ? AND Password = ?
+        SELECT * FROM UserListing WHERE Email = ? AND Password = ? AND isDeleted = 0
     ''', (email, password))
     user = cursor.fetchone()
     conn.close()
@@ -222,7 +223,7 @@ def user_profile():
         logging.error("Email is required but not provided")
         return jsonify({'error': 'Email is required'}), 400
 
-    conn = create_connection()
+    conn = create_connection_users()
     cursor = conn.cursor()
 
     try:
@@ -256,6 +257,28 @@ def user_profile():
 
     finally:
         conn.close()
+
+@app.route('/delete_account', methods=['POST'])
+def deleteAcct():
+    try:
+        data = request.json
+        email = data.get(email)
+        if email:
+            conn = create_connection_users()
+            cursor = conn.cursor()
+            cursor.execute("UPDATE UserListing SET isDeleted = 1 WHERE email = '%s'" % (email))
+            conn.commit()
+            if cursor.rowcount == 0:
+                logging.warning(f"No rows updated for email: {email}")
+                return jsonify({'error': 'User not found'}), 404
+        return jsonify({'message': 'Account deleted successfully'}), 200
+    except sqlite3.Error as e:
+        logging.error(f"Database error: {e}")
+        return jsonify({'error': 'Database error occurred'}), 500
+
+    finally:
+        conn.close()
+
 
 # # endpoint to get all items
 # @app.route('/items', methods=['GET'])
@@ -498,7 +521,7 @@ def send_request():
 
 
 if __name__ == '__main__':
-    if not os.path.exists(os.path.dirname(DATABASE)):
-        os.makedirs(os.path.dirname(DATABASE))
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    if not os.path.exists(os.path.dirname(USERS_DB)):
+        os.makedirs(os.path.dirname(USERS_DB))
+    os.makedirs(DEFAULT_IMAGE_PATH, exist_ok=True)
     app.run(debug=True, host='0.0.0.0', port=5000)
