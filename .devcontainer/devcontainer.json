@@ -23,7 +23,8 @@
         "ms-python.black-formatter", //python formatter
         "ms-python.isort", //python import sorter
         "VisualStudioExptTeam.vscodeintellicode", //intellicode
-        "JuanGerardoMedellinIbarra.sqlite-viewer-browser" //sqlite bworser
+        "qwtel.sqlite-viewer", //sqlite bworser
+        "Continue.continue" //ai stuff
       ]
     }
   },
