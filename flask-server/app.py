@@ -31,8 +31,10 @@ ITEMS_DB = os.path.join(os.path.dirname(base_dir),
                         'Databases', 'ItemListings.db')
 USERS_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'Accounts.db')
 
-#trying error of no image avail
-DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
+# trying error of no image avail
+DEFAULT_IMAGE_PATH = os.path.join(
+    os.path.dirname(base_dir), 'flask_server', 'uploads', 'TestImage.png')
+
 
 def create_connection_users():
     conn = None
@@ -153,6 +155,7 @@ def add_item():
     app.logger.warning("Invalid file type")
     return jsonify({'error': 'Invalid file type'}), 400
 
+
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
@@ -258,20 +261,33 @@ def user_profile():
     finally:
         conn.close()
 
+
 @app.route('/delete_account', methods=['POST'])
 def deleteAcct():
     try:
-        data = request.json
-        email = data.get(email)
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
         if email:
             conn = create_connection_users()
             cursor = conn.cursor()
-            cursor.execute("UPDATE UserListing SET isDeleted = 1 WHERE email = '%s'" % (email))
+            print('274')
+            cursor.execute(
+                '''SELECT * FROM UserListing WHERE Email = ? AND isDeleted = ?''', (email, 0))
+            row = cursor.fetchone()
+            if row[2] != password or row is None:
+                print("incorrect")
+                logging.warning(f"incorrect password for user: {email}")
+                return jsonify({'error': 'Incorrect password'}), 500
+
+            cursor.execute(
+                "UPDATE UserListing SET isDeleted = 1 WHERE email = '%s'" % (email))
             conn.commit()
             if cursor.rowcount == 0:
                 logging.warning(f"No rows updated for email: {email}")
                 return jsonify({'error': 'User not found'}), 404
-        return jsonify({'message': 'Account deleted successfully'}), 200
+
+        return jsonify({'success': 'Account deleted successfully'}), 200
     except sqlite3.Error as e:
         logging.error(f"Database error: {e}")
         return jsonify({'error': 'Database error occurred'}), 500
@@ -297,7 +313,7 @@ def deleteAcct():
 #     } for item in items]
 #     # for image display in frontend: <img src={`data:image/jpeg;base64,${base64ImageData}`} alt="Item" />
 
-    
+
 #     return jsonify(items_list), 200
 
 
@@ -307,12 +323,14 @@ def get_image_base64(image_path):
         return base64.b64encode(image_file.read()).decode('utf-8')
 
 # Endpoint to get all items
-@app.route('/items', methods=['GET'])
+
+
+@ app.route('/items', methods=['GET'])
 def view_all_items():
     app.logger.info("Fetching all items")
     items = get_all_items()
     items_list = []
-    
+
     for item in items:
         if isinstance(item[7], bytes):  # Image exists and is in bytes
             image_data = base64.b64encode(item[7]).decode('utf-8')
@@ -320,7 +338,7 @@ def view_all_items():
             image_data = get_image_base64(DEFAULT_IMAGE_PATH)
         else:
             image_data = item[7]  # If already in the correct format
-        
+
         items_list.append({
             'ItemID': item[0],
             'ItemName': item[1],
@@ -331,15 +349,15 @@ def view_all_items():
             'Description': item[6],
             'ImageURL': image_data
         })
-    
+
     return jsonify(items_list), 200
- 
+
 # # New endpoint to get a specific item by its ID
 # @app.route('/item/<int:item_id>', methods=['GET'])
 # def view_item(item_id):
 #     app.logger.info(f"Fetching details for item ID: {item_id}")
 #     item = get_item_by_id(item_id)
-    
+
 #     if item:
 #         item_data = {
 #             'ItemID': item[0],
@@ -359,7 +377,7 @@ def view_all_items():
 # New endpoint to get a specific item by its ID
 
 
-@app.route('/item/<int:item_id>', methods=['GET'])
+@ app.route('/item/<int:item_id>', methods=['GET'])
 def view_item(item_id):
     app.logger.info(f"Fetching details for item ID: {item_id}")
     item = get_item_by_id(item_id)
@@ -372,7 +390,7 @@ def view_item(item_id):
             image_data = get_image_base64(DEFAULT_IMAGE_PATH)
         else:
             image_data = item[7]  # If already in the correct format
-        
+
         item_data = {
             'ItemID': item[0],
             'ItemName': item[1],
@@ -390,11 +408,10 @@ def view_item(item_id):
         return jsonify({'error': 'Item not found'}), 404
 
 
-    
 # archive item
 
 
-@app.route('/item/archive/<int:item_id>', methods=['POST'])
+@ app.route('/item/archive/<int:item_id>', methods=['POST'])
 def archive_item_endpoint(item_id):
     try:
         conn = sqlite3.connect(ITEMS_DB)
@@ -412,7 +429,7 @@ def archive_item_endpoint(item_id):
 # endpoint to unarchive item
 
 
-@app.route('/item/unarchive/<int:item_id>', methods=['POST'])
+@ app.route('/item/unarchive/<int:item_id>', methods=['POST'])
 def unarchive_item_endpoint(item_id):
     try:
         conn = sqlite3.connect(ITEMS_DB)
@@ -426,11 +443,12 @@ def unarchive_item_endpoint(item_id):
     except Exception as e:
         app.logger.error(f"Error unarchiving item: {e}")
         return jsonify({'error': 'Failed to unarchive item'}), 500
-    
-@app.route('/item/<int:item_id>', methods=['PUT'])
+
+
+@ app.route('/item/<int:item_id>', methods=['PUT'])
 def update_item(item_id):
     app.logger.info(f"Received PUT request to update item {item_id}")
-    
+
     conn = create_connection_items(ITEMS_DB)
     cursor = conn.cursor()
 
@@ -458,15 +476,16 @@ def update_item(item_id):
             else:
                 return jsonify({'error': 'Invalid file type'}), 400
         else:
-            image_data = current_item[7]  # Keep the current image if no new image is provided
+            # Keep the current image if no new image is provided
+            image_data = current_item[7]
 
         # Update the database
         cursor.execute('''
-            UPDATE FOUNDITEMS 
+            UPDATE FOUNDITEMS
             SET ItemName=?, Color=?, Brand=?, LocationFound=?, LocationTurnedIn=?, Description=?, Photo=?
             WHERE ItemID=?
         ''', (item_name, color, brand, found_at, turned_in_at, description, image_data, item_id))
-        
+
         conn.commit()
         return jsonify({'message': 'Item updated successfully'}), 200
 
@@ -479,8 +498,7 @@ def update_item(item_id):
         conn.close()
 
 
-
-@app.route('/claim-item', methods=['POST'])
+@ app.route('/claim-item', methods=['POST'])
 def send_request():
     app.logger.info("Received POST request to /items")
     app.logger.debug(f"Request form data: {request.form}")
@@ -489,35 +507,34 @@ def send_request():
     if 'file' not in request.files:
         app.logger.warning("No image file in request")
         return jsonify({'error': 'No image file provided'}), 400
-    
+
     file = request.files['file']
-    
+
     if file.filename == '':
         app.logger.warning("Empty filename")
         return jsonify({'error': 'No selected file'}), 400
-    
+
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
-        
+
         # Get other form data
         itemid = request.form.get('itemId')
         comments = request.form.get('comments')
-        
+
         try:
             insertclaim(itemid, comments, file_path)
-            
+
             # Remove the file after it's been inserted into the database
             os.remove(file_path)
-            
+
         except Exception as e:
             app.logger.error(f"Error inserting item: {str(e)}")
             return jsonify({'error': 'Failed to add item to database'}), 500
-    
+
     app.logger.warning("Invalid file type")
     return jsonify({'error': 'Invalid file type'}), 400
-
 
 
 if __name__ == '__main__':
