@@ -3,7 +3,7 @@ import os
 
 # Get the absolute path to the Databases directory
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATABASE = os.path.join(base_dir, 'Databases', 'ItemListings.db')
+USERS_DB = os.path.join(base_dir, 'Databases', 'ItemListings.db')
 
 def convertToBinaryData(filename):
     # Convert digital data to binary format
@@ -14,7 +14,7 @@ def convertToBinaryData(filename):
 def insertItem(ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, Photo, ItemStatus, Date):
     sqliteConnection = None
     try:
-        sqliteConnection = sqlite3.connect(DATABASE)
+        sqliteConnection = sqlite3.connect(USERS_DB)
         cursor = sqliteConnection.cursor()
         
         # Ensure the table exists
