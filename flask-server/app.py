@@ -8,7 +8,7 @@ from AddFoundItemPic import *
 from AddClaimRequest import *
 import base64
 from datetime import datetime
-from flask_mail import Mail, Message
+# from flask_mail import Mail, Message
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -28,14 +28,14 @@ DATABASE = os.path.join(os.path.dirname(base_dir), 'Databases', 'Accounts.db')
 #trying error of no image avail
 DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
 
-#setting up some mail stuff
-app.config['MAIL_SERVER']='sandbox.smtp.mailtrap.io'
-app.config['MAIL_PORT'] = 2525
-app.config['MAIL_USERNAME'] = 'b12d6e1f84f6ba'
-app.config['MAIL_PASSWORD'] = '1c4c3423a6d643'
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
-mail = Mail(app)
+# #setting up some mail stuff
+# app.config['MAIL_SERVER']='sandbox.smtp.mailtrap.io'
+# app.config['MAIL_PORT'] = 2525
+# app.config['MAIL_USERNAME'] = 'b12d6e1f84f6ba'
+# app.config['MAIL_PASSWORD'] = '1c4c3423a6d643'
+# app.config['MAIL_USE_TLS'] = True
+# app.config['MAIL_USE_SSL'] = False
+# mail = Mail(app)
 
 def create_connection():
     conn = None
@@ -454,31 +454,31 @@ def send_request():
             
             
             
-            # Sending an email
-            emailstr1 = "Hello there\n\nA new claim request has been submitted and is awaiting review...\n\nItem Id:" + itemid + "\n\nReason Given:" + comments
-            emailstr2 = "\n\nPlease open the portal to accept or deny the claim\n\nThank You!\n~BoilerTrack Devs"
+            # # Sending an email
+            # emailstr1 = "Hello there\n\nA new claim request has been submitted and is awaiting review...\n\nItem Id:" + itemid + "\n\nReason Given:" + comments
+            # emailstr2 = "\n\nPlease open the portal to accept or deny the claim\n\nThank You!\n~BoilerTrack Devs"
             
-            msg = Message("BoilerTrack: New Claim Request for Review",
-                  sender="boilertrackdevs@mailtrap.io",
-                  recipients=["staff@mailtrap.io"])
+            # msg = Message("BoilerTrack: New Claim Request for Review",
+            #       sender="boilertrackdevs@mailtrap.io",
+            #       recipients=["staff@mailtrap.io"])
             
-            msg.html = f"""
-            <html>
-                <body>
-                    <p>{emailstr1.replace('\n', '<br>')}</p>
-                    <p>Image uploaded as proof of ownership:</p>
-                    <img src="cid:image1">
-                    <p>{emailstr2.replace('\n', '<br>')}</p>
-                </body>
-            </html>
-            """
+            # msg.html = f"""
+            # <html>
+            #     <body>
+            #         <p>{emailstr1.replace('\n', '<br>')}</p>
+            #         <p>Image uploaded as proof of ownership:</p>
+            #         <img src="cid:image1">
+            #         <p>{emailstr2.replace('\n', '<br>')}</p>
+            #     </body>
+            # </html>
+            # """
             
-            # Attach the image
-            with open(file_path, 'rb') as fp:
-                msg.attach("image.jpg", "image/jpeg", fp.read(), headers={'Content-ID': '<image1>'})
+            # # Attach the image
+            # with open(file_path, 'rb') as fp:
+            #     msg.attach("image.jpg", "image/jpeg", fp.read(), headers={'Content-ID': '<image1>'})
             
-            mail.send(msg)
-            app.logger.info("Message sent!")
+            # mail.send(msg)
+            # app.logger.info("Message sent!")
             
             
             
