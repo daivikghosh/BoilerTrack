@@ -154,7 +154,7 @@ function AllItemsPage() {
     // Apply date filter to non-pinned items
     if (filter.dates && filter.dates.length > 0) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
-        filter.dates.includes(item.DateFound)
+        filter.dates.includes(item.Date)
       );
     }
 

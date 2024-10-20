@@ -1,5 +1,5 @@
 # Use an official Python image as the base for Flask backend
-FROM mcr.microsoft.com/devcontainers/python:3.10
+FROM mcr.microsoft.com/devcontainers/python:3.11
 
 # Install Node.js and npm for the React frontend
 RUN apt-get update && apt-get install -y \

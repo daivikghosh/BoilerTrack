@@ -3,7 +3,7 @@ import os
 
 # Get the absolute path to the Databases directory
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATABASE = os.path.join(base_dir, 'Databases', 'ItemListings.db')
+USERS_DB = os.path.join(base_dir, 'Databases', 'ItemListings.db')
 
 def convertToBinaryData(filename):
     # Convert digital data to binary format
@@ -11,10 +11,10 @@ def convertToBinaryData(filename):
         blobData = file.read()
     return blobData
 
-def insertItem(ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, Photo):
+def insertItem(ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, Photo, ItemStatus, Date):
     sqliteConnection = None
     try:
-        sqliteConnection = sqlite3.connect(DATABASE)
+        sqliteConnection = sqlite3.connect(USERS_DB)
         cursor = sqliteConnection.cursor()
         
         # Ensure the table exists
@@ -27,16 +27,18 @@ def insertItem(ItemName, Color, Brand, LocationFound, LocationTurnedIn, Descript
          LocationTurnedIn   TEXT,
          Description        TEXT,
          Photo              BLOB,
+         ItemStatus         INTEGER,
+         Date               TEXT,
          Archived           INTEGER DEFAULT 0);''')
         
         print("Table created successfully")
         
         sqlite_insert_query = """ INSERT INTO FOUNDITEMS
-                                  (ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, Photo, Archived) 
-                                  VALUES (?, ?, ?, ?, ?, ?, ?, 0)"""
+                                  (ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, Photo, Archived, ItemStatus, Date) 
+                                  VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)"""
         binaryPhoto = convertToBinaryData(Photo)
         # Convert data into tuple format
-        data_tuple = (ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, binaryPhoto)
+        data_tuple = (ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, binaryPhoto, ItemStatus, Date)
         cursor.execute(sqlite_insert_query, data_tuple)
         sqliteConnection.commit()
         print("Item inserted into db successfully")
