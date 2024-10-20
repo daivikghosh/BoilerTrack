@@ -100,7 +100,7 @@ def add_item():
         description = request.form.get('description')
         
         try:
-            insertItem(item_name, color, brand, found_at, turned_in_at, description, file_path)
+            insertItem(item_name, color, brand, found_at, turned_in_at, description, file_path, 1)
             
             app.logger.info(f"New item added: {item_name}, {color}, {brand}, {found_at}, {turned_in_at}, {description}")
             app.logger.info(f"Image saved at: {file_path}")
