@@ -8,9 +8,18 @@ import "./ItemView.css";
 const ItemView = () => {
   const { id } = useParams(); // Get the item ID from the URL
   const [item, setItem] = useState(null);
+  const [user, setUser] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isArchived, setIsArchived] = useState(false);
+
+  const fetchUserProfile = async () => {
+    const userEmail = localStorage.getItem("userEmail");
+    if (userEmail) {
+      const response = await axios.get(`http://localhost:5000/profile?email=${userEmail}`);
+      setUser(response.data);
+    }
+  };
 
   // Fake item data for testing
   const fakeItem = {
@@ -93,6 +102,10 @@ const ItemView = () => {
             <strong>Turned In At:</strong> {item?.LocationTurnedIn}
           </p>
           <p className="item-description">{item?.Description}</p>
+          <h3>User Information</h3>
+          <p><strong>Name:</strong> {user?.name || 'N/A'}</p>
+          <p><strong>Email:</strong> {localStorage.getItem("userEmail")}</p>
+          <p><strong>Pronouns:</strong> {user?.pronouns || 'N/A'}</p>
         </div>
         <div className="button-container">
           <button className="archive-button" onClick={handleArchiveToggle}>
