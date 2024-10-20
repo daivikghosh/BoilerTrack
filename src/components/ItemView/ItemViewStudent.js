@@ -91,28 +91,9 @@ const ItemViewStudent = () => {
           </p>
           <p className="item-description">{item?.Description}</p>
         </div>
-        <div className="upload-section">
-          <label htmlFor="file-upload" className="file-upload-label">
-            Upload proof
-            <input type="file" id="file-upload" onChange={handleFileChange} />
-          </label>
-          <div className="file-upload-text">
-            {file ? file.name : "File / upload"}
-          </div>
-        </div>
-        <div className="comment-section">
-          <label htmlFor="comments">Explain</label>
-          <textarea
-            id="comments"
-            placeholder="Your comments"
-            value={comments}
-            onChange={handleCommentChange}
-            maxLength={2000}
-          />
-          <p className="char-limit">Max. 2000 characters</p>
-        </div>
+        
         <button className="claim-button" onClick={handleClaimClick}>
-          Claim
+          Claim Request Form
         </button>
       </div>
     </div>
