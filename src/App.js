@@ -12,6 +12,8 @@ import ClaimForm from "./components/ClaimForm/ClaimForm.js";
 import ItemViewStudent from "./components/ItemView/ItemViewStudent.js";
 import ModifyItemForm from "./components/StaffInputForm/ModifyItemform.js";
 import AllItemsPage_Staff from "./pages/AllItemsPage_Staff.js";
+import NotificationTab from "./components/NotificationTab/NotificationTab.js";
+import LostItemForm from "./components/LostItemForm/LostItemForm.js";
 
 const App = () => {
   return (
@@ -35,6 +37,8 @@ const App = () => {
         <Route path="/claim/:id" element={<ClaimForm />} />
         <Route path="/modify-item/:id" element={<ModifyItemForm />} />
         <Route path="all-items-staff" element={<AllItemsPage_Staff />} />
+        <Route path="/notifications" element={<NotificationTab />} />
+        <Route path="/report-lost-item" element={<LostItemForm />} />
       </Routes>
     </Router>
   );

@@ -70,6 +70,56 @@ def home():
     app.logger.info("Accessed root route")
     return jsonify({"message": "Welcome to the Lost and Found API"}), 200
 
+@app.route('/lost-item-request', methods=['POST', 'OPTIONS'])
+def add_lost_item_request():
+    if request.method == 'OPTIONS':
+        # Handle preflight request
+        return jsonify({'message': 'CORS preflight'}), 200
+
+    app.logger.info("Received POST request to /lost-item-request")
+    
+    # Ensure it's JSON data we're receiving
+    try:
+        data = request.get_json()
+    except Exception as e:
+        app.logger.error(f"Error parsing JSON: {e}")
+        return jsonify({'error': 'Invalid data format. JSON expected.'}), 400
+
+    # Log the received data for debugging
+    app.logger.debug(f"Data received: {data}")
+
+    # Extract item details
+    item_name = data.get('itemName')
+    description = data.get('description')
+    date_lost = data.get('dateLost')
+    location_lost = data.get('locationLost')
+
+    # Check for missing data
+    if not item_name or not description or not date_lost or not location_lost:
+        app.logger.warning("Missing required fields in request")
+        return jsonify({'error': 'All fields are required'}), 400
+
+    try:
+        # Connect to LostItemRequest.db
+        lost_item_db = os.path.join(os.path.dirname(base_dir), 'databases', 'LostItemRequest.db')
+        conn = sqlite3.connect(lost_item_db)
+        cursor = conn.cursor()
+
+        # Insert the lost item request into the database
+        cursor.execute('''
+            INSERT INTO LostItems (ItemName, Description, DateLost, LocationLost)
+            VALUES (?, ?, ?, ?)
+        ''', (item_name, description, date_lost, location_lost))
+        
+        conn.commit()
+        conn.close()
+
+        app.logger.info(f"Lost item added: {item_name}, {description}, {date_lost}, {location_lost}")
+        return jsonify({'message': 'Lost item request added successfully'}), 201
+    except sqlite3.Error as e:
+        app.logger.error(f"Database error: {e}")
+        return jsonify({'error': 'Failed to add lost item request to the database'}), 500
+
 @app.route('/items', methods=['POST'])
 def add_item():
     app.logger.info("Received POST request to /items")
