@@ -9,21 +9,34 @@ function CloseAccountForm() {
     setConfirmation(e.target.checked);
   };
 
+
 const handleSubmit = (e) => {
   e.preventDefault();
   if (!confirmation || !password) {
     alert("Please confirm and provide your password to close your account.");
   } else {
     // Send a POST request to delete_account endpoint
-    const email = localStorage.getItem('userEmail')
+    const email = localStorage.getItem('userEmail');
     fetch('http://localhost:5000/delete_account', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ email, password}),
+      body: JSON.stringify({ email, password })
     })
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        // Check for a 401 status code with the specific error message
+        if (response.status === 401 && response.json().then(data => data.error === 'Incorrect Password')) {
+          alert("Incorrect password. Please try again.");
+        } else {
+          return response.json().then(data => {
+            throw new Error(data.error);
+          });
+        }
+      }
+      return response.json();
+    })
     .then(data => {
       if (data.success) {
         console.log("Account closed successfully!");
@@ -34,11 +47,43 @@ const handleSubmit = (e) => {
       }
     })
     .catch(error => {
-      console.error("Error sending request:", error);
+      console.error("Error sending request:", error.message);
       alert("Error closing your account. Please try again.");
     });
   }
 };
+
+
+// const handleSubmit = (e) => {
+//   e.preventDefault();
+//   if (!confirmation || !password) {
+//     alert("Please confirm and provide your password to close your account.");
+//   } else {
+//     // Send a POST request to delete_account endpoint
+//     const email = localStorage.getItem('userEmail')
+//     fetch('http://localhost:5000/delete_account', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json'
+//       },
+//       body: JSON.stringify({ email, password}),
+//     })
+//     .then(response => response.json())
+//     .then(data => {
+//       if (data.success) {
+//         console.log("Account closed successfully!");
+//         alert("Your account has been closed.");
+//       } else {
+//         console.error("Error closing account:", data.error);
+//         alert("Error closing your account. Please try again.");
+//       }
+//     })
+//     .catch(error => {
+//       console.error("Error sending request:", error);
+//       alert("Error closing your account. Please try again.");
+//     });
+//   }
+// };
 
 
 

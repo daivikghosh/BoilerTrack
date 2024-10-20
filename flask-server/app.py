@@ -31,9 +31,8 @@ ITEMS_DB = os.path.join(os.path.dirname(base_dir),
                         'Databases', 'ItemListings.db')
 USERS_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'Accounts.db')
 
-# trying error of no image avail
 DEFAULT_IMAGE_PATH = os.path.join(
-    os.path.dirname(base_dir), 'flask_server', 'uploads', 'TestImage.png')
+    os.path.dirname(base_dir), 'flask-server', 'uploads')
 
 
 def create_connection_users():
@@ -278,7 +277,7 @@ def deleteAcct():
             if row[2] != password or row is None:
                 print("incorrect")
                 logging.warning(f"incorrect password for user: {email}")
-                return jsonify({'error': 'Incorrect password'}), 500
+                return jsonify({'error': 'Incorrect password'}), 401
 
             cursor.execute(
                 "UPDATE UserListing SET isDeleted = 1 WHERE email = '%s'" % (email))
