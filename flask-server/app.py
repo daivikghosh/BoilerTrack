@@ -15,7 +15,7 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 logging.basicConfig(level=logging.DEBUG)
 
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = 'C:\\Users\\aniwa\\Downloads\\CS-307-Group-19\\uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -26,7 +26,7 @@ ITEMS_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'ItemListings.db
 DATABASE = os.path.join(os.path.dirname(base_dir), 'Databases', 'Accounts.db')
 
 #trying error of no image avail
-DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
+DEFAULT_IMAGE_PATH = '..\\uploads\\TestImage.png'
 
 # #setting up some mail stuff
 # app.config['MAIL_SERVER']='sandbox.smtp.mailtrap.io'
