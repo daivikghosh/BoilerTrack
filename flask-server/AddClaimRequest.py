@@ -11,7 +11,7 @@ def convertToBinaryData(filename):
         blobData = file.read()
     return blobData
 
-def insertclaim(ItemID, Comments, Photo):
+def insertclaim(ItemID, Comments, Photo, UserEmail):
     sqliteConnection = None
     try:
         sqliteConnection = sqlite3.connect(USERS_DB)
@@ -21,16 +21,17 @@ def insertclaim(ItemID, Comments, Photo):
         cursor.execute('''CREATE TABLE IF NOT EXISTS CLAIMREQUETS
          (ItemID            INTEGER PRIMARY KEY,
          Comments           TEXT    NOT NULL,
-         PhotoProof         BLOB);''')
+         PhotoProof         BLOB,
+         UserEmail          TEXT    NOT NULL);''')
         
         print("Table created successfully")
         
         sqlite_insert_query = """ INSERT INTO CLAIMREQUETS
-                                  (ItemID, Comments, PhotoProof) 
-                                  VALUES (?, ?, ?)"""
+                                  (ItemID, Comments, PhotoProof, UserEmail) 
+                                  VALUES (?, ?, ?, ?)"""
         binaryPhoto = convertToBinaryData(Photo)
         # Convert data into tuple format
-        data_tuple = (ItemID, Comments, binaryPhoto)
+        data_tuple = (ItemID, Comments, binaryPhoto, UserEmail)
         cursor.execute(sqlite_insert_query, data_tuple)
         sqliteConnection.commit()
         print("Item inserted into db successfully")

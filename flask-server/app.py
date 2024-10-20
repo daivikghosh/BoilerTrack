@@ -24,7 +24,14 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 logging.basicConfig(level=logging.DEBUG)
 
+UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
+# Store the accoung info in a global var
+globalUSEREMAIL = ""
 
 
 # Get the absolute path to the Databases directory
@@ -267,9 +274,13 @@ def signup():
 
 @app.route('/login', methods=['POST'])
 def login():
+    global globalUSEREMAIL
+    
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
+    
+    globalUSEREMAIL = email
 
     if not email or not password:
         return jsonify({'error': 'Missing required fields'}), 400
@@ -584,6 +595,8 @@ def send_request():
     app.logger.info("Received POST request to /items")
     app.logger.debug(f"Request form data: {request.form}")
     app.logger.debug(f"Request files: {request.files}")
+    
+    print(globalUSEREMAIL)
 
     if 'file' not in request.files:
         app.logger.warning("No image file in request")
@@ -605,7 +618,7 @@ def send_request():
         comments = request.form.get('comments')
 
         try:
-            insertclaim(itemid, comments, file_path)
+            insertclaim(itemid, comments, file_path, globalUSEREMAIL)
             
             
             
@@ -740,5 +753,6 @@ def view_found_items():
 if __name__ == '__main__':
     if not os.path.exists(os.path.dirname(USERS_DB)):
         os.makedirs(os.path.dirname(USERS_DB))
-    os.makedirs(DEFAULT_IMAGE_PATH, exist_ok=True)
+    # os.makedirs(DEFAULT_IMAGE_PATH, exist_ok=True)
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     app.run(debug=True, host='0.0.0.0', port=5000)
