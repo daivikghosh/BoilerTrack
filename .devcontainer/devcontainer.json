@@ -24,7 +24,8 @@
         "ms-python.isort", //python import sorter
         "VisualStudioExptTeam.vscodeintellicode", //intellicode
         "qwtel.sqlite-viewer", //sqlite bworser
-        "Continue.continue" //ai stuff
+        "Continue.continue", //ai stuff
+        "esbenp.prettier-vscode" //js formatting
       ]
     }
   },
