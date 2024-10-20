@@ -7,6 +7,7 @@ import os
 from AddFoundItemPic import *
 from AddClaimRequest import *
 import base64
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -100,7 +101,7 @@ def add_item():
         description = request.form.get('description')
         
         try:
-            insertItem(item_name, color, brand, found_at, turned_in_at, description, file_path, 1)
+            insertItem(item_name, color, brand, found_at, turned_in_at, description, file_path, 1, datetime.today().strftime('%Y-%m-%d'))
             
             app.logger.info(f"New item added: {item_name}, {color}, {brand}, {found_at}, {turned_in_at}, {description}")
             app.logger.info(f"Image saved at: {file_path}")
