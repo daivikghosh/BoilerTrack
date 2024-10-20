@@ -1,2 +1,5 @@
-Flask==3.0.3
+flask==3.0.3
 flask_cors==3.0.10
+apscheduler==3.10.4
+werkzeug==3.0.4
+python-dotenv==1.0.1

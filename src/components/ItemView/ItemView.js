@@ -29,7 +29,7 @@ const ItemView = () => {
       try {
         const response = await axios.get(`/item/${id}`);
         setItem(response.data);
-        setIsArchived(response.data.Archived === 1);
+        setIsArchived(response.data.Archived == 1);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching item details, using fake data:", err);

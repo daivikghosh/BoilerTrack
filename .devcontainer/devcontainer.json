@@ -15,14 +15,20 @@
       "settings": {
         "python.defaultInterpreterPath": "${workspaceFolder}/flask-server/.venv",
         "python.terminal.activateEnvInCurrentTerminal": true,
-        "python.terminal.launchArgs": ["-X", "dev"]
+        "python.terminal.launchArgs": ["-X", "dev"],
+        "[javascript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        }
       },
       "extensions": [
         "esbenp.prettier-vscode", // Prettier extension
         "ms-azuretools.vscode-docker", // Docker extension
         "ms-python.black-formatter", //python formatter
         "ms-python.isort", //python import sorter
-        "VisualStudioExptTeam.vscodeintellicode" //intellicode
+        "VisualStudioExptTeam.vscodeintellicode", //intellicode
+        "qwtel.sqlite-viewer", //sqlite bworser
+        "Continue.continue", //ai stuff
+        "esbenp.prettier-vscode" //js formatting
       ]
     }
   },
