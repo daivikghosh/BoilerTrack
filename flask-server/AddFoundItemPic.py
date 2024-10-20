@@ -11,7 +11,7 @@ def convertToBinaryData(filename):
         blobData = file.read()
     return blobData
 
-def insertItem(ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, Photo):
+def insertItem(ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, Photo, ItemStatus, Date):
     sqliteConnection = None
     try:
         sqliteConnection = sqlite3.connect(USERS_DB)
@@ -27,17 +27,18 @@ def insertItem(ItemName, Color, Brand, LocationFound, LocationTurnedIn, Descript
          LocationTurnedIn   TEXT,
          Description        TEXT,
          Photo              BLOB,
-         Archived           INTEGER DEFAULT 0)
-                       Deleted INTEGER DEFAULT 0;''')
+         ItemStatus         INTEGER,
+         Date               TEXT,
+         Archived           INTEGER DEFAULT 0);''')
         
         print("Table created successfully")
         
         sqlite_insert_query = """ INSERT INTO FOUNDITEMS
-                                  (ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, Photo, Archived, Deleted) 
-                                  VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0)"""
+                                  (ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, Photo, Archived, ItemStatus, Date) 
+                                  VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)"""
         binaryPhoto = convertToBinaryData(Photo)
         # Convert data into tuple format
-        data_tuple = (ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, binaryPhoto)
+        data_tuple = (ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, binaryPhoto, ItemStatus, Date)
         cursor.execute(sqlite_insert_query, data_tuple)
         sqliteConnection.commit()
         print("Item inserted into db successfully")
