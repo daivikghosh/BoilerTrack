@@ -15,7 +15,10 @@
       "settings": {
         "python.defaultInterpreterPath": "${workspaceFolder}/flask-server/.venv",
         "python.terminal.activateEnvInCurrentTerminal": true,
-        "python.terminal.launchArgs": ["-X", "dev"]
+        "python.terminal.launchArgs": ["-X", "dev"],
+        "[javascript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        }
       },
       "extensions": [
         "esbenp.prettier-vscode", // Prettier extension
