@@ -55,6 +55,10 @@ const ItemView = () => {
     }
   };
 
+  const handlePrint = () => {
+    window.print(); // This will trigger the browser's print dialog
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -95,6 +99,9 @@ const ItemView = () => {
             {isArchived
               ? "Undo Move to Central Lost and Found Facility"
               : "Transfer to Central Lost and Found Facility"}
+          </button>
+          <button className="archive-button" onClick={handlePrint}>
+            Print Item
           </button>
         </div>
       </div>

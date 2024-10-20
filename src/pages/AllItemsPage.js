@@ -217,7 +217,7 @@ function AllItemsPage() {
                 >
                   {pinnedItems.includes(item.ItemID) ? "Unpin" : "Pin"}
                 </button>
-                <Link to={`/item/${item.ItemID}`}>
+                <Link to={`/item-view-student/${item.ItemID}`}>
                   <button className="view-button">View</button>
                 </Link>
               </div>

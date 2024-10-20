@@ -97,8 +97,15 @@
     text-align: right;
   }
   
-  .claim-button {
-    width: 100%;
+  .button-container {
+    margin-top: 20px; /* Adds space between the buttons */
+    display: flex;
+    gap: 10px; /* Space between the buttons */
+    justify-content: center; /* Centers the buttons */
+  }
+  
+  .archive-button {
+    width: 100%; /* Adjusts to the available space */
     padding: 0.8rem;
     background-color: #c5a673;
     color: white;
@@ -109,11 +116,11 @@
     transition: background-color 0.3s ease;
   }
   
-  .claim-button:hover {
+  .archive-button:hover {
     background-color: #b38e61;
   }
   
-  .claim-button:active {
+  .archive-button:active {
     background-color: #a37e55;
   }
   

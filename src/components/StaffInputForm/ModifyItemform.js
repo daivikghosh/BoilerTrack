@@ -89,7 +89,7 @@ function ModifyItemForm() {
             });
             console.log(response.data);
             alert('Item updated successfully!');
-            navigate('/all-items');
+            navigate('/all-items-staff');
         } catch (error) {
             console.error('There was an error updating the item!', error);
         }
