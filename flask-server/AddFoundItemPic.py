@@ -34,8 +34,8 @@ def insertItem(ItemName, Color, Brand, LocationFound, LocationTurnedIn, Descript
         print("Table created successfully")
         
         sqlite_insert_query = """ INSERT INTO FOUNDITEMS
-                                  (ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, Photo, ItemStatus, Date, Archived) 
-                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)"""
+                                  (ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, Photo, Archived, ItemStatus, Date) 
+                                  VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)"""
         binaryPhoto = convertToBinaryData(Photo)
         # Convert data into tuple format
         data_tuple = (ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, binaryPhoto, ItemStatus, Date)
