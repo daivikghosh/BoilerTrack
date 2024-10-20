@@ -24,6 +24,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 base_dir = os.path.dirname(os.path.abspath(__file__))
 ITEMS_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'ItemListings.db')
 DATABASE = os.path.join(os.path.dirname(base_dir), 'Databases', 'Accounts.db')
+CLAIMS_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'ClaimRequest.db')
 
 #trying error of no image avail
 DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
@@ -56,6 +57,25 @@ def create_connection_items(db_path):
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def get_all_claim_requests():
+    """Fetch all claim requests from the ClaimRequest database."""
+    conn = create_connection_items(CLAIMS_DB)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM CLAIMREQUETS")
+    claim_requests = cursor.fetchall()
+    conn.close()
+    return claim_requests
+
+def get_found_items_by_ids(item_ids):
+    """Fetch found items for a list of item IDs from the FoundItems database."""
+    conn = create_connection_items(ITEMS_DB)
+    cursor = conn.cursor()
+    query = f"SELECT * FROM FOUNDITEMS WHERE ItemID IN ({','.join(['?' for _ in item_ids])})"
+    cursor.execute(query, item_ids)
+    found_items = cursor.fetchall()
+    conn.close()
+    return found_items
 
 def get_all_items():
     """Fetch all items from the database."""
@@ -494,7 +514,91 @@ def send_request():
     app.logger.warning("Invalid file type")
     return jsonify({'error': 'Invalid file type'}), 400
 
+# Endpoint to fetch claim requests and associated item details
+@app.route('/claim-requests', methods=['GET'])
+def view_claim_requests():
+    app.logger.info("Fetching all claim requests")
+    claim_requests = get_all_claim_requests()
+    app.logger.info(f"Found {len(claim_requests)} claim requests")
 
+    # Extract item IDs from claim requests
+    item_ids = [request[0] for request in claim_requests]
+    
+    # Fetch corresponding found items
+    found_items = get_found_items_by_ids(item_ids)
+
+    # Create a map for easy access of found items by their IDs
+    found_items_map = {item[0]: item for item in found_items}
+    app.logger.info("this was the issue")
+    # Combine claim request data with corresponding found item details
+    result = []
+    for claim in claim_requests:
+        item_id = claim[0]
+        if item_id in found_items_map:
+            found_item = found_items_map[item_id]
+
+            # Handle image encoding or placeholder image
+            if isinstance(found_item[7], bytes):
+                image_data = base64.b64encode(found_item[7]).decode('utf-8')
+            elif found_item[7] is None:
+                image_data = get_image_base64(DEFAULT_IMAGE_PATH)
+            else:
+                image_data = found_item[7]
+
+            result.append({
+                'ItemID': claim[0],
+                'Comments': claim[1],
+                'PhotoProof': base64.b64encode(claim[2]).decode('utf-8') if claim[2] else None,
+                'ItemName': found_item[1],
+                'Color': found_item[2],
+                'Brand': found_item[3],
+                'LocationFound': found_item[4],
+                'LocationTurnedIn': found_item[5],
+                'Description': found_item[6],
+                'ImageURL': image_data,
+                'ItemStatus': found_item[9],
+                'Date': found_item[10]
+            })
+        else:
+            app.logger.warning(f"Item with ID {item_id} not found for claim request ID {claim[0]}")
+
+    return jsonify(result), 200
+
+
+# Endpoint to fetch found items by list of item IDs
+@app.route('/found-items', methods=['POST'])
+def view_found_items():
+    item_ids = request.json.get('itemIDs', [])
+    if not item_ids:
+        return jsonify({'error': 'No item IDs provided'}), 400
+
+    app.logger.info(f"Fetching found items for item IDs: {item_ids}")
+    found_items = get_found_items_by_ids(item_ids)
+
+    result = []
+    for item in found_items:
+        if isinstance(item[7], bytes):
+            image_data = base64.b64encode(item[7]).decode('utf-8')
+        elif item[7] is None:
+            image_data = get_image_base64(DEFAULT_IMAGE_PATH)
+        else:
+            image_data = item[7]
+
+        result.append({
+            'ItemID': item[0],
+            'ItemName': item[1],
+            'Color': item[2],
+            'Brand': item[3],
+            'LocationFound': item[4],
+            'LocationTurnedIn': item[5],
+            'Description': item[6],
+            'ImageURL': image_data,
+            'ItemStatus': item[9],
+            'Date': item[10]
+        })
+
+    return jsonify(result), 200
+    
 
 if __name__ == '__main__':
     if not os.path.exists(os.path.dirname(DATABASE)):

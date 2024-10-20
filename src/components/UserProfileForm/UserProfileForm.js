@@ -1,5 +1,6 @@
 import React from "react";
 import "./UserProfileForm.css";
+import { useNavigate } from "react-router-dom"; // Import the useNavigate hook
 
 const UserProfileForm = ({
   name,
@@ -10,6 +11,7 @@ const UserProfileForm = ({
   handleEditClick,
   handleSaveClick,
 }) => {
+  const navigate = useNavigate(); // Initialize navigate
   return (
     <div className="user-profile-container">
       <div className="user-profile">
@@ -56,10 +58,16 @@ const UserProfileForm = ({
       </div>
 
       <div className="additional-buttons">
-        <button onClick={() => alert("View Claim Requests clicked")}>
+        <button
+          onClick={() => navigate('/ClaimRequests')} // Use navigate to go to claim requests page
+          className="action-button"
+        >
           View Claim Requests
         </button>
-        <button onClick={() => alert("My Registered Items clicked")}>
+        <button
+          onClick={() => navigate('/registered-items')} // Use navigate to go to registered items page
+          className="action-button"
+        >
           My Registered Items
         </button>
       </div>

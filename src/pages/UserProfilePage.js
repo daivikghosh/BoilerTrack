@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // Import the useNavigate hook
 import UserProfileForm from "../components/UserProfileForm/UserProfileForm.js";
 
 const UserProfilePage = () => {
@@ -6,6 +7,7 @@ const UserProfilePage = () => {
     const [pronouns, setPronouns] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [email, setEmail] = useState(''); // This should be set when the user logs in
+    const navigate = useNavigate(); // Initialize useNavigate hook
 
     useEffect(() => {
       const userEmail = localStorage.getItem('userEmail');
@@ -77,6 +79,9 @@ const UserProfilePage = () => {
     }
   };
 
+  const handleViewClaimRequests = () => {
+    navigate('/ClaimRequests'); // This will navigate to the Claim Requests page
+  };
     // ... rest of the component
 
     return (
@@ -91,6 +96,12 @@ const UserProfilePage = () => {
                 handleEditClick={() => setIsEditing(true)}
                 handleSaveClick={handleSaveClick}
             />
+
+            <div className="additional-buttons">
+                <button onClick={handleViewClaimRequests}>View Claim Requests</button>
+                {/* You can add the "My Registered Items" button similarly */}
+                <button onClick={() => navigate('/registered-items')}>My Registered Items</button>
+            </div>
         </div>
     );
 };
