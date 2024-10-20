@@ -265,7 +265,9 @@ def view_all_items():
             'LocationFound': item[4],
             'LocationTurnedIn': item[5],
             'Description': item[6],
-            'ImageURL': image_data
+            'ImageURL': image_data,
+            'ItemStatus': item[9],
+            'Date': item[10]
         })
     
     return jsonify(items_list), 200
@@ -316,7 +318,9 @@ def view_item(item_id):
             'LocationTurnedIn': item[5],
             'Description': item[6],
             'ImageURL': image_data,
-            'Archived': bool(item[8])
+            'Archived': bool(item[8]),
+            'ItemStatus': item[9],
+            'Date': item[10]
         }
         return jsonify(item_data), 200
     else:
