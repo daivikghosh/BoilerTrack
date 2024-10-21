@@ -10,6 +10,7 @@ const ItemView = () => {
   const [item, setItem] = useState(null);
   const [user, setUser] = useState({});
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState({});
   const [error, setError] = useState(null);
   const [isArchived, setIsArchived] = useState(false);
 
@@ -33,7 +34,17 @@ const ItemView = () => {
     ImageURL: "", // Add a base64 image string if you want to display an image
   };
 
+  const fetchUserProfile = async () => {
+    const userEmail = localStorage.getItem("userEmail");
+    if (userEmail) {
+      const response = await axios.get(`http://localhost:5000/profile?email=${userEmail}`);
+      setUser(response.data);
+    }
+  };
+
+
   useEffect(() => {
+    fetchUserProfile();
     const fetchItem = async () => {
       try {
         const response = await axios.get(`/item/${id}`);
@@ -65,7 +76,7 @@ const ItemView = () => {
   };
 
   const handlePrint = () => {
-    window.print(); // This will trigger the browser's print dialog
+    window.print(); // You can style for print using @media print in CSS
   };
 
   if (loading) {
@@ -113,9 +124,7 @@ const ItemView = () => {
               ? "Undo Move to Central Lost and Found Facility"
               : "Transfer to Central Lost and Found Facility"}
           </button>
-          <button className="archive-button" onClick={handlePrint}>
-            Print Item
-          </button>
+          <button className="print-button" onClick={handlePrint}>Print Item</button>
         </div>
       </div>
     </div>
