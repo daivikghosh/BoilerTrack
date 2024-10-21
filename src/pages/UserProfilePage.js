@@ -82,6 +82,10 @@ const UserProfilePage = () => {
   const handleViewClaimRequests = () => {
     navigate('/ClaimRequests'); // This will navigate to the Claim Requests page
   };
+
+  const handleViewRegistedItems = () => {
+    navigate('/Preregistered-items'); // This will navigate to the Claim Requests page
+  };
     // ... rest of the component
 
     return (
@@ -100,7 +104,7 @@ const UserProfilePage = () => {
             <div className="additional-buttons">
                 <button onClick={handleViewClaimRequests}>View Claim Requests</button>
                 {/* You can add the "My Registered Items" button similarly */}
-                <button onClick={() => navigate('/registered-items')}>My Registered Items</button>
+                <button onClick={handleViewRegistedItems}>My Registered Items</button>
             </div>
         </div>
     );

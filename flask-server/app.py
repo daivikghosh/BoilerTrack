@@ -40,6 +40,7 @@ ITEMS_DB = os.path.join(os.path.dirname(base_dir),
                         'Databases', 'ItemListings.db')
 USERS_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'Accounts.db')
 CLAIMS_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'ClaimRequest.db')
+PREREG_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'ItemListings.db')
 
 #trying error of no image avail
 DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
@@ -79,7 +80,7 @@ def get_all_claim_requests():
     """Fetch all claim requests from the ClaimRequest database."""
     conn = create_connection_items(CLAIMS_DB)
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM CLAIMREQUETS")
+    cursor.execute("SELECT * FROM CLAIMREQUETS WHERE UserEmail = ?", (globalUSEREMAIL,))
     claim_requests = cursor.fetchall()
     conn.close()
     return claim_requests
@@ -93,6 +94,62 @@ def get_found_items_by_ids(item_ids):
     found_items = cursor.fetchall()
     conn.close()
     return found_items
+
+def get_all_pre_registered_items():
+    """Fetch all pre-registered items from the database."""
+    conn = create_connection_items(PREREG_DB)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM PREREGISTERED WHERE UserEmail = ?", (globalUSEREMAIL,))
+    pre_registered_items = cursor.fetchall()
+    conn.close()
+    return pre_registered_items
+
+@app.route('/pre-registered-items', methods=['GET'])
+def get_pre_registered_items():
+    app.logger.info(f"Fetching pre-registered items for email: {globalUSEREMAIL}")
+    
+    # Ensure the email is provided
+    if not globalUSEREMAIL:
+        return jsonify({'error': 'No user email provided'}), 400
+
+    pre_registered_items = get_all_pre_registered_items()
+    app.logger.info(f"Found {len(pre_registered_items)} pre-registered items")
+
+    # Prepare the result to be returned as JSON
+    result = []
+    
+    for item in pre_registered_items:
+        # Handle image encoding for both Photo and QR code images
+        if isinstance(item[5], bytes):  # Photo exists and is in bytes
+            photo_data = base64.b64encode(item[5]).decode('utf-8')
+        elif item[5] is None:  # Photo is NULL or None, use the placeholder
+            photo_data = get_image_base64(DEFAULT_IMAGE_PATH)
+        else:
+            photo_data = item[5]
+
+        if isinstance(item[7], bytes):  # QR code image exists and is in bytes
+            qr_code_data = base64.b64encode(item[7]).decode('utf-8')
+        elif item[7] is None:  # QR code is NULL or None, use the placeholder
+            qr_code_data = get_image_base64(DEFAULT_IMAGE_PATH)
+        else:
+            qr_code_data = item[7]
+
+        # Append item details to the result list
+        result.append({
+            'pre_reg_item_id': item[0],
+            'ItemName': item[1],
+            'Color': item[2],
+            'Brand': item[3],
+            'Description': item[4],
+            'Photo': photo_data,
+            'Date': item[6],
+            'QRCodeImage': qr_code_data,
+            'UserEmail': item[8]  # Assuming email is the 8th column
+        })
+    
+    return jsonify(result), 200
+
+
 
 
 def clear_deleted_entries():

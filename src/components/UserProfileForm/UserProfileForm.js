@@ -65,7 +65,7 @@ const UserProfileForm = ({
           View Claim Requests
         </button>
         <button
-          onClick={() => navigate('/registered-items')} // Use navigate to go to registered items page
+          onClick={() => navigate('/Preregistered-items')} // Use navigate to go to registered items page
           className="action-button"
         >
           My Registered Items
