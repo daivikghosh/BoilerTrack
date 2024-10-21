@@ -43,7 +43,7 @@ CLAIMS_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'ClaimRequest.d
 PREREG_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'ItemListings.db')
 
 #trying error of no image avail
-DEFAULT_IMAGE_PATH = '..\\uploads\\TestImage.png'
+DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
 
 # #setting up some mail stuff
 # app.config['MAIL_SERVER']='sandbox.smtp.mailtrap.io'

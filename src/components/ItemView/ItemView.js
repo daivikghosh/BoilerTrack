@@ -10,7 +10,7 @@ const ItemView = () => {
   const [item, setItem] = useState(null);
   const [user, setUser] = useState({});
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState({});
+
   const [error, setError] = useState(null);
   const [isArchived, setIsArchived] = useState(false);
 
@@ -34,13 +34,13 @@ const ItemView = () => {
     ImageURL: "", // Add a base64 image string if you want to display an image
   };
 
-  const fetchUserProfile = async () => {
-    const userEmail = localStorage.getItem("userEmail");
-    if (userEmail) {
-      const response = await axios.get(`http://localhost:5000/profile?email=${userEmail}`);
-      setUser(response.data);
-    }
-  };
+  //const fetchUserProfile = async () => {
+    //const userEmail = localStorage.getItem("userEmail");
+    //if (userEmail) {
+      //const response = await axios.get(`http://localhost:5000/profile?email=${userEmail}`);
+      //setUser(response.data);
+    //}
+  //};
 
 
   useEffect(() => {
