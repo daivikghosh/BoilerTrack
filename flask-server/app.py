@@ -222,9 +222,10 @@ def add_lost_item_request():
     description = data.get('description')
     date_lost = data.get('dateLost')
     location_lost = data.get('locationLost')
+    user_email = globalUSEREMAIL 
 
     # Check for missing data
-    if not item_name or not description or not date_lost or not location_lost:
+    if not item_name or not description or not date_lost or not location_lost or not user_email:
         app.logger.warning("Missing required fields in request")
         return jsonify({'error': 'All fields are required'}), 400
 
@@ -236,18 +237,53 @@ def add_lost_item_request():
 
         # Insert the lost item request into the database
         cursor.execute('''
-            INSERT INTO LostItems (ItemName, Description, DateLost, LocationLost)
-            VALUES (?, ?, ?, ?)
-        ''', (item_name, description, date_lost, location_lost))
+            INSERT INTO LostItems (ItemName, Description, DateLost, LocationLost, userEmail)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (item_name, description, date_lost, location_lost, user_email))
         
         conn.commit()
         conn.close()
 
-        app.logger.info(f"Lost item added: {item_name}, {description}, {date_lost}, {location_lost}")
+        app.logger.info(f"Lost item added by {user_email}: {item_name}, {description}, {date_lost}, {location_lost}")
+        
         return jsonify({'message': 'Lost item request added successfully'}), 201
     except sqlite3.Error as e:
         app.logger.error(f"Database error: {e}")
         return jsonify({'error': 'Failed to add lost item request to the database'}), 500
+
+@app.route('/lost-item-requests', methods=['GET'])
+def get_lost_item_requests():
+    global globalUSEREMAIL  # Assuming this stores the current user's email
+    user_email = globalUSEREMAIL
+
+    # Check if the user email is set
+    if not user_email:
+        return jsonify({'error': 'User email not set'}), 400
+
+    # Connect to the LostItemRequest.db database
+    lost_item_db = os.path.join(os.path.dirname(base_dir), 'databases', 'LostItemRequest.db')
+    conn = sqlite3.connect(lost_item_db)
+    cursor = conn.cursor()
+    
+    # Query for lost items based on user email
+    cursor.execute("SELECT ItemID, ItemName, Description, DateLost, LocationLost FROM LostItems WHERE userEmail = ?", (user_email,))
+    items = cursor.fetchall()
+    
+    # Close the database connection
+    conn.close()
+
+    # Convert the results to a list of dictionaries
+    items_list = [{
+        'ItemID': item[0],
+        'ItemName': item[1],
+        'Description': item[2],
+        'DateLost': item[3],
+        'LocationLost': item[4]
+    } for item in items]
+
+    # Return the items as JSON
+    return jsonify(items_list), 200
+
 
 
 @app.route('/items', methods=['POST'])

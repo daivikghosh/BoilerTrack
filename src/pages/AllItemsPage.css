@@ -193,3 +193,65 @@
     background-color: #ffd700; /* Gold color to indicate the item is pinned */
     color: white;
   }
+
+  .view-requests-button {
+    background-color: #808080; /* Bright dark blue */
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    margin-left: 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .view-requests-button:hover {
+    background-color: #505050; /* Darker blue on hover */
+  }
+
+  .lost-item-request-container {
+    margin-top: auto; /* Pushes the button to the bottom */
+  margin-bottom: 20px; /* Adds spacing at the bottom */
+  text-align: center;
+  width: 100%;
+  }
+  
+  .lost-item-request-button {
+    background-color: #999; /* grey */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+  }
+  
+  .lost-item-request-button:hover {
+    background-color: #666; /* dark grey */
+  }
+
+  .lost-item-request-container {
+    margin-top: auto; /* Pushes the button to the bottom */
+    margin-bottom: 20px; /* Adds spacing at the bottom */
+    text-align: center;
+    width: 100%;
+  }
+  
+  .lost-item-request-button {
+    background-color: #999; /* grey */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+    width: 400px; /* Set a smaller width */
+    margin: 20px; /* Center the button */
+  }
+  
+  .lost-item-request-button:hover {
+    background-color: #666; /* dark grey */
+  }

@@ -193,7 +193,15 @@ function AllItemsPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="search-bar"
         />
+
+        <Link to="/all-lost-item-requests">
+          <button className="view-requests-button">
+            View Your Lost Item Requests
+          </button>
+        </Link>
       </div>
+
+
 
       <div className="main-content">
         <FilterPane onFilterChange={handleFilterChange} />
@@ -226,7 +234,17 @@ function AllItemsPage() {
             <p>No items found.</p>
           )}
         </div>
+
+
+        
       </div>
+      <div className="lost-item-request-container">
+          <Link to="/report-lost-item">
+            <button className="lost-item-request-button">
+              Can't find your item? Put in a lost item request
+            </button>
+          </Link>
+        </div>
     </div>
   );
 }

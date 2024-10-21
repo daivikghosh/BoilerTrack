@@ -16,6 +16,7 @@ import ViewClaimRequests from './components/ViewClaimRequests/ViewClaimRequests.
 import NotificationTab from "./components/NotificationTab/NotificationTab.js";
 import LostItemForm from "./components/LostItemForm/LostItemForm.js";
 import ViewPreRegItems from "./components/ViewPreRegItems/ViewPreRegItems.js"; 
+import AllLostItemRequests from "./components/AllLostItemRequests/AllLostItemRequests.js";
 
 const App = () => {
   return (
@@ -45,6 +46,7 @@ const App = () => {
         <Route path="/report-lost-item" element={<LostItemForm />} />
         <Route path="/Preregistered-items" element={<ViewPreRegItems />} />
 
+        <Route path="/all-lost-item-requests" element={<AllLostItemRequests />} />
       </Routes>
     </Router>
   );
