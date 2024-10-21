@@ -3,3 +3,5 @@ flask_cors==3.0.10
 apscheduler==3.10.4
 werkzeug==3.0.4
 python-dotenv==1.0.1
+apscheduler==3.10.4
+flask_mail==0.10.0
