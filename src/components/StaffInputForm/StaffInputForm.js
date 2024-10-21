@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './StaffInputForm.css';
 
 function StaffInputForm() {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         itemName: '',
         color: '',
@@ -66,6 +68,7 @@ function StaffInputForm() {
             setFormData({ itemName: '', color: '', brand: '', foundAt: '', turnedInAt: '', description: '' });
             setSelectedFile(null);
             setErrors({}); // Clear errors after successful submission
+            navigate('/all-items-staff');
         } catch (error) {
             console.error('There was an error adding the item!', error);
         }

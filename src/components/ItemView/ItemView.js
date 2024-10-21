@@ -9,6 +9,7 @@ const ItemView = () => {
   const { id } = useParams(); // Get the item ID from the URL
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState({});
   const [error, setError] = useState(null);
   const [isArchived, setIsArchived] = useState(false);
 
@@ -24,7 +25,17 @@ const ItemView = () => {
     ImageURL: "", // Add a base64 image string if you want to display an image
   };
 
+  const fetchUserProfile = async () => {
+    const userEmail = localStorage.getItem("userEmail");
+    if (userEmail) {
+      const response = await axios.get(`http://localhost:5000/profile?email=${userEmail}`);
+      setUser(response.data);
+    }
+  };
+
+
   useEffect(() => {
+    fetchUserProfile();
     const fetchItem = async () => {
       try {
         const response = await axios.get(`/item/${id}`);
@@ -53,6 +64,10 @@ const ItemView = () => {
     } catch (err) {
       console.error("Error archiving/unarchiving item:", err);
     }
+  };
+
+  const handlePrint = () => {
+    window.print(); // You can style for print using @media print in CSS
   };
 
   if (loading) {
@@ -89,6 +104,10 @@ const ItemView = () => {
             <strong>Turned In At:</strong> {item?.LocationTurnedIn}
           </p>
           <p className="item-description">{item?.Description}</p>
+          <h3>User Information</h3>
+          <p><strong>Name:</strong> {user?.name || 'N/A'}</p>
+          <p><strong>Email:</strong> {localStorage.getItem("userEmail")}</p>
+          <p><strong>Pronouns:</strong> {user?.pronouns || 'N/A'}</p>
         </div>
         <div className="button-container">
           <button className="archive-button" onClick={handleArchiveToggle}>
@@ -96,6 +115,7 @@ const ItemView = () => {
               ? "Undo Move to Central Lost and Found Facility"
               : "Transfer to Central Lost and Found Facility"}
           </button>
+          <button className="print-button" onClick={handlePrint}>Print Item</button>
         </div>
       </div>
     </div>
