@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './AllLostItemRequests.css';  // Import the CSS file for styling
+import { Link } from 'react-router-dom'; 
 
 const AllLostItemRequests = () => {
   const [lostItems, setLostItems] = useState([]);
@@ -44,6 +45,9 @@ const AllLostItemRequests = () => {
                 <p><strong>Description:</strong> {item.Description}</p>
                 <p><strong>Date Lost:</strong> {item.DateLost}</p>
                 <p><strong>Location:</strong> {item.LocationLost}</p>
+                <Link to={`/edit-lost-item/${item.ItemID}`}>
+                  <button className="edit-button">Edit</button>
+                </Link>
               </div>
             </li>
           ))}

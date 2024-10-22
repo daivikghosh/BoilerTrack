@@ -284,6 +284,66 @@ def get_lost_item_requests():
     # Return the items as JSON
     return jsonify(items_list), 200
 
+@app.route('/lost-item/<int:item_id>', methods=['GET'])
+def get_lost_item(item_id):
+    try:
+        # Connect to the LostItemRequest.db database
+        lost_item_db = os.path.join(os.path.dirname(base_dir), 'databases', 'LostItemRequest.db')
+        conn = sqlite3.connect(lost_item_db)
+        cursor = conn.cursor()
+
+        # Fetch the item from the LostItems table
+        cursor.execute("SELECT * FROM LostItems WHERE ItemID = ?", (item_id,))
+        item = cursor.fetchone()
+
+        conn.close()
+
+        if item:
+            # Assuming the columns in the LostItems table are (ItemID, ItemName, Description, DateLost, LocationLost)
+            item_data = {
+                'ItemID': item[0],
+                'ItemName': item[1],
+                'Description': item[2],
+                'DateLost': item[3],
+                'LocationLost': item[4]
+            }
+            return jsonify(item_data), 200
+        else:
+            return jsonify({'error': 'Item not found'}), 404
+    except sqlite3.Error as e:
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+
+
+@app.route('/lost-item/<int:item_id>', methods=['PUT'])
+def update_lost_item(item_id):
+    data = request.get_json()  # Get the JSON data from the request
+
+    # Validate the input data
+    if not data or not data.get('itemName') or not data.get('description') or not data.get('dateLost') or not data.get('locationLost'):
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    try:
+        # Connect to the LostItemRequest.db database
+        lost_item_db = os.path.join(os.path.dirname(base_dir), 'databases', 'LostItemRequest.db')
+        conn = sqlite3.connect(lost_item_db)
+        cursor = conn.cursor()
+
+        # Update the item in the LostItems table based on the itemId
+        cursor.execute('''
+            UPDATE LostItems
+            SET ItemName = ?, Description = ?, DateLost = ?, LocationLost = ?
+            WHERE ItemID = ?
+        ''', (data['itemName'], data['description'], data['dateLost'], data['locationLost'], item_id))
+
+        conn.commit()  # Commit the changes
+        conn.close()   # Close the database connection
+
+        return jsonify({'message': 'Lost item request updated successfully'}), 200
+    except sqlite3.Error as e:
+        return jsonify({'error': f'Failed to update lost item request in the database: {str(e)}'}), 500
+
+
+
 
 
 @app.route('/items', methods=['POST'])
@@ -849,3 +909,5 @@ if __name__ == '__main__':
     # os.makedirs(DEFAULT_IMAGE_PATH, exist_ok=True)
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     app.run(debug=True, host='0.0.0.0', port=5000)
+
+

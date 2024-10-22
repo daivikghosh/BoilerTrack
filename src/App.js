@@ -17,6 +17,7 @@ import NotificationTab from "./components/NotificationTab/NotificationTab.js";
 import LostItemForm from "./components/LostItemForm/LostItemForm.js";
 import ViewPreRegItems from "./components/ViewPreRegItems/ViewPreRegItems.js"; 
 import AllLostItemRequests from "./components/AllLostItemRequests/AllLostItemRequests.js";
+import EditLostItemRequest from "./components/EditLostItemRequest/EditLostItemRequest.js";
 
 const App = () => {
   return (
@@ -47,6 +48,8 @@ const App = () => {
         <Route path="/Preregistered-items" element={<ViewPreRegItems />} />
 
         <Route path="/all-lost-item-requests" element={<AllLostItemRequests />} />
+        <Route path="/edit-lost-item/:itemId" element={<EditLostItemRequest />} />
+
       </Routes>
     </Router>
   );
