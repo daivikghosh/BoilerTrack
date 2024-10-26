@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from "axios";
 import "./ClaimForm.css";
 
 const ClaimForm = () => {
   const { id } = useParams();
   const [item, setItem] = useState(null);
+  const navigate = useNavigate();
 
   // Fake item data for testing purposes
   const fakeItem = {
@@ -78,10 +79,12 @@ const ClaimForm = () => {
       // Clear form fields
       setFile(null);
       setComments("");
+      navigate('/all-items');
     } catch (err) {
 
       console.log("Claim submitted");
       alert("Claim submitted successfully!");
+      navigate('/all-items');
 
       // SHLOK - need to recheck why it defaults to err
       // console.error("Error submitting claim:", err);
