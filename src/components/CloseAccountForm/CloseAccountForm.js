@@ -57,37 +57,6 @@ function CloseAccountForm() {
     }
   };
 
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   if (!confirmation || !password) {
-  //     alert("Please confirm and provide your password to close your account.");
-  //   } else {
-  //     // Send a POST request to delete_account endpoint
-  //     const email = localStorage.getItem('userEmail')
-  //     fetch('http://localhost:5000/delete_account', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json'
-  //       },
-  //       body: JSON.stringify({ email, password}),
-  //     })
-  //     .then(response => response.json())
-  //     .then(data => {
-  //       if (data.success) {
-  //         console.log("Account closed successfully!");
-  //         alert("Your account has been closed.");
-  //       } else {
-  //         console.error("Error closing account:", data.error);
-  //         alert("Error closing your account. Please try again.");
-  //       }
-  //     })
-  //     .catch(error => {
-  //       console.error("Error sending request:", error);
-  //       alert("Error closing your account. Please try again.");
-  //     });
-  //   }
-  // };
-
   return (
     <div className="close-account-form-container">
       <form className="close-account-form" onSubmit={handleSubmit}>
