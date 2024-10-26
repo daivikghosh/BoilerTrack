@@ -725,9 +725,10 @@ def send_request():
         
         item = get_item_by_id(itemid)
         staffemail = item[5] + "@googlemail.com"
+        status = 1
 
         try:
-            insertclaim(itemid, comments, file_path, globalUSEREMAIL)
+            insertclaim(itemid, comments, file_path, globalUSEREMAIL, status)
 
          
             # Sending an email
