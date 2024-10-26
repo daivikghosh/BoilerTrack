@@ -19,7 +19,7 @@ def insertclaim(ItemID, Comments, Photo, UserEmail):
         
         # Ensure the table exists
         cursor.execute('''CREATE TABLE IF NOT EXISTS CLAIMREQUETS
-         (ItemID            INTEGER PRIMARY KEY,
+         (ItemID            INTEGER NOT NULL,
          Comments           TEXT    NOT NULL,
          PhotoProof         BLOB,
          UserEmail          TEXT    NOT NULL);''')
