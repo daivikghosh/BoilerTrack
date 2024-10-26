@@ -525,6 +525,42 @@ def user_profile():
         conn.close()
 
 
+@app.route('/reset_password', methods=['POST'])
+def password_reset():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        old_password = data.get('old_password')
+        if old_password == '':
+            # TODO do the stuff for email reset
+            return jsonify({'server error': 'unimplemented'}), 501
+        if email:
+            conn = create_connection_users()
+            cursor = conn.cursor()
+            cursor.execute(
+                '''SELECT * FROM UserListing WHERE Email = ? AND isDeleted = ?''',
+                (email, 0)
+            )
+            row = cursor.fetchone()
+            if row is None:
+                logging.warning(f"User not found: {email}")
+                return jsonify({'error': 'User Not found'}), 404
+            if row[2] != old_password:
+                logging.warning(f"Incorrect password for user: {email}")
+                return jsonify({'error': 'Incorrect password'}), 401
+            new_password = data.get('new_password')
+            cursor.execute(
+                '''UPDATE UserListing SET password = ? WHERE Email = ?''',
+                (new_password, email)
+            )
+            conn.commit()
+
+    except sqlite3.Error as e:
+        logging.error(f"Database error {e}")
+    finally:
+        conn.close()
+
+
 @app.route('/delete_account', methods=['POST'])
 def deleteAcct():
     try:
@@ -534,12 +570,13 @@ def deleteAcct():
         if email:
             conn = create_connection_users()
             cursor = conn.cursor()
-            print('274')
             cursor.execute(
                 '''SELECT * FROM UserListing WHERE Email = ? AND isDeleted = ?''', (email, 0))
             row = cursor.fetchone()
-            if row[2] != password or row is None:
-                print("incorrect")
+            if row is None:
+                logging.warning(f"User not found: {email}")
+                return jsonify({'error': 'Incorrect password'}), 404
+            if row[2] != password:
                 logging.warning(f"incorrect password for user: {email}")
                 return jsonify({'error': 'Incorrect password'}), 401
 
