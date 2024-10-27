@@ -6,8 +6,10 @@ import time
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_mail import Mail, Message
 from werkzeug.utils import secure_filename
 
+from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from timeit import default_timer as timer
 from apscheduler.triggers.cron import CronTrigger
@@ -15,9 +17,7 @@ from apscheduler.triggers.cron import CronTrigger
 from database_cleaner import delete_deleted_items
 from AddFoundItemPic import *
 from AddClaimRequest import *
-import base64
-from datetime import datetime
-from flask_mail import Mail, Message
+
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -36,13 +36,12 @@ globalUSEREMAIL = ""
 
 # Get the absolute path to the Databases directory
 base_dir = os.path.dirname(os.path.abspath(__file__))
-ITEMS_DB = os.path.join(os.path.dirname(base_dir),
-                        'Databases', 'ItemListings.db')
-USERS_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'Accounts.db')
-CLAIMS_DB = os.path.join(os.path.dirname(
-    base_dir), 'Databases', 'ClaimRequest.db')
-PREREG_DB = os.path.join(os.path.dirname(
-    base_dir), 'Databases', 'ItemListings.db')
+db_dir = os.path.join(os.path.dirname(base_dir),
+                      'Databases')
+ITEMS_DB = os.path.join(db_dir, 'ItemListings.db')
+USERS_DB = os.path.join(db_dir, 'Accounts.db')
+CLAIMS_DB = os.path.join(db_dir, 'ClaimRequest.db')
+PREREG_DB = os.path.join(db_dir, 'ItemListings.db')
 
 # trying error of no image avail
 DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
@@ -161,13 +160,13 @@ _______________________________________________________________________________
 '''
 
 
-@app.route('/')
+@ app.route('/')
 def home():
     app.logger.info("Accessed root route")
     return jsonify({"message": "Welcome to the Lost and Found API"}), 200
 
 
-@app.route('/pre-registered-items', methods=['GET'])
+@ app.route('/pre-registered-items', methods=['GET'])
 def get_pre_registered_items():
     app.logger.info(
         f"Fetching pre-registered items for email: {globalUSEREMAIL}")
@@ -214,7 +213,7 @@ def get_pre_registered_items():
     return jsonify(result), 200
 
 
-@app.route('/lost-item-request', methods=['POST', 'OPTIONS'])
+@ app.route('/lost-item-request', methods=['POST', 'OPTIONS'])
 def add_lost_item_request():
     if request.method == 'OPTIONS':
         # Handle preflight request
@@ -269,7 +268,7 @@ def add_lost_item_request():
         return jsonify({'error': 'Failed to add lost item request to the database'}), 500
 
 
-@app.route('/lost-item-requests', methods=['GET'])
+@ app.route('/lost-item-requests', methods=['GET'])
 def get_lost_item_requests():
     global globalUSEREMAIL  # Assuming this stores the current user's email
     user_email = globalUSEREMAIL
@@ -305,7 +304,7 @@ def get_lost_item_requests():
     return jsonify(items_list), 200
 
 
-@app.route('/lost-item/<int:item_id>', methods=['GET'])
+@ app.route('/lost-item/<int:item_id>', methods=['GET'])
 def get_lost_item(item_id):
     try:
         # Connect to the LostItemRequest.db database
@@ -336,7 +335,7 @@ def get_lost_item(item_id):
         return jsonify({'error': f'Database error: {str(e)}'}), 500
 
 
-@app.route('/lost-item/<int:item_id>', methods=['PUT'])
+@ app.route('/lost-item/<int:item_id>', methods=['PUT'])
 def update_lost_item(item_id):
     data = request.get_json()  # Get the JSON data from the request
 
@@ -366,7 +365,7 @@ def update_lost_item(item_id):
         return jsonify({'error': f'Failed to update lost item request in the database: {str(e)}'}), 500
 
 
-@app.route('/items', methods=['POST'])
+@ app.route('/items', methods=['POST'])
 def add_item():
     app.logger.info("Received POST request to /items")
     app.logger.debug(f"Request form data: {request.form}")
@@ -415,7 +414,7 @@ def add_item():
     return jsonify({'error': 'Invalid file type'}), 400
 
 
-@app.route('/signup', methods=['POST'])
+@ app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
     email = data.get('email')
@@ -447,7 +446,7 @@ def signup():
     return jsonify({'message': 'User registered successfully'}), 201
 
 
-@app.route('/login', methods=['POST'])
+@ app.route('/login', methods=['POST'])
 def login():
     global globalUSEREMAIL
 
@@ -475,7 +474,7 @@ def login():
         return jsonify({'error': 'Invalid email or password'}), 401
 
 
-@app.route('/profile', methods=['GET', 'POST'])
+@ app.route('/profile', methods=['GET', 'POST'])
 def user_profile():
     if request.method == 'GET':
         email = request.args.get('email')
@@ -525,7 +524,7 @@ def user_profile():
         conn.close()
 
 
-@app.route('/reset_password', methods=['POST'])
+@ app.route('/reset_password', methods=['POST'])
 def password_reset():
     try:
         data = request.get_json()
@@ -561,7 +560,7 @@ def password_reset():
         conn.close()
 
 
-@app.route('/delete_account', methods=['POST'])
+@ app.route('/delete_account', methods=['POST'])
 def deleteAcct():
     try:
         data = request.get_json()
@@ -792,9 +791,8 @@ def send_request():
             insertclaim(itemid, comments, file_path, globalUSEREMAIL, status)
 
             # Sending an email
-            emailstr1 = "Hello there\n\nA new claim request has been submitted and is awaiting review...\n\nItem Id: " + \
-                itemid + "\n\nReason Given: " + comments
-            emailstr2 = "\n\nPlease open the portal to check status of the claim\n\nThank You!\n~BoilerTrack Devs"
+            emailstr1 = f"Hello there<br><br>A new claim request has been submitted and is awaiting review...<br><br>Item Id: {itemid}<br><br>Reason Given: {comments}"
+            emailstr2 = f"<br><br>Please open the portal to check status of the claim<br><br>Thank You!<br>~BoilerTrack Devs"
 
             msg = Message("BoilerTrack: New Claim Request for Review",
                           sender="shloksbairagi07@gmail.com",
@@ -803,10 +801,10 @@ def send_request():
             msg.html = f"""
             <html>
                 <body>
-                    <p>{emailstr1.replace('\n', '<br>')}</p>
+                    <p>{emailstr1}</p>
                     <p>Image uploaded as proof of ownership:</p>
                     <img src="cid:image1">
-                    <p>{emailstr2.replace('\n', '<br>')}</p>
+                    <p>{emailstr2}</p>
                 </body>
             </html>
             """
@@ -832,7 +830,7 @@ def send_request():
 # Endpoint to fetch claim requests and associated item details
 
 
-@app.route('/claim-requests', methods=['GET'])
+@ app.route('/claim-requests', methods=['GET'])
 def view_claim_requests():
     app.logger.info("Fetching all claim requests")
     claim_requests = get_all_claim_requests()
@@ -884,7 +882,7 @@ def view_claim_requests():
 
 
 # Endpoint to fetch found items by list of item IDs
-@app.route('/found-items', methods=['POST'])
+@ app.route('/found-items', methods=['POST'])
 def view_found_items():
     item_ids = request.json.get('itemIDs', [])
     if not item_ids:
