@@ -12,12 +12,13 @@ import ClaimForm from "./components/ClaimForm/ClaimForm.js";
 import ItemViewStudent from "./components/ItemView/ItemViewStudent.js";
 import ModifyItemForm from "./components/StaffInputForm/ModifyItemform.js";
 import AllItemsPage_Staff from "./pages/AllItemsPage_Staff.js";
-import ViewClaimRequests from './components/ViewClaimRequests/ViewClaimRequests.js'; 
+import ViewClaimRequests from "./components/ViewClaimRequests/ViewClaimRequests.js";
 import NotificationTab from "./components/NotificationTab/NotificationTab.js";
 import LostItemForm from "./components/LostItemForm/LostItemForm.js";
-import ViewPreRegItems from "./components/ViewPreRegItems/ViewPreRegItems.js"; 
+import ViewPreRegItems from "./components/ViewPreRegItems/ViewPreRegItems.js";
 import AllLostItemRequests from "./components/AllLostItemRequests/AllLostItemRequests.js";
 import EditLostItemRequest from "./components/EditLostItemRequest/EditLostItemRequest.js";
+import PasswordChangeForm from "./components/PasswordChangeForm/PasswordChangeForm.js";
 
 const App = () => {
   return (
@@ -41,15 +42,20 @@ const App = () => {
         <Route path="/claim/:id" element={<ClaimForm />} />
         <Route path="/modify-item/:id" element={<ModifyItemForm />} />
         <Route path="all-items-staff" element={<AllItemsPage_Staff />} />
-        <Route path="ClaimRequests" element={<ViewClaimRequests />} /> {/* Add this route */}
-        
+        <Route path="ClaimRequests" element={<ViewClaimRequests />} />{" "}
+        {/* Add this route */}
         <Route path="/notifications" element={<NotificationTab />} />
         <Route path="/report-lost-item" element={<LostItemForm />} />
         <Route path="/Preregistered-items" element={<ViewPreRegItems />} />
-
-        <Route path="/all-lost-item-requests" element={<AllLostItemRequests />} />
-        <Route path="/edit-lost-item/:itemId" element={<EditLostItemRequest />} />
-
+        <Route
+          path="/all-lost-item-requests"
+          element={<AllLostItemRequests />}
+        />
+        <Route
+          path="/edit-lost-item/:itemId"
+          element={<EditLostItemRequest />}
+        />
+        <Route path="/resetpassword" element={<PasswordChangeForm />} />
       </Routes>
     </Router>
   );
