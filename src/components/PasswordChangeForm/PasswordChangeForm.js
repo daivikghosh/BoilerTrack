@@ -6,6 +6,7 @@ const PasswordChangeForm = () => {
   const [oldPassword, setOldPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -19,14 +20,34 @@ const PasswordChangeForm = () => {
       setError("New passwords do not match.");
       return;
     }
-
-    // Here we would ideally call a backend API to change the password,
-    // but for the sake of this example, we'll only simulate the process.
-    console.log("Old password: ", oldPassword);
-    console.log("New password: ", newPassword);
-
-    // Simulate successful password change
-    alert("Password changed successfully!");
+    const email = localStorage.getItem("userEmail");
+    fetch("http://localhost:5000/reset_password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, oldPassword, newPassword }),
+    })
+      .then((response) => {
+        if (response.ok) {
+          setSuccess("Password changed successfully");
+          setError(null);
+          setNewPassword("");
+          setOldPassword("");
+          setConfirmPassword("");
+        } else {
+          return response.json().then((data) => {
+            if (data.error === "Incorrect Password") {
+              setError("Incorrect password");
+            } else if (data.error === "User Not Found") {
+              setError("Please make sure you are logged in");
+            } else {
+              setError("An error occurred");
+            }
+          });
+        }
+      })
+      .catch((err) => console.error("Error handling password reset:", err));
   };
 
   const isFormValid =
@@ -68,6 +89,11 @@ const PasswordChangeForm = () => {
             placeholder="Confirm your new password"
             required
           />
+          {success && (
+            <div className="success-message" style={{ color: "black" }}>
+              {success}
+            </div>
+          )}
           {error && (
             <div className="error-message" style={{ color: "red" }}>
               {error}
