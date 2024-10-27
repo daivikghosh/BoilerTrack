@@ -266,7 +266,7 @@ def get_lost_item_requests():
     cursor = conn.cursor()
     
     # Query for lost items based on user email
-    cursor.execute("SELECT ItemID, ItemName, Description, DateLost, LocationLost FROM LostItems WHERE userEmail = ?", (user_email,))
+    cursor.execute("SELECT ItemID, ItemName, Description, DateLost, LocationLost, status FROM LostItems WHERE userEmail = ?", (user_email,))
     items = cursor.fetchall()
     
     # Close the database connection
@@ -278,7 +278,8 @@ def get_lost_item_requests():
         'ItemName': item[1],
         'Description': item[2],
         'DateLost': item[3],
-        'LocationLost': item[4]
+        'LocationLost': item[4],
+        'status': item[5]
     } for item in items]
 
     # Return the items as JSON
@@ -739,16 +740,17 @@ def send_request():
                   sender="shloksbairagi07@gmail.com",
                   recipients=[globalUSEREMAIL, staffemail])
             
-            msg.html = f"""
+            msg.html = """
             <html>
                 <body>
-                    <p>{emailstr1.replace('\n', '<br>')}</p>
+                    <p>{}</p>
                     <p>Image uploaded as proof of ownership:</p>
                     <img src="cid:image1">
-                    <p>{emailstr2.replace('\n', '<br>')}</p>
+                    <p>{}</p>
                 </body>
             </html>
-            """
+            """.format(emailstr1.replace('\n', '<br>'), emailstr2.replace('\n', '<br>'))
+
             
             # Attach the image
             with open(file_path, 'rb') as fp:

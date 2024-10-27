@@ -45,9 +45,13 @@ const AllLostItemRequests = () => {
                 <p><strong>Description:</strong> {item.Description}</p>
                 <p><strong>Date Lost:</strong> {item.DateLost}</p>
                 <p><strong>Location:</strong> {item.LocationLost}</p>
+                <p><strong>Status:</strong> {item.status}</p>
+                
                 <Link to={`/edit-lost-item/${item.ItemID}`}>
                   <button className="edit-button">Edit</button>
                 </Link>
+                
+                
               </div>
             </li>
           ))}
