@@ -20,6 +20,8 @@ import AllLostItemRequests from "./components/AllLostItemRequests/AllLostItemReq
 import EditLostItemRequest from "./components/EditLostItemRequest/EditLostItemRequest.js";
 import ListViewClaimRequests from "./components/ViewAllClaimsStaff/ViewAllClaimsStaff.js";
 import IndividualClaimView from "./components/ViewAllClaimsStaff/ClaimViewStaff.js";
+import DisputeClaimForm from "./components/DisputeClaimForm/DisputeClaimForm.js";
+
 
 const App = () => {
   return (
@@ -44,7 +46,8 @@ const App = () => {
         <Route path="/modify-item/:id" element={<ModifyItemForm />} />
         <Route path="all-items-staff" element={<AllItemsPage_Staff />} />
         <Route path="ClaimRequests" element={<ViewClaimRequests />} /> {/* Add this route */}
-        
+        <Route path="/dispute/:id" element={<DisputeClaimForm />} />
+
         <Route path="/notifications" element={<NotificationTab />} />
         <Route path="/report-lost-item" element={<LostItemForm />} />
         <Route path="/Preregistered-items" element={<ViewPreRegItems />} />

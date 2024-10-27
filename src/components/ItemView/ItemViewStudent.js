@@ -22,10 +22,15 @@ const ItemViewStudent = () => {
     LocationTurnedIn: "Front Desk",
     Description: "Red Sony headphones found at the gym front desk.",
     ImageURL: "", // Add a base64 image string if you want to display an image
+    ItemStatus: 3, // Example status for testing
   };
 
   const handleClaimClick = () => {
     navigate(`/claim/${id}`); // Navigate to the claim form when the Claim button is clicked
+  };
+
+  const handleDisputeClick = () => {
+    navigate(`/dispute/${id}`); // Navigate to the dispute form when the Dispute button is clicked
   };
 
   useEffect(() => {
@@ -92,9 +97,15 @@ const ItemViewStudent = () => {
           <p className="item-description">{item?.Description}</p>
         </div>
         
-        <button className="claim-button" onClick={handleClaimClick}>
-          Claim Request Form
-        </button>
+        {item?.ItemStatus === 3 ? (
+          <button className="dispute-button" onClick={handleDisputeClick}>
+            Dispute Claim
+          </button>
+        ) : (
+          <button className="claim-button" onClick={handleClaimClick}>
+            Claim Request Form
+          </button>
+        )}
       </div>
     </div>
   );
