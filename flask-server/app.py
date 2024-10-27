@@ -529,13 +529,19 @@ def password_reset():
     try:
         data = request.get_json()
         email = data.get('email')
-        old_password = data.get('old_password')
+        old_password = data.get('oldPassword')
+
+        conn = create_connection_users()
+        cursor = conn.cursor()
+
         if old_password == '':
             # TODO do the stuff for email reset
+            '''procedure should be: send email with token, store token in db with a creation timestamp,
+            update schedlued task to delete the token if the timestamp is > 24hours old
+            add a new function to handle the reset with the token.'''
             return jsonify({'server error': 'unimplemented'}), 501
         if email:
-            conn = create_connection_users()
-            cursor = conn.cursor()
+
             cursor.execute(
                 '''SELECT * FROM UserListing WHERE Email = ? AND isDeleted = ?''',
                 (email, 0)
@@ -543,19 +549,24 @@ def password_reset():
             row = cursor.fetchone()
             if row is None:
                 logging.warning(f"User not found: {email}")
-                return jsonify({'error': 'User Not found'}), 404
+                return jsonify({'error': 'User Not Found'}), 404
             if row[2] != old_password:
                 logging.warning(f"Incorrect password for user: {email}")
-                return jsonify({'error': 'Incorrect password'}), 401
-            new_password = data.get('new_password')
+                print("db: {}, old: {}".format(
+                    row[2], old_password))
+                return jsonify({'error': 'Incorrect Password'}), 401
+            new_password = data.get('newPassword')
             cursor.execute(
                 '''UPDATE UserListing SET password = ? WHERE Email = ?''',
                 (new_password, email)
             )
             conn.commit()
-
+            return jsonify({'success': 'Password reset successfully'}), 200
+        else:
+            return jsonify({'error': 'Email not provided'}), 400
     except sqlite3.Error as e:
-        logging.error(f"Database error {e}")
+        logging.error(f"Database error: {e}")
+        return jsonify({'error': 'Database error occurred'}), 500
     finally:
         conn.close()
 
