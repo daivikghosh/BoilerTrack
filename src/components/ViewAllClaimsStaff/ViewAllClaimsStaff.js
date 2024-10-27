@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./ViewAllClaimsStaff.css";
 
@@ -6,6 +7,7 @@ const ListViewClaimRequests = () => {
   const [claimRequests, setClaimRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchClaimRequests = async () => {
@@ -54,7 +56,8 @@ const ListViewClaimRequests = () => {
             <div className="list-item-actions">
               <button
                 className="action-button"
-                onClick={() => alert(`Viewing claim for ${item.ItemName}`)}
+                onClick={() => {
+                  navigate(`/individual-request-staff/${item.ItemID}`)} }
               >
                 View Request
               </button>
