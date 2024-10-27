@@ -865,6 +865,15 @@ def get_all_claimrequests_staff():
     conn.close()
     return claim_requests
 
+def get_claim_by_id(item_id):
+    """Fetch a single item from the database by its ID."""
+    conn = create_connection_items(CLAIMS_DB)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM CLAIMREQUETS WHERE ItemID = ?", (item_id,))
+    claim_request = cursor.fetchone()
+    conn.close()
+    return claim_request
+
 @ app.route('/allclaim-requests-staff', methods=['GET'])
 def view_all_requests():
     app.logger.info("Fetching all claims")
@@ -893,6 +902,39 @@ def view_all_requests():
         })
 
     return jsonify(claims_list), 200 
+
+
+
+@ app.route('/individual-request-staff/<int:item_id>', methods=['GET'])
+def view_claim(item_id):
+    app.logger.info(f"Fetching details for claim for item ID: {item_id}")
+    claim = get_claim_by_id(item_id)
+    item = get_item_by_id(item_id)
+
+    if claim:
+        # Check if the image is bytes, None, or already present in the correct format
+        if isinstance(claim[2], bytes):  # Image exists and is in bytes
+            image_data = base64.b64encode(claim[2]).decode('utf-8')
+        elif claim[2] is None:  # Image is NULL or None, use the placeholder
+            image_data = get_image_base64(DEFAULT_IMAGE_PATH)
+        else:
+            image_data = claim[2]  # If already in the correct format
+
+        claim_data = {
+            'ItemID': item[0],
+            'ItemName': item[1],
+            'LocationTurnedIn': item[5],
+            'Comments': claim[1],
+            'UserEmail':claim[3],
+            'PhotoProof': image_data
+        }
+        return jsonify(claim_data), 200
+    else:
+        app.logger.warning(f"Claim with ID {item_id} not found")
+        return jsonify({'error': 'Item not found'}), 404
+
+
+
 
 
 if __name__ == '__main__':

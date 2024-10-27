@@ -19,6 +19,7 @@ import ViewPreRegItems from "./components/ViewPreRegItems/ViewPreRegItems.js";
 import AllLostItemRequests from "./components/AllLostItemRequests/AllLostItemRequests.js";
 import EditLostItemRequest from "./components/EditLostItemRequest/EditLostItemRequest.js";
 import ListViewClaimRequests from "./components/ViewAllClaimsStaff/ViewAllClaimsStaff.js";
+import IndividualClaimView from "./components/ViewAllClaimsStaff/ClaimViewStaff.js";
 
 const App = () => {
   return (
@@ -52,6 +53,7 @@ const App = () => {
         <Route path="/edit-lost-item/:itemId" element={<EditLostItemRequest />} />
 
         <Route path="/all-request-staff" element={<ListViewClaimRequests />} />
+        <Route path="/individual-request-staff/:claimId" element={<IndividualClaimView />} />
 
       </Routes>
     </Router>
