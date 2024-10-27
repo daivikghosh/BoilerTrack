@@ -927,6 +927,46 @@ def view_found_items():
     return jsonify(result), 200
 
 
+def get_all_claimrequests_staff():
+    """Fetch all claim requests from the ClaimRequest database."""
+    conn = create_connection_items(CLAIMS_DB)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM CLAIMREQUETS")
+    claim_requests = cursor.fetchall()
+    conn.close()
+    return claim_requests
+
+
+@ app.route('/allclaim-requests-staff', methods=['GET'])
+def view_all_requests():
+    app.logger.info("Fetching all claims")
+    claims = get_all_claimrequests_staff()
+    claims_list = []
+
+    for item in claims:
+
+        if isinstance(item[2], bytes):  # Photo exists and is in bytes
+            photo_data = base64.b64encode(item[2]).decode('utf-8')
+        elif item[2] is None:  # Photo is NULL or None, use the placeholder
+            photo_data = get_image_base64(DEFAULT_IMAGE_PATH)
+        else:
+            photo_data = item[2]
+
+        item_deets = get_item_by_id(item[0])
+
+        claims_list.append({
+            'ItemID': item[0],
+            'Comments': item[1],
+            'PhotoProof': photo_data,
+            'UserEmail': item[3],
+            'ClaimStatus': item[4],
+            'ItemName': item_deets[1],
+            'LocationTurnedIn': item_deets[5]
+        })
+
+    return jsonify(claims_list), 200
+
+
 if __name__ == '__main__':
     if not os.path.exists(os.path.dirname(USERS_DB)):
         os.makedirs(os.path.dirname(USERS_DB))

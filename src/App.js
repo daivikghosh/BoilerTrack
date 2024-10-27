@@ -19,7 +19,7 @@ import ViewPreRegItems from "./components/ViewPreRegItems/ViewPreRegItems.js";
 import AllLostItemRequests from "./components/AllLostItemRequests/AllLostItemRequests.js";
 import EditLostItemRequest from "./components/EditLostItemRequest/EditLostItemRequest.js";
 import PasswordChangeForm from "./components/PasswordChangeForm/PasswordChangeForm.js";
-
+import ListViewClaimRequests from "./components/ViewAllClaimsStaff/ViewAllClaimsStaff.js";
 const App = () => {
   return (
     <Router>
@@ -30,9 +30,17 @@ const App = () => {
         {/* Item detail page */}
         <Route path="/StaffInputForm" element={<StaffInputForm />} />{" "}
         <Route path="/UserProfile" element={<UserProfilePage />} />{" "}
+        <Route path="/" element={<LoginSignupPage />} />
+        <Route path="/UploadImage" element={<ImageUpload />} />
+        <Route path="/item/:id" element={<ItemView />} />{" "}
+        {/* Item detail page */}
+        <Route path="/StaffInputForm" element={<StaffInputForm />} />
+        <Route path="/UserProfile" element={<UserProfilePage />} />
         <Route path="/close-account" element={<CloseAccountForm />} /> //test
         <Route path="/all-items" element={<AllItemsPage />} />
         <Route path="/item-view/:id" element={<ItemView />} />
+        {/* Route for ItemView */}
+        <Route path="/item-view/:id" element={<ItemView />} />{" "}
         {/* Route for ItemView */}
         {/* Temporary route for testing with fake data */}
         <Route path="/test-item-view/1" element={<ItemView />} />
@@ -56,6 +64,7 @@ const App = () => {
           element={<EditLostItemRequest />}
         />
         <Route path="/resetpassword" element={<PasswordChangeForm />} />
+        <Route path="/all-request-staff" element={<ListViewClaimRequests />} />
       </Routes>
     </Router>
   );
