@@ -25,7 +25,6 @@ def create_claim_disputes_table():
                             Reason             TEXT NOT NULL,
                             AdditionalComments TEXT,
                             DisputePhotoProof  BLOB,
-                            Photo              BLOB,
                             FOREIGN KEY (ItemID) REFERENCES FoundItems(ItemID)
                         );''')
         
@@ -38,7 +37,7 @@ def create_claim_disputes_table():
             sqliteConnection.close()
             print("The sqlite connection is closed.")
 
-def insert_dispute(ItemID, ClaimedBy, DisputeBy, Reason, AdditionalComments, DisputePhotoProof, Photo):
+def insert_dispute(ItemID, ClaimedBy, DisputeBy, Reason, AdditionalComments, DisputePhotoProof):
     sqliteConnection = None
     try:
         sqliteConnection = sqlite3.connect(ITEMS_DB)
@@ -46,15 +45,15 @@ def insert_dispute(ItemID, ClaimedBy, DisputeBy, Reason, AdditionalComments, Dis
         
         # Insert a record into ClaimDisputes
         sqlite_insert_query = """INSERT INTO ClaimDisputes 
-                                 (ItemID, ClaimedBy, DisputeBy, Reason, AdditionalComments, DisputePhotoProof, Photo)
-                                 VALUES (?, ?, ?, ?, ?, ?, ?)"""
+                                 (ItemID, ClaimedBy, DisputeBy, Reason, AdditionalComments, DisputePhotoProof)
+                                 VALUES (?, ?, ?, ?, ?, ?)"""
         
         # Convert files to binary data
         binaryDisputePhotoProof = convertToBinaryData(DisputePhotoProof) if DisputePhotoProof else None
-        binaryPhoto = convertToBinaryData(Photo) if Photo else None
+        # binaryPhoto = convertToBinaryData(Photo) if Photo else None
         
         # Data tuple to insert
-        data_tuple = (ItemID, ClaimedBy, DisputeBy, Reason, AdditionalComments, binaryDisputePhotoProof, binaryPhoto)
+        data_tuple = (ItemID, ClaimedBy, DisputeBy, Reason, AdditionalComments, binaryDisputePhotoProof)
         
         cursor.execute(sqlite_insert_query, data_tuple)
         sqliteConnection.commit()
@@ -69,9 +68,19 @@ def insert_dispute(ItemID, ClaimedBy, DisputeBy, Reason, AdditionalComments, Dis
 
 if __name__ == "__main__":
     # Create the ClaimDisputes table
+    
+    # delete the whole table
+    '''
+    sqliteConnection = sqlite3.connect(ITEMS_DB)
+    cursor = sqliteConnection.cursor()
+    cursor.execute("DROP TABLE ClaimDisputes")
+    sqliteConnection.commit()
+    sqliteConnection.close()
+    print("deleted")
     create_claim_disputes_table()
+    '''
     
     # Example of inserting a dispute record
     insert_dispute(ItemID=1, ClaimedBy="laxminag@purdue.edu", DisputeBy="whiffy@purdue.edu",
                     Reason="Incorrect claim", AdditionalComments="Please verify the details.",
-                    DisputePhotoProof="uploads/bitcoinClaim.jpeg", Photo="uploads/bitcoinLogo.png")
+                    DisputePhotoProof="uploads/bitcoinClaim.jpeg")

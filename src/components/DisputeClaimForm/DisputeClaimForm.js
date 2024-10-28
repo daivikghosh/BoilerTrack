@@ -73,7 +73,7 @@ const DisputeClaimForm = () => {
     formData.append("itemId", id);
 
     try {
-      const response = await axios.post("/dispute-claim", formData, {
+      const response = await axios.post(`/dispute-claim/${id}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
