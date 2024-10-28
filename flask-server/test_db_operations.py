@@ -27,9 +27,7 @@ def main():
     retrieved_item = get_item_by_name("UnitTest")
     if retrieved_item:
         print("\nItem retrieved from the database:")
-        print("ItemID: {}, Keywords: {}, {}, {}, {}, LocationFound: {}, LocationTurnedIn: {}".format(
-            retrieved_item[0], retrieved_item[1], retrieved_item[2], retrieved_item[3], retrieved_item[4], retrieved_item[5]))
-
+        print(f"ItemID: {retrieved_item[0]}, Keywords: {retrieved_item[1]}, {retrieved_item[2]}, {retrieved_item[3]}, {retrieved_item[4]}, LocationFound: {retrieved_item[5]}, LocationTurnedIn: {retrieved_item[6]}")
 # ---------------------------------------------------------
 #               enshrining this as the weirdest string operation I have ever seen
 #        print(f"ItemID: {retrieved_item[0]}, Keywords: {retrieved_item[1]+", "+retrieved_item[2]+", "+retrieved_item[3]}, LocationFound: {retrieved_item[4]}, LocationTurnedIn: {retrieved_item[5]}")

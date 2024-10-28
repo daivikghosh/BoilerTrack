@@ -31,7 +31,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 # Store the accoung info in a global var
-globalUSEREMAIL = ""
+GLOBAL_USER_EMAIL = ""
 
 
 # Get the absolute path to the Databases directory
@@ -84,7 +84,7 @@ def get_all_claim_requests():
     conn = create_connection_items(CLAIMS_DB)
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT * FROM CLAIMREQUETS WHERE UserEmail = ?", (globalUSEREMAIL,))
+        "SELECT * FROM CLAIMREQUETS WHERE UserEmail = ?", (GLOBAL_USER_EMAIL,))
     claim_requests = cursor.fetchall()
     conn.close()
     return claim_requests
@@ -106,7 +106,7 @@ def get_all_pre_registered_items():
     conn = create_connection_items(PREREG_DB)
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT * FROM PREREGISTERED WHERE UserEmail = ?", (globalUSEREMAIL,))
+        "SELECT * FROM PREREGISTERED WHERE UserEmail = ?", (GLOBAL_USER_EMAIL,))
     pre_registered_items = cursor.fetchall()
     conn.close()
     return pre_registered_items
@@ -169,10 +169,10 @@ def home():
 @ app.route('/pre-registered-items', methods=['GET'])
 def get_pre_registered_items():
     app.logger.info(
-        f"Fetching pre-registered items for email: {globalUSEREMAIL}")
+        "Fetching pre-registered items for email: %(gu_email)s", {"gu_email": GLOBAL_USER_EMAIL})
 
     # Ensure the email is provided
-    if not globalUSEREMAIL:
+    if not GLOBAL_USER_EMAIL:
         return jsonify({'error': 'No user email provided'}), 400
 
     pre_registered_items = get_all_pre_registered_items()
@@ -236,7 +236,7 @@ def add_lost_item_request():
     description = data.get('description')
     date_lost = data.get('dateLost')
     location_lost = data.get('locationLost')
-    user_email = globalUSEREMAIL
+    user_email = GLOBAL_USER_EMAIL
 
     # Check for missing data
     if not item_name or not description or not date_lost or not location_lost or not user_email:
@@ -270,8 +270,8 @@ def add_lost_item_request():
 
 @ app.route('/lost-item-requests', methods=['GET'])
 def get_lost_item_requests():
-    global globalUSEREMAIL  # Assuming this stores the current user's email
-    user_email = globalUSEREMAIL
+    global GLOBAL_USER_EMAIL  # Assuming this stores the current user's email
+    user_email = GLOBAL_USER_EMAIL
 
     # Check if the user email is set
     if not user_email:
@@ -449,13 +449,13 @@ def signup():
 
 @ app.route('/login', methods=['POST'])
 def login():
-    global globalUSEREMAIL
+    global GLOBAL_USER_EMAIL
 
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
 
-    globalUSEREMAIL = email
+    GLOBAL_USER_EMAIL = email
 
     if not email or not password:
         return jsonify({'error': 'Missing required fields'}), 400
@@ -774,7 +774,7 @@ def send_request():
     app.logger.debug(f"Request form data: {request.form}")
     app.logger.debug(f"Request files: {request.files}")
 
-    print(globalUSEREMAIL)
+    print(GLOBAL_USER_EMAIL)
 
     if 'file' not in request.files:
         app.logger.warning("No image file in request")
@@ -800,7 +800,7 @@ def send_request():
         status = 1
 
         try:
-            insertclaim(itemid, comments, file_path, globalUSEREMAIL, status)
+            insertclaim(itemid, comments, file_path, GLOBAL_USER_EMAIL, status)
 
             # Sending an email
             emailstr1 = f"Hello there<br><br>A new claim request has been submitted and is awaiting review...<br><br>Item Id: {itemid}<br><br>Reason Given: {comments}"
@@ -808,7 +808,7 @@ def send_request():
 
             msg = Message("BoilerTrack: New Claim Request for Review",
                           sender="shloksbairagi07@gmail.com",
-                          recipients=[globalUSEREMAIL, staffemail])
+                          recipients=[GLOBAL_USER_EMAIL, staffemail])
 
             msg.html = """
             <html>
@@ -980,7 +980,8 @@ def view_all_requests():
 
 @ app.route('/individual-request-staff/<int:item_id>', methods=['GET'])
 def view_claim(item_id):
-    app.logger.info(f"Fetching details for claim for item ID: {item_id}")
+    app.logger.info("Fetching details for claim for item ID: %(item_id)s", {
+                    'item_id': item_id})
     claim = get_claim_by_id(item_id)
     item = get_item_by_id(item_id)
 
@@ -1003,7 +1004,8 @@ def view_claim(item_id):
         }
         return jsonify(claim_data), 200
     else:
-        app.logger.warning(f"Claim with ID {item_id} not found")
+        app.logger.warning("Claim with ID %(item_id)s not found", {
+                           "item_id": item_id})
         return jsonify({'error': 'Item not found'}), 404
 
 
@@ -1023,7 +1025,7 @@ def approve_claim(claim_id):
         conn.commit()
         conn.close()
         return jsonify({'message': 'Claim approved and item removed successfully'}), 200
-    except sqlite3.Error as e:
+    except sqlite3.Error:
         return jsonify({'error': 'Failed to approve claim and remove item'}), 500
     finally:
         conn.close()
@@ -1045,7 +1047,7 @@ def reject_claim(claim_id):
         # cursor.execute("DELETE FROM CLAIMREQUETS WHERE ItemID = ?", (claim_id,))
         conn.commit()
         return jsonify({'message': 'Claim rejected and rationale saved'}), 200
-    except sqlite3.Error as e:
+    except sqlite3.Error:
         return jsonify({'error': 'Failed to reject claim and save rationale'}), 500
     finally:
         conn.close()
