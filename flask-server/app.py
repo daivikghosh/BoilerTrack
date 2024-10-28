@@ -934,6 +934,42 @@ def view_claim(item_id):
         return jsonify({'error': 'Item not found'}), 404
 
 
+@app.route('/individual-request-staff/<int:claim_id>/approve', methods=['POST'])
+def approve_claim(claim_id):
+    conn = create_connection_items(CLAIMS_DB)
+    cursor = conn.cursor()
+    try:
+        # Update claim status to 'approved'
+        cursor.execute("UPDATE CLAIMREQUETS SET ClaimStatus = 'approved' WHERE ItemID = ?", (claim_id,))
+        
+        # Remove the claim from the claim requests table
+        cursor.execute("DELETE FROM CLAIMREQUETS WHERE ItemID = ?", (claim_id,))
+        
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Claim approved and item removed successfully'}), 200
+    except sqlite3.Error as e:
+        return jsonify({'error': 'Failed to approve claim and remove item'}), 500
+    finally:
+        conn.close()
+
+# Route to reject a claim request
+@app.route('/individual-request-staff/<int:claim_id>/reject', methods=['POST'])
+def reject_claim(claim_id):
+    rationale = request.json.get('rationale', '')  # Get the rationale from the request
+    conn = create_connection_items(CLAIMS_DB)
+    cursor = conn.cursor()
+    try:
+        # Update claim status to 'rejected' and store the rationale
+        cursor.execute("UPDATE CLAIMREQUETS SET ClaimStatus = 'rejected', RejectRationale = ? WHERE ItemID = ?", (rationale, claim_id))
+
+        #cursor.execute("DELETE FROM CLAIMREQUETS WHERE ItemID = ?", (claim_id,))
+        conn.commit()
+        return jsonify({'message': 'Claim rejected and rationale saved'}), 200
+    except sqlite3.Error as e:
+        return jsonify({'error': 'Failed to reject claim and save rationale'}), 500
+    finally:
+        conn.close()
 
 
 

@@ -8,6 +8,7 @@ const IndividualClaimView = () => {
   const [claim, setClaim] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [rationale, setRationale] = useState("");
   const navigate = useNavigate(); // Initialize useNavigate for routing
 
   useEffect(() => {
@@ -40,10 +41,13 @@ const IndividualClaimView = () => {
 
   const handleReject = async () => {
     try {
-      // Make an API call to reject the claim request
-      await axios.post(`/individual-request-staff/${claimId}/reject`);
-      alert("Claim rejected successfully!");
-      navigate("/all-request-staff"); // Navigate back to the claim list
+      if (!rationale) {
+        alert("Please provide a rationale for rejection.");
+        return;
+      }
+      await axios.post(`/individual-request-staff/${claimId}/reject`, { rationale });
+      alert("Claim rejected with rationale!");
+      navigate("/all-request-staff");
     } catch (err) {
       console.error("Error rejecting claim:", err);
       alert("Failed to reject the claim. Please try again.");
@@ -96,6 +100,12 @@ const IndividualClaimView = () => {
             <button className="approve-button" onClick={handleApprove}>
               Approve
             </button>
+            <textarea
+              placeholder="Provide rationale for rejection..."
+              value={rationale}
+              onChange={(e) => setRationale(e.target.value)}  // Capture rationale input
+              className="rationale-textarea"
+            ></textarea>
             <button className="reject-button" onClick={handleReject}>
               Reject
             </button>

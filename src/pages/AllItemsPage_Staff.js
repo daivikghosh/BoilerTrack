@@ -200,6 +200,10 @@ function AllItemsPage() {
           Add New Item
       </Link>
 
+      <Link to="/all-request-staff" className="claim-request-view-button">
+          All Claim Requests
+      </Link>
+
       <div className="main-content">
         <FilterPane onFilterChange={handleFilterChange} />
 
