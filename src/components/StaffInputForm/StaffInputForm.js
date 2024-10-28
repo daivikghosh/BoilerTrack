@@ -53,6 +53,21 @@ function StaffInputForm() {
             return; // Stop submission if validation fails
         }
 
+        try {
+            const checkResponse = await axios.post('/check-lost-item-request', formData, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (checkResponse.data.matchFound) {
+                alert(checkResponse.data.message);
+            } else {
+                alert(checkResponse.data.message);
+            }
+        } catch (error) {
+            console.error('There was an error checking for lost item requests!', error);
+            return;
+        }
+
         const data = new FormData();
         data.append('image', selectedFile);
         for (let key in formData) {

@@ -342,7 +342,45 @@ def update_lost_item(item_id):
         return jsonify({'message': 'Lost item request updated successfully'}), 200
     except sqlite3.Error as e:
         return jsonify({'error': f'Failed to update lost item request in the database: {str(e)}'}), 500
-
+    
+@app.route('/check-lost-item-request', methods=['POST'])
+def check_lost_item_request():
+    data = request.get_json()
+    
+    # Extract item details from the request
+    item_name = data.get('itemName')
+    description = data.get('description')
+    location_lost = data.get('foundAt')  # Assuming `foundAt` is equivalent to `LocationLost`
+    
+    # Connect to LostItemRequest.db
+    lost_item_db = os.path.join(os.path.dirname(base_dir), 'databases', 'LostItemRequest.db')
+    conn = sqlite3.connect(lost_item_db)
+    cursor = conn.cursor()
+    
+    # Query to find a matching item in the LostItems table
+    cursor.execute("""
+        SELECT ItemID FROM LostItems
+        WHERE ItemName = ? AND Description = ? AND LocationLost = ? AND status = 'pending'
+    """, (item_name, description, location_lost))
+    
+    matching_item = cursor.fetchone()
+    
+    if matching_item:
+        # If a match is found, update its status to "in review"
+        cursor.execute("""
+            UPDATE LostItems
+            SET status = 'in review'
+            WHERE ItemID = ?
+        """, (matching_item[0],))
+        conn.commit()
+        
+        # Close the connection and return a response
+        conn.close()
+        return jsonify({'matchFound': True, 'message': 'Matching lost item found and updated to "in review".'}), 200
+    else:
+        # No match found, close the connection and return a response
+        conn.close()
+        return jsonify({'matchFound': False, 'message': 'No matching lost item request found.'}), 200
 
 
 
