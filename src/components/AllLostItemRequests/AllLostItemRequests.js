@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import './AllLostItemRequests.css';  // Import the CSS file for styling
-import { Link } from 'react-router-dom'; 
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import "./AllLostItemRequests.css"; // Import the CSS file for styling
+import { Link } from "react-router-dom";
 
 const AllLostItemRequests = () => {
   const [lostItems, setLostItems] = useState([]);
@@ -12,12 +12,12 @@ const AllLostItemRequests = () => {
   useEffect(() => {
     const fetchLostItems = async () => {
       try {
-        const response = await axios.get('/lost-item-requests');  // Call the Flask API
+        const response = await axios.get("/lost-item-requests"); // Call the Flask API
         setLostItems(response.data);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching lost items:', error);
-        setError('Error fetching lost item requests.');
+        console.error("Error fetching lost items:", error);
+        setError("Error fetching lost item requests.");
         setLoading(false);
       }
     };
@@ -42,16 +42,22 @@ const AllLostItemRequests = () => {
             <li key={item.ItemID} className="lost-item-card">
               <div className="lost-item-details">
                 <h3>{item.ItemName}</h3>
-                <p><strong>Description:</strong> {item.Description}</p>
-                <p><strong>Date Lost:</strong> {item.DateLost}</p>
-                <p><strong>Location:</strong> {item.LocationLost}</p>
-                <p><strong>Status:</strong> {item.status}</p>
-                
+                <p>
+                  <strong>Description:</strong> {item.Description}
+                </p>
+                <p>
+                  <strong>Date Lost:</strong> {item.DateLost}
+                </p>
+                <p>
+                  <strong>Location:</strong> {item.LocationLost}
+                </p>
+                <p>
+                  <strong>Status:</strong> {item.status}
+                </p>
+
                 <Link to={`/edit-lost-item/${item.ItemID}`}>
                   <button className="edit-button">Edit</button>
                 </Link>
-                
-                
               </div>
             </li>
           ))}
