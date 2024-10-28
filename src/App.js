@@ -20,6 +20,9 @@ import AllLostItemRequests from "./components/AllLostItemRequests/AllLostItemReq
 import EditLostItemRequest from "./components/EditLostItemRequest/EditLostItemRequest.js";
 import PasswordChangeForm from "./components/PasswordChangeForm/PasswordChangeForm.js";
 import ListViewClaimRequests from "./components/ViewAllClaimsStaff/ViewAllClaimsStaff.js";
+import IndividualClaimView from "./components/ViewAllClaimsStaff/ClaimViewStaff.js";
+import DisputeClaimForm from "./components/DisputeClaimForm/DisputeClaimForm.js";
+
 const App = () => {
   return (
     <Router>
@@ -52,6 +55,7 @@ const App = () => {
         <Route path="all-items-staff" element={<AllItemsPage_Staff />} />
         <Route path="ClaimRequests" element={<ViewClaimRequests />} />{" "}
         {/* Add this route */}
+        <Route path="/dispute/:id" element={<DisputeClaimForm />} />
         <Route path="/notifications" element={<NotificationTab />} />
         <Route path="/report-lost-item" element={<LostItemForm />} />
         <Route path="/Preregistered-items" element={<ViewPreRegItems />} />
@@ -65,6 +69,10 @@ const App = () => {
         />
         <Route path="/resetpassword" element={<PasswordChangeForm />} />
         <Route path="/all-request-staff" element={<ListViewClaimRequests />} />
+        <Route
+          path="/individual-request-staff/:claimId"
+          element={<IndividualClaimView />}
+        />
       </Routes>
     </Router>
   );

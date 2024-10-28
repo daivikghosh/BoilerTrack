@@ -285,7 +285,7 @@ def get_lost_item_requests():
 
     # Query for lost items based on user email
     cursor.execute(
-        "SELECT ItemID, ItemName, Description, DateLost, LocationLost FROM LostItems WHERE userEmail = ?", (user_email,))
+        "SELECT ItemID, ItemName, Description, DateLost, LocationLost, status FROM LostItems WHERE userEmail = ?", (user_email,))
     items = cursor.fetchall()
 
     # Close the database connection
@@ -297,7 +297,8 @@ def get_lost_item_requests():
         'ItemName': item[1],
         'Description': item[2],
         'DateLost': item[3],
-        'LocationLost': item[4]
+        'LocationLost': item[4],
+        'status': item[5]
     } for item in items]
 
     # Return the items as JSON
@@ -809,16 +810,16 @@ def send_request():
                           sender="shloksbairagi07@gmail.com",
                           recipients=[globalUSEREMAIL, staffemail])
 
-            msg.html = f"""
+            msg.html = """
             <html>
                 <body>
-                    <p>{emailstr1}</p>
+                    <p>{}</p>
                     <p>Image uploaded as proof of ownership:</p>
                     <img src="cid:image1">
-                    <p>{emailstr2}</p>
+                    <p>{}</p>
                 </body>
             </html>
-            """
+            """.format(emailstr1.replace('\n', '<br>'), emailstr2.replace('\n', '<br>'))
 
             # Attach the image
             with open(file_path, 'rb') as fp:
@@ -937,6 +938,16 @@ def get_all_claimrequests_staff():
     return claim_requests
 
 
+def get_claim_by_id(item_id):
+    """Fetch a single item from the database by its ID."""
+    conn = create_connection_items(CLAIMS_DB)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM CLAIMREQUETS WHERE ItemID = ?", (item_id,))
+    claim_request = cursor.fetchone()
+    conn.close()
+    return claim_request
+
+
 @ app.route('/allclaim-requests-staff', methods=['GET'])
 def view_all_requests():
     app.logger.info("Fetching all claims")
@@ -965,6 +976,79 @@ def view_all_requests():
         })
 
     return jsonify(claims_list), 200
+
+
+@ app.route('/individual-request-staff/<int:item_id>', methods=['GET'])
+def view_claim(item_id):
+    app.logger.info(f"Fetching details for claim for item ID: {item_id}")
+    claim = get_claim_by_id(item_id)
+    item = get_item_by_id(item_id)
+
+    if claim:
+        # Check if the image is bytes, None, or already present in the correct format
+        if isinstance(claim[2], bytes):  # Image exists and is in bytes
+            image_data = base64.b64encode(claim[2]).decode('utf-8')
+        elif claim[2] is None:  # Image is NULL or None, use the placeholder
+            image_data = get_image_base64(DEFAULT_IMAGE_PATH)
+        else:
+            image_data = claim[2]  # If already in the correct format
+
+        claim_data = {
+            'ItemID': item[0],
+            'ItemName': item[1],
+            'LocationTurnedIn': item[5],
+            'Comments': claim[1],
+            'UserEmail': claim[3],
+            'PhotoProof': image_data
+        }
+        return jsonify(claim_data), 200
+    else:
+        app.logger.warning(f"Claim with ID {item_id} not found")
+        return jsonify({'error': 'Item not found'}), 404
+
+
+@app.route('/individual-request-staff/<int:claim_id>/approve', methods=['POST'])
+def approve_claim(claim_id):
+    conn = create_connection_items(CLAIMS_DB)
+    cursor = conn.cursor()
+    try:
+        # Update claim status to 'approved'
+        cursor.execute(
+            "UPDATE CLAIMREQUETS SET ClaimStatus = 'approved' WHERE ItemID = ?", (claim_id,))
+
+        # Remove the claim from the claim requests table
+        cursor.execute(
+            "DELETE FROM CLAIMREQUETS WHERE ItemID = ?", (claim_id,))
+
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Claim approved and item removed successfully'}), 200
+    except sqlite3.Error as e:
+        return jsonify({'error': 'Failed to approve claim and remove item'}), 500
+    finally:
+        conn.close()
+
+# Route to reject a claim request
+
+
+@app.route('/individual-request-staff/<int:claim_id>/reject', methods=['POST'])
+def reject_claim(claim_id):
+    # Get the rationale from the request
+    rationale = request.json.get('rationale', '')
+    conn = create_connection_items(CLAIMS_DB)
+    cursor = conn.cursor()
+    try:
+        # Update claim status to 'rejected' and store the rationale
+        cursor.execute(
+            "UPDATE CLAIMREQUETS SET ClaimStatus = 'rejected', RejectRationale = ? WHERE ItemID = ?", (rationale, claim_id))
+
+        # cursor.execute("DELETE FROM CLAIMREQUETS WHERE ItemID = ?", (claim_id,))
+        conn.commit()
+        return jsonify({'message': 'Claim rejected and rationale saved'}), 200
+    except sqlite3.Error as e:
+        return jsonify({'error': 'Failed to reject claim and save rationale'}), 500
+    finally:
+        conn.close()
 
 
 if __name__ == '__main__':

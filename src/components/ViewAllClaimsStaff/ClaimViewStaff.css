@@ -1,0 +1,89 @@
+.individual-claim-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.individual-claim-card {
+  display: flex;
+  background-color: white;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 800px; /* Increase max-width for more space */
+  width: 100%;
+}
+
+.image-container {
+  text-align: left;
+  margin-bottom: 1rem;
+}
+
+.image-caption {
+  margin-bottom: 0.5rem;
+}
+
+.individual-claim-image {
+  width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.claim-details-container {
+  flex: 1; /* Allow details to take up remaining space */
+  display: flex;
+  flex-direction: column;
+}
+
+.individual-claim-header {
+  text-align: left;
+  margin-bottom: 1rem;
+}
+
+.claim-details {
+  margin-bottom: 1rem;
+}
+
+.claim-details p {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.staff-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+.approve-button,
+.reject-button {
+  padding: 0.8rem;
+  width: 45%;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  border: none;
+  color: white;
+  transition: background-color 0.3s ease;
+}
+
+.approve-button {
+  background-color: #4caf50;
+}
+
+.approve-button:hover {
+  background-color: #45a049;
+}
+
+.reject-button {
+  background-color: #f44336;
+}
+
+.reject-button:hover {
+  background-color: #e53935;
+}
