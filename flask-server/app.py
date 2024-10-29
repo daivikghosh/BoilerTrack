@@ -3,20 +3,20 @@ import os
 import sqlite3
 import base64
 import time
+from datetime import datetime
+from timeit import default_timer as timer
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from werkzeug.utils import secure_filename
 
-from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
-from timeit import default_timer as timer
 from apscheduler.triggers.cron import CronTrigger
 
 from database_cleaner import delete_deleted_items
-from AddFoundItemPic import *
-from AddClaimRequest import *
+from AddFoundItemPic import insertItem
+from AddClaimRequest import insertclaim
 
 
 app = Flask(__name__)
@@ -57,6 +57,11 @@ mail = Mail(app)
 
 
 def create_connection_users():
+    """
+    Creates a connection to the SQLite database containing user accounts.
+
+    :return: The database connection object.
+    """
     conn = None
     try:
         conn = sqlite3.connect(USERS_DB)
@@ -66,6 +71,12 @@ def create_connection_users():
 
 
 def create_connection_items(db_path):
+    """
+    Creates a connection to the SQLite database containing item listings.
+
+    :param db_path: The path to the SQLite database file.
+    :return: The database connection object.
+    """
     conn = None
     try:
         conn = sqlite3.connect(db_path)
@@ -75,6 +86,12 @@ def create_connection_items(db_path):
 
 
 def allowed_file(filename):
+    """
+    Checks if the provided filename has an extension that is in the ALLOWED_EXTENSIONS set.
+
+    :param filename: The name of the file to check.
+    :return: True if the file's extension is allowed, False otherwise.
+    """
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -113,17 +130,24 @@ def get_all_pre_registered_items():
 
 
 def clear_deleted_entries():
+    """
+    Clears deleted entries from the Users and FoundItems databases.
+
+    This function removes any records marked as deleted in both the user listings
+    and found items tables. It logs the start and end time of each operation for
+    debugging purposes.
+    """
     app.logger.info(
-        f"Clearing deleted items from database at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        "Clearing deleted items from database at %s", time.strftime('%Y-%m-%d %H:%M:%S'))
     start = timer()
     delete_deleted_items(USERS_DB, "UserListing")
     end = timer()
-    app.logger.info(f"Clearing deleted users took {end-start}")
+    app.logger.info("Clearing deleted users took %.2f seconds", (end-start))
 
     start = timer()
     delete_deleted_items(ITEMS_DB, "FOUNDITEMS")
     end = timer()
-    app.logger.info(f"Clearing deleted items took {end-start}")
+    app.logger.info("Clearing deleted items took %.2f seconds", (end - start))
 
 
 # initialize scheduler for deleted items clearing task
@@ -154,20 +178,34 @@ def get_item_by_id(item_id):
     return item
 
 
-'''
-Do not put app routes above this line
-_______________________________________________________________________________
-'''
+# Do not put app routes above this line
+# _______________________________________________________________________________
 
 
 @ app.route('/')
 def home():
+    """
+    Home route for the application.
+
+    Logs a message when accessed and returns a welcome message.
+
+    :return: A JSON response with a welcome message.
+    """
     app.logger.info("Accessed root route")
     return jsonify({"message": "Welcome to the Lost and Found API"}), 200
 
 
 @ app.route('/pre-registered-items', methods=['GET'])
 def get_pre_registered_items():
+    """
+    Fetches pre-registered items for the user.
+
+    This function retrieves all pre-registered items associated with a specific
+    email address and formats them into a JSON response. It handles image data
+    such as Photo and QR code images, converting binary data to base64 strings.
+
+    :return: A JSON response containing details of the pre-registered items.
+    """
     app.logger.info(
         "Fetching pre-registered items for email: %(gu_email)s", {"gu_email": GLOBAL_USER_EMAIL})
 
@@ -176,7 +214,7 @@ def get_pre_registered_items():
         return jsonify({'error': 'No user email provided'}), 400
 
     pre_registered_items = get_all_pre_registered_items()
-    app.logger.info(f"Found {len(pre_registered_items)} pre-registered items")
+    app.logger.info("Found %s pre-registered items", len(pre_registered_items))
 
     # Prepare the result to be returned as JSON
     result = []
@@ -215,6 +253,16 @@ def get_pre_registered_items():
 
 @ app.route('/lost-item-request', methods=['POST', 'OPTIONS'])
 def add_lost_item_request():
+    """
+    Adds a lost item request to the database.
+
+    This function handles both POST and OPTIONS requests. For POST, it adds
+    a new lost item request to the LostItemRequest.db database after validating
+    that all required fields are present in the JSON data received from the client.
+    For OPTIONS, it returns a CORS preflight response with a 200 status code.
+
+    :return: A JSON response indicating success or failure of the operation.
+    """
     if request.method == 'OPTIONS':
         # Handle preflight request
         return jsonify({'message': 'CORS preflight'}), 200
@@ -225,11 +273,11 @@ def add_lost_item_request():
     try:
         data = request.get_json()
     except Exception as e:
-        app.logger.error(f"Error parsing JSON: {e}")
+        app.logger.error("Error parsing JSON: %s", e)
         return jsonify({'error': 'Invalid data format. JSON expected.'}), 400
 
     # Log the received data for debugging
-    app.logger.debug(f"Data received: {data}")
+    app.logger.debug("Data received: %s", data)
 
     # Extract item details
     item_name = data.get('itemName')
@@ -264,13 +312,14 @@ def add_lost_item_request():
 
         return jsonify({'message': 'Lost item request added successfully'}), 201
     except sqlite3.Error as e:
-        app.logger.error(f"Database error: {e}")
+        app.logger.error("Database error: %s", e)
         return jsonify({'error': 'Failed to add lost item request to the database'}), 500
 
 
 @ app.route('/lost-item-requests', methods=['GET'])
 def get_lost_item_requests():
     global GLOBAL_USER_EMAIL  # Assuming this stores the current user's email
+    # this variable is not assigned
     user_email = GLOBAL_USER_EMAIL
 
     # Check if the user email is set
@@ -299,7 +348,7 @@ def get_lost_item_requests():
         'DateLost': item[3],
         'LocationLost': item[4],
         'status': item[5],
-        'ItemMatchID' : item[6]
+        'ItemMatchID': item[6]
     } for item in items]
 
     # Return the items as JSON
@@ -365,30 +414,33 @@ def update_lost_item(item_id):
         return jsonify({'message': 'Lost item request updated successfully'}), 200
     except sqlite3.Error as e:
         return jsonify({'error': f'Failed to update lost item request in the database: {str(e)}'}), 500
-    
+
+
 @app.route('/check-lost-item-request', methods=['POST'])
 def check_lost_item_request():
     data = request.get_json()
-    
+
     # Extract item details from the request
     item_name = data.get('itemName')
     description = data.get('description')
-    location_lost = data.get('foundAt')  # Assuming `foundAt` is equivalent to `LocationLost`
+    # Assuming `foundAt` is equivalent to `LocationLost`
+    location_lost = data.get('foundAt')
     found_item_id = data.get('foundItemId')
-    
+
     # Connect to LostItemRequest.db
-    lost_item_db = os.path.join(os.path.dirname(base_dir), 'databases', 'LostItemRequest.db')
+    lost_item_db = os.path.join(os.path.dirname(
+        base_dir), 'databases', 'LostItemRequest.db')
     conn = sqlite3.connect(lost_item_db)
     cursor = conn.cursor()
-    
+
     # Query to find a matching item in the LostItems table
     cursor.execute("""
         SELECT ItemID FROM LostItems
         WHERE ItemName = ? AND Description = ? AND LocationLost = ? AND status = 'pending'
     """, (item_name, description, location_lost))
-    
+
     matching_item = cursor.fetchone()
-    
+
     if matching_item:
         matching_item_id = matching_item[0]
 
@@ -407,15 +459,16 @@ def check_lost_item_request():
         conn.close()
         return jsonify({'matchFound': False, 'message': 'No matching lost item request found.'}), 200
 
-    
+
 @app.route('/update-item-match', methods=['PUT'])
 def update_item_match():
     data = request.get_json()
     matching_item_id = data.get('matchingItemId')
     found_item_id = data.get('foundItemId')
-    
+
     # Connect to LostItemRequest.db
-    lost_item_db = os.path.join(os.path.dirname(base_dir), 'databases', 'LostItemRequest.db')
+    lost_item_db = os.path.join(os.path.dirname(
+        base_dir), 'databases', 'LostItemRequest.db')
     conn = sqlite3.connect(lost_item_db)
     cursor = conn.cursor()
 
@@ -427,8 +480,10 @@ def update_item_match():
     """, (found_item_id, matching_item_id))
     conn.commit()
     conn.close()
-    
+
     return jsonify({'message': 'ItemMatchID updated successfully'}), 200
+
+
 @ app.route('/items', methods=['POST'])
 def add_item():
     app.logger.info("Received POST request to /items")
@@ -460,7 +515,7 @@ def add_item():
 
         try:
             new_item_id = insertItem(item_name, color, brand, found_at, turned_in_at,
-                       description, file_path, 1, datetime.today().strftime('%Y-%m-%d'))
+                                     description, file_path, 1, datetime.today().strftime('%Y-%m-%d'))
 
             app.logger.info(
                 f"New item added: {item_name}, {color}, {brand}, {found_at}, {turned_in_at}, {description}")
@@ -469,7 +524,7 @@ def add_item():
             # Remove the file after it's been inserted into the database
             os.remove(file_path)
 
-            return jsonify({'message': 'Item added successfully', 'filename': filename, 'ItemID' : new_item_id}), 200
+            return jsonify({'message': 'Item added successfully', 'filename': filename, 'ItemID': new_item_id}), 200
         except Exception as e:
             app.logger.error(f"Error inserting item: {str(e)}")
             return jsonify({'error': 'Failed to add item to database'}), 500
@@ -592,8 +647,8 @@ def user_profile():
 def password_reset():
     """
     Resets a user's password by verifying the old password and updating it with a new one.
-    
-    The function first checks if an email is provided. If not, it returns an error. 
+
+    The function first checks if an email is provided. If not, it returns an error.
     Then, it verifies that the old password matches the one stored in the database for the given email.
     If correct, the new password is set. Otherwise, appropriate errors are returned.
     In case of success, a confirmation message is returned.
@@ -646,10 +701,10 @@ def password_reset():
 
 
 @ app.route('/delete_account', methods=['POST'])
-def deleteAcct():
+def delete_acct():
     """
     Deletes a user's account by verifying the email and password provided.
-    
+
     The function first checks if an email is provided. If not, it returns an error.
     It then verifies that the password matches the one stored in the database for the given email.
     If correct, the user's 'isDeleted' field is set to 1, marking the account as deleted.
