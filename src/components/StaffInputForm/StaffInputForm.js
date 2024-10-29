@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './StaffInputForm.css';
 
@@ -13,60 +13,35 @@ function StaffInputForm() {
         turnedInAt: '',
         description: '',
     });
-
     const [selectedFile, setSelectedFile] = useState(null);
     const [errors, setErrors] = useState({});
 
-    const handleFileChange = (event) => {
-        setSelectedFile(event.target.files[0]);
-    };
-
+    const handleFileChange = (event) => setSelectedFile(event.target.files[0]);
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-        setErrors({ ...errors, [e.target.name]: '' }); // Clear the error when the user types
+        setErrors({ ...errors, [e.target.name]: '' });
     };
 
     const validateForm = () => {
         let formErrors = {};
         let isValid = true;
-
-        // Check if all fields are filled
         for (let key in formData) {
             if (!formData[key]) {
                 formErrors[key] = 'This field is required';
                 isValid = false;
             }
         }
-
         if (!selectedFile) {
             formErrors.image = 'An image file is required';
             isValid = false;
         }
-
         setErrors(formErrors);
         return isValid;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!validateForm()) {
-            return; // Stop submission if validation fails
-        }
-
-        try {
-            const checkResponse = await axios.post('/check-lost-item-request', formData, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-            
-            if (checkResponse.data.matchFound) {
-                alert(checkResponse.data.message);
-            } else {
-                alert(checkResponse.data.message);
-            }
-        } catch (error) {
-            console.error('There was an error checking for lost item requests!', error);
-            return;
-        }
+        if (!validateForm()) return;
 
         const data = new FormData();
         data.append('image', selectedFile);
@@ -78,14 +53,27 @@ function StaffInputForm() {
             const response = await axios.post('/items', data, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            console.log(response.data);
-            alert('Item added successfully!');
+
+            const newItemId = response.data.ItemID; // Retrieve new item ID from response
+
+            // Now check for a lost item match after adding the item
+            const checkResponse = await axios.post('/check-lost-item-request', { ...formData, foundItemId: newItemId }, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (checkResponse.data.matchFound) {
+                alert(checkResponse.data.message);
+            } else {
+                alert(checkResponse.data.message);
+            }
+
+            // Reset form
             setFormData({ itemName: '', color: '', brand: '', foundAt: '', turnedInAt: '', description: '' });
             setSelectedFile(null);
-            setErrors({}); // Clear errors after successful submission
+            setErrors({});
             navigate('/all-items-staff');
         } catch (error) {
-            console.error('There was an error adding the item!', error);
+            console.error('Error processing the item!', error);
         }
     };
 
