@@ -590,6 +590,16 @@ def user_profile():
 
 @ app.route('/reset_password', methods=['POST'])
 def password_reset():
+    """
+    Resets a user's password by verifying the old password and updating it with a new one.
+    
+    The function first checks if an email is provided. If not, it returns an error. 
+    Then, it verifies that the old password matches the one stored in the database for the given email.
+    If correct, the new password is set. Otherwise, appropriate errors are returned.
+    In case of success, a confirmation message is returned.
+
+    :return: JSON response indicating success or failure
+    """
     try:
         data = request.get_json()
         email = data.get('email')
@@ -637,13 +647,26 @@ def password_reset():
 
 @ app.route('/delete_account', methods=['POST'])
 def deleteAcct():
+    """
+    Deletes a user's account by verifying the email and password provided.
+    
+    The function first checks if an email is provided. If not, it returns an error.
+    It then verifies that the password matches the one stored in the database for the given email.
+    If correct, the user's 'isDeleted' field is set to 1, marking the account as deleted.
+    Otherwise, appropriate errors are returned.
+    In case of success, a confirmation message is returned.
+
+    :return: JSON response indicating success or failure
+    """
     try:
         data = request.get_json()
         email = data.get('email')
         password = data.get('password')
+
         if email:
             conn = create_connection_users()
             cursor = conn.cursor()
+
             cursor.execute(
                 '''SELECT * FROM UserListing WHERE Email = ? AND isDeleted = ?''', (email, 0))
             row = cursor.fetchone()
@@ -651,11 +674,11 @@ def deleteAcct():
                 logging.warning(f"User not found: {email}")
                 return jsonify({'error': 'Incorrect password'}), 404
             if row[2] != password:
-                logging.warning(f"incorrect password for user: {email}")
+                logging.warning(f"Incorrect password for user: {email}")
                 return jsonify({'error': 'Incorrect password'}), 401
 
             cursor.execute(
-                "UPDATE UserListing SET isDeleted = 1 WHERE email = '%s'" % (email))
+                "UPDATE UserListing SET isDeleted = 1 WHERE email = ?", (email,))
             conn.commit()
             if cursor.rowcount == 0:
                 logging.warning(f"No rows updated for email: {email}")
