@@ -252,8 +252,8 @@ def add_lost_item_request():
 
         # Insert the lost item request into the database
         cursor.execute('''
-            INSERT INTO LostItems (ItemName, Description, DateLost, LocationLost, userEmail)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO LostItems (ItemName, Description, DateLost, LocationLost, userEmail, ItemMatchID)
+            VALUES (?, ?, ?, ?, ?, -1)
         ''', (item_name, description, date_lost, location_lost, user_email))
 
         conn.commit()
@@ -285,7 +285,7 @@ def get_lost_item_requests():
 
     # Query for lost items based on user email
     cursor.execute(
-        "SELECT ItemID, ItemName, Description, DateLost, LocationLost, status FROM LostItems WHERE userEmail = ?", (user_email,))
+        "SELECT ItemID, ItemName, Description, DateLost, LocationLost, status, ItemMatchID FROM LostItems WHERE userEmail = ?", (user_email,))
     items = cursor.fetchall()
 
     # Close the database connection
@@ -298,7 +298,8 @@ def get_lost_item_requests():
         'Description': item[2],
         'DateLost': item[3],
         'LocationLost': item[4],
-        'status': item[5]
+        'status': item[5],
+        'ItemMatchID' : item[6]
     } for item in items]
 
     # Return the items as JSON
@@ -364,8 +365,70 @@ def update_lost_item(item_id):
         return jsonify({'message': 'Lost item request updated successfully'}), 200
     except sqlite3.Error as e:
         return jsonify({'error': f'Failed to update lost item request in the database: {str(e)}'}), 500
+    
+@app.route('/check-lost-item-request', methods=['POST'])
+def check_lost_item_request():
+    data = request.get_json()
+    
+    # Extract item details from the request
+    item_name = data.get('itemName')
+    description = data.get('description')
+    location_lost = data.get('foundAt')  # Assuming `foundAt` is equivalent to `LocationLost`
+    found_item_id = data.get('foundItemId')
+    
+    # Connect to LostItemRequest.db
+    lost_item_db = os.path.join(os.path.dirname(base_dir), 'databases', 'LostItemRequest.db')
+    conn = sqlite3.connect(lost_item_db)
+    cursor = conn.cursor()
+    
+    # Query to find a matching item in the LostItems table
+    cursor.execute("""
+        SELECT ItemID FROM LostItems
+        WHERE ItemName = ? AND Description = ? AND LocationLost = ? AND status = 'pending'
+    """, (item_name, description, location_lost))
+    
+    matching_item = cursor.fetchone()
+    
+    if matching_item:
+        matching_item_id = matching_item[0]
 
+        # Update status to "in review" and set ItemMatchID for the matched item
+        cursor.execute("""
+            UPDATE LostItems
+            SET status = 'in review', ItemMatchID = ?
+            WHERE ItemID = ?
+        """, (found_item_id, matching_item_id))
+        conn.commit()
 
+        conn.close()
+        # Return matching_item_id to the frontend for further processing
+        return jsonify({'matchFound': True, 'message': 'Matching lost item found and updated to "in review".', 'matchingItemId': matching_item_id}), 200
+    else:
+        conn.close()
+        return jsonify({'matchFound': False, 'message': 'No matching lost item request found.'}), 200
+
+    
+@app.route('/update-item-match', methods=['PUT'])
+def update_item_match():
+    data = request.get_json()
+    matching_item_id = data.get('matchingItemId')
+    found_item_id = data.get('foundItemId')
+    
+    # Connect to LostItemRequest.db
+    lost_item_db = os.path.join(os.path.dirname(base_dir), 'databases', 'LostItemRequest.db')
+    conn = sqlite3.connect(lost_item_db)
+    cursor = conn.cursor()
+
+    # Update the ItemMatchID for the matched item
+    cursor.execute("""
+        UPDATE LostItems
+        SET ItemMatchID = ?
+        WHERE ItemID = ?
+    """, (found_item_id, matching_item_id))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'message': 'ItemMatchID updated successfully'}), 200
 @ app.route('/items', methods=['POST'])
 def add_item():
     app.logger.info("Received POST request to /items")
@@ -396,7 +459,7 @@ def add_item():
         description = request.form.get('description')
 
         try:
-            insertItem(item_name, color, brand, found_at, turned_in_at,
+            new_item_id = insertItem(item_name, color, brand, found_at, turned_in_at,
                        description, file_path, 1, datetime.today().strftime('%Y-%m-%d'))
 
             app.logger.info(
@@ -406,7 +469,7 @@ def add_item():
             # Remove the file after it's been inserted into the database
             os.remove(file_path)
 
-            return jsonify({'message': 'Item added successfully', 'filename': filename}), 200
+            return jsonify({'message': 'Item added successfully', 'filename': filename, 'ItemID' : new_item_id}), 200
         except Exception as e:
             app.logger.error(f"Error inserting item: {str(e)}")
             return jsonify({'error': 'Failed to add item to database'}), 500

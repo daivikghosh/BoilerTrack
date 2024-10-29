@@ -44,7 +44,9 @@ def insertItem(item_name, color, brand, location_found, location_turned_in, desc
                       location_turned_in, description, photo_bin, item_status, date)
         cursor.execute(sqlite_insert_query, data_tuple)
         connection.commit()
+        new_item_id = cursor.lastrowid
         print("Item inserted into db successfully")
+        return new_item_id
 
     except sqlite3.Error as error:
         print("Failed to insert data into sqlite table", error)

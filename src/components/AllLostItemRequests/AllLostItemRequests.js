@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import "./AllLostItemRequests.css"; // Import the CSS file for styling
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import './AllLostItemRequests.css';
+import { Link } from 'react-router-dom';
 
 const AllLostItemRequests = () => {
   const [lostItems, setLostItems] = useState([]);
@@ -58,6 +58,13 @@ const AllLostItemRequests = () => {
                 <Link to={`/edit-lost-item/${item.ItemID}`}>
                   <button className="edit-button">Edit</button>
                 </Link>
+                
+                {/* Conditionally render the matched item button */}
+                {item.ItemMatchID > -1 && (
+                  <Link to={`/item-view-student/${item.ItemMatchID}`}>
+                    <button className="view-matched-item-button">View Matched Item</button>
+                  </Link>
+                )}
               </div>
             </li>
           ))}
