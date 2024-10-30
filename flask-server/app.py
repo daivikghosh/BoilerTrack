@@ -1089,6 +1089,63 @@ def get_claim_by_id(item_id):
     return claim_request
 
 
+
+
+
+
+def get_all_claimrequests_student(email):
+    """Fetch all claim requests from the ClaimRequest database by email"""
+    conn = create_connection_items(CLAIMS_DB)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM CLAIMREQUETS WHERE UserEmail = ?", (email,))
+    claim_requests = cursor.fetchall()
+    conn.close()
+    return claim_requests
+
+@ app.route('/allclaim-requests-student/<string:emailId>', methods=['GET'])
+def view_all_requests_student(emailId):
+    app.logger.info("Fetching all claims")
+    id = emailId
+    claims = get_all_claimrequests_student(id)
+    claims_list = []
+
+    for item in claims:
+
+        if isinstance(item[2], bytes):  # Photo exists and is in bytes
+            photo_data = base64.b64encode(item[2]).decode('utf-8')
+        elif item[2] is None:  # Photo is NULL or None, use the placeholder
+            photo_data = get_image_base64(DEFAULT_IMAGE_PATH)
+        else:
+            photo_data = item[2]
+
+        item_deets = get_item_by_id(item[0])
+        
+        status = "NA"
+        if (item[4] == 2):
+            status = "Acepted"
+        elif (item[4] == 3):
+            status = "Rejected"
+        else:
+            status = "Pending"
+
+        claims_list.append({
+            'ItemID': item[0],
+            'Comments': item[1],
+            'PhotoProof': photo_data,
+            'ClaimStatus': status,
+            'ItemName': item_deets[1],
+            'LocationTurnedIn': item_deets[5]
+        })
+
+    return jsonify(claims_list), 200
+
+
+
+
+
+
+
+
 @ app.route('/allclaim-requests-staff', methods=['GET'])
 def view_all_requests():
     app.logger.info("Fetching all claims")

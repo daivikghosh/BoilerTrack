@@ -22,6 +22,7 @@ import PasswordChangeForm from "./components/PasswordChangeForm/PasswordChangeFo
 import ListViewClaimRequests from "./components/ViewAllClaimsStaff/ViewAllClaimsStaff.js";
 import IndividualClaimView from "./components/ViewAllClaimsStaff/ClaimViewStaff.js";
 import DisputeClaimForm from "./components/DisputeClaimForm/DisputeClaimForm.js";
+import ListViewClaimRequestsStudent from "./components/ViewAllClaimsStudent/ViewAllClaimsStudent.js";
 
 const App = () => {
   return (
@@ -72,6 +73,10 @@ const App = () => {
         <Route
           path="/individual-request-staff/:claimId"
           element={<IndividualClaimView />}
+        />
+        <Route
+          path="/allclaim-requests-student/:emailId"
+          element={<ListViewClaimRequestsStudent />}
         />
       </Routes>
     </Router>
