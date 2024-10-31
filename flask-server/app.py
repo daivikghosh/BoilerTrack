@@ -680,7 +680,7 @@ def password_reset():
                 return jsonify({'error': 'User not found'}), 404
             if 1 > (datetime.now().timestamp() - dbtime) / 3600:
                 return jsonify({'error': 'Token expired'}), 401
-            print(f"tk: {token}\ndb: {row[1]}")
+
             if token != row[1]:
                 return jsonify({'error': 'Invalid token'}), 401
             new_password = data.get('newPassword')
@@ -692,7 +692,6 @@ def password_reset():
         if not old_password:
 
             rand_tok = str(uuid4())
-            print("token: "+rand_tok)
             timestamp = datetime.now().timestamp()
 
             cursor.execute('''
@@ -707,8 +706,8 @@ def password_reset():
             conn.commit()
             logging.info("token inserted for user %(email)s", {'email': email})
             # Sending an email
-            emailstr1 = f"Hello there<br><br>A new new token has been generated for your recent password reset request:<br><br>Token: {rand_tok}<br>User email: {email}"
-            emailstr2 = f"<br><br>It will be valid for 24 hours, so please use it to reset your password before then.<br><br>Thank You!<br>~BoilerTrack Devs"
+            emailstr1 = f"Hello there!<br><br>A new new token has been generated for your recent password reset request:<br><br>Token: {rand_tok}<br>User email: {email}"
+            emailstr2 = "<br><br>It will be valid for 24 hours, so please use it to reset your password before then.<br><br>Thank You!<br>~BoilerTrack Devs"
 
             msg = Message("BoilerTrack: Password Reset Request",
                           sender="shloksbairagi07@gmail.com",
