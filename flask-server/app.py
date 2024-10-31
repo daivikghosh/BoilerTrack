@@ -1590,6 +1590,69 @@ def reject_claim_more_info(claim_id):
     finally:
         conn.close()
 
+@app.route('/dispute-claim/<int:item_id>', methods=['POST'])
+def dispute_claim(item_id):
+    try:
+        # Connect to the disputes database
+        conn = sqlite3.connect(DISPUTES_DB)
+        cursor = conn.cursor()
+
+        # Fetch the user who initially claimed the item from CLAIMREQUETS
+        claims_conn = sqlite3.connect(CLAIMS_DB)
+        claims_cursor = claims_conn.cursor()
+        claims_cursor.execute("SELECT UserEmail FROM CLAIMREQUETS WHERE ItemID = ?", (item_id,))
+        claimed_by = claims_cursor.fetchone()
+        claims_conn.close()
+
+        # Check if the item was claimed
+        if not claimed_by:
+            return jsonify({"error": "No claim found for this item ID"}), 404
+
+        # The user submitting the dispute
+        dispute_by = GLOBAL_USER_EMAIL
+
+        # Get the form data
+        reason = request.form.get('reason')
+        additional_comments = request.form.get('notes')
+
+        # Check if dispute photo is provided and convert it to binary data
+        dispute_photo = request.files.get('file')
+        if dispute_photo and dispute_photo.filename:
+            # Save the file to the uploads folder
+            filename = secure_filename(dispute_photo.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            dispute_photo.save(file_path)
+
+            # Convert image to binary data
+            with open(file_path, 'rb') as file:
+                image_data = file.read()
+
+        
+        else:
+            return jsonify({"error": "Dispute photo proof is required"}), 400
+
+        # SQL to insert data into ClaimDisputes table
+        insert_query = """
+            INSERT INTO ClaimDisputes (ItemID, ClaimedBy, DisputeBy, Reason, AdditionalComments, DisputePhotoProof)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """
+        # Data to be inserted
+        data_tuple = (item_id, claimed_by[0], dispute_by, reason, additional_comments, image_data)
+
+        # Execute the insert query
+        cursor.execute(insert_query, data_tuple)
+        conn.commit()
+
+        return jsonify({"message": "Dispute claim submitted successfully"}), 201
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return jsonify({"error": "Failed to submit dispute claim"}), 500
+
+    finally:
+        if conn:
+            conn.close()
+
 
 if __name__ == '__main__':
     if not os.path.exists(os.path.dirname(USERS_DB)):

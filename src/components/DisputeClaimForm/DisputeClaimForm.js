@@ -11,6 +11,7 @@ const DisputeClaimForm = () => {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
   const navigate = useNavigate();
 
   // Fake item data for testing
@@ -53,16 +54,26 @@ const DisputeClaimForm = () => {
     setNotes(e.target.value);
   };
 
+  const validateForm = () => {
+    const errors = {};
+    if (!reason.trim()) {
+      errors.reason = "Reason for dispute is required.";
+    }
+    if (!file) {
+      errors.file = "Proof image is required.";
+    }
+    if (!notes.trim()) {
+      errors.notes = "Additional comments are required. Enter 'NA' if none.";
+    }
+    return errors;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!file) {
-      alert("Please upload proof to support your dispute.");
-      return;
-    }
-
-    if (!reason) {
-      alert("Please provide a reason for the dispute.");
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
 
@@ -74,6 +85,7 @@ const DisputeClaimForm = () => {
 
     try {
       const response = await axios.post(`/dispute-claim/${id}`, formData, {
+
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -83,6 +95,7 @@ const DisputeClaimForm = () => {
       setFile(null);
       setReason("");
       setNotes("");
+      setFormErrors({});
       navigate("/all-items");
     } catch (err) {
       console.error("Error submitting dispute:", err);
@@ -131,6 +144,7 @@ const DisputeClaimForm = () => {
             onChange={handleReasonChange}
             maxLength={1000}
           />
+          {formErrors.reason && <p className="error-text">{formErrors.reason}</p>}
           <p className="char-limit">Max. 1000 characters</p>
         </div>
 
@@ -144,20 +158,22 @@ const DisputeClaimForm = () => {
               accept="image/*"
             />
           </label>
+          {formErrors.file && <p className="error-text">{formErrors.file}</p>}
           <div className="file-upload-text">
             {file ? file.name : "Choose file"}
           </div>
         </div>
 
         <div className="notes-section">
-          <label htmlFor="notes">Additional notes (optional)</label>
+          <label htmlFor="notes">Additional comments (NA if none)</label>
           <textarea
             id="notes"
-            placeholder="Any additional information to support your dispute"
+            placeholder="Any additional information to support your dispute (Enter 'NA' if none)"
             value={notes}
             onChange={handleNotesChange}
             maxLength={2000}
           />
+          {formErrors.notes && <p className="error-text">{formErrors.notes}</p>}
           <p className="char-limit">Max. 2000 characters</p>
         </div>
 
