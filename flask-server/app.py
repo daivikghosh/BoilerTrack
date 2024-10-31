@@ -670,10 +670,25 @@ def password_reset():
         conn = create_connection_users()
         cursor = conn.cursor()
 
+        if token:
+            # check if the email is in the second table, and if the timestamp is less than 24 hours old
+            cursor.execute(
+                "SELECT * FROM reset_password WHERE email=?, AND isDeleted = 0", (email))
+            row = cursor.fetchone()
+            if not row:
+                return jsonify({'error': 'Email not found'}), 404
+            if 1 > (datetime.now().timestamp() - row[2]) / 3600:
+                return jsonify({'error': 'Token expired'}), 401
+            if token != row[1]:
+                return jsonify({'error': 'Invalid token'}), 401
+            new_password = data.get('newPassword')
+            cursor.execute('''UPDATE UserListing SET password = ? WHERE Email = ?''',
+                           (new_password, email))
+            conn.commit()
+            return jsonify({'success': 'Password reset successfully'}), 200
+
         if old_password == '':
-            '''procedure should be: send email with token, store token in db with a creation timestamp,
-            update schedlued task to delete the token if the timestamp is > 24hours old
-            add a new function to handle the reset with the token.'''
+
             rand_tok = str(uuid4())
             print("token: "+rand_tok)
             timestamp = datetime.datetime.now()
@@ -700,12 +715,12 @@ def password_reset():
             )
             row = cursor.fetchone()
             if row is None:
-                logging.warning(f"User not found: {email}")
+                logging.warning("User not found: %(email)s", {'email': email})
                 return jsonify({'error': 'User Not Found'}), 404
             if row[2] != old_password:
-                logging.warning(f"Incorrect password for user: {email}")
-                print("db: {}, old: {}".format(
-                    row[2], old_password))
+                logging.warning(
+                    "Incorrect password for user: %(email)s", {'email': email})
+
                 return jsonify({'error': 'Incorrect Password'}), 401
             new_password = data.get('newPassword')
             cursor.execute(
@@ -717,7 +732,7 @@ def password_reset():
         else:
             return jsonify({'error': 'Email not provided'}), 400
     except sqlite3.Error as e:
-        logging.error(f"Database error: {e}")
+        logging.error("Database error: %(err)s", {'err', e})
         return jsonify({'error': 'Database error occurred'}), 500
     finally:
         conn.close()
@@ -749,22 +764,24 @@ def delete_acct():
                 '''SELECT * FROM UserListing WHERE Email = ? AND isDeleted = ?''', (email, 0))
             row = cursor.fetchone()
             if row is None:
-                logging.warning(f"User not found: {email}")
+                logging.warning("User not found: %(email)s", {'email': email})
                 return jsonify({'error': 'Incorrect password'}), 404
             if row[2] != password:
-                logging.warning(f"Incorrect password for user: {email}")
+                logging.warning(
+                    "Incorrect password for user: %(email)s", {'email': email})
                 return jsonify({'error': 'Incorrect password'}), 401
 
             cursor.execute(
                 "UPDATE UserListing SET isDeleted = 1 WHERE email = ?", (email,))
             conn.commit()
             if cursor.rowcount == 0:
-                logging.warning(f"No rows updated for email: {email}")
+                logging.warning(
+                    "No rows updated for email: %(email)s", {'email': email})
                 return jsonify({'error': 'User not found'}), 404
 
         return jsonify({'success': 'Account deleted successfully'}), 200
     except sqlite3.Error as e:
-        logging.error(f"Database error: {e}")
+        logging.error("Database error: %(err)s)", {'err': e})
         return jsonify({'error': 'Database error occurred'}), 500
 
     finally:
