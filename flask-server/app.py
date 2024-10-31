@@ -706,10 +706,33 @@ def password_reset():
                 "INSERT INTO reset_tokens (user_email, token, timestamp) VALUES (?, ?, ?)", (email, rand_tok, timestamp))
             conn.commit()
             logging.info("token inserted for user %(email)s", {'email': email})
+            
+            
             # TODO: send the email with rand_tok
             # message: "Here is your token:
             # <token>
             # it will be valid for 24 hours. please use it to reset your password before then"
+            
+            # Sending an email
+            emailstr1 = f"Hello there<br><br>A new new token has been generated for your recent password reset request...<br><br>Token: {rand_tok}<br>User email: {email}"
+            emailstr2 = f"<br><br>It will be valid for 24 hours, so please use it to reset your password before then.<br><br>Thank You!<br>~BoilerTrack Devs"
+
+            msg = Message("BoilerTrack: Password Reset Request",
+                          sender="shloksbairagi07@gmail.com",
+                          recipients=[email])
+
+            msg.html = """
+            <html>
+                <body>
+                    <p>{}</p>
+                    <p>{}</p>
+                </body>
+            </html>
+            """.format(emailstr1.replace('\n', '<br>'), emailstr2.replace('\n', '<br>'))
+
+            mail.send(msg)
+            app.logger.info("Message sent!")
+            
             return jsonify({"success": "email sent"}), 200
 
         if email:
