@@ -1,3 +1,6 @@
+"""
+Main file for the boilertrack backend
+"""
 import logging
 import os
 import sqlite3
@@ -5,6 +8,8 @@ import base64
 import time
 from datetime import datetime
 from timeit import default_timer as timer
+from uuid import uuid4
+
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -31,7 +36,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 # Store the accoung info in a global var
-GLOBAL_USER_EMAIL = ""
+GLOBAL_USER_EMAIL: str
 
 
 # Get the absolute path to the Databases directory
@@ -655,20 +660,38 @@ def password_reset():
 
     :return: JSON response indicating success or failure
     """
+
     try:
         data = request.get_json()
         email = data.get('email')
         old_password = data.get('oldPassword')
+        token = data.get('token')
 
         conn = create_connection_users()
         cursor = conn.cursor()
 
         if old_password == '':
-            # TODO do the stuff for email reset
             '''procedure should be: send email with token, store token in db with a creation timestamp,
             update schedlued task to delete the token if the timestamp is > 24hours old
             add a new function to handle the reset with the token.'''
-            return jsonify({'server error': 'unimplemented'}), 501
+            rand_tok = str(uuid4())
+            print("token: "+rand_tok)
+            timestamp = datetime.datetime.now()
+
+            cursor.execute('''
+                SELECT * FROM UserListing WHERE email = ? AND isDeleteted = 0;''', (email,))
+            row = cursor.fetchone()
+            if not row:
+                # returning success even if user not found for ✨security reasons✨
+                return jsonify({'success': 'email sent'}), 200
+
+            insert_query = "INSERT INTO reset_tokens (user_email, token, timestamp) VALUES (%s,%s,%s)"
+            cursor.execute(insert_query, (email, rand_tok, timestamp))
+            conn.commit()
+            logging.info("token inserted for user %(email)s", {'email': email})
+            # TODO: send the email with rand_tok
+            return jsonify({"success": "email sent"}), 200
+
         if email:
 
             cursor.execute(
@@ -1146,7 +1169,7 @@ def update_claim(claim_id, comments, file_path):
     conn.close()
 
 
-@app.route('/claim-modify-student/<int:claim_id>', methods=['PUT'])
+@ app.route('/claim-modify-student/<int:claim_id>', methods=['PUT'])
 def modify_claim(claim_id):
     app.logger.info(f"Received modify request for claim ID: {claim_id}")
     if 'file' not in request.files and 'comments' not in request.form:
@@ -1270,7 +1293,7 @@ def view_claim(item_id):
         return jsonify({'error': 'Item not found'}), 404
 
 
-@app.route('/individual-request-staff/<int:claim_id>/approve', methods=['POST'])
+@ app.route('/individual-request-staff/<int:claim_id>/approve', methods=['POST'])
 def approve_claim(claim_id):
     conn = create_connection_items(CLAIMS_DB)
     cursor = conn.cursor()
@@ -1294,7 +1317,7 @@ def approve_claim(claim_id):
 # Route to reject a claim request
 
 
-@app.route('/individual-request-staff/<int:claim_id>/reject', methods=['POST'])
+@ app.route('/individual-request-staff/<int:claim_id>/reject', methods=['POST'])
 def reject_claim(claim_id):
     # Get the rationale from the request
     rationale = request.json.get('rationale', '')
