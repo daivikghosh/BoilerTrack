@@ -706,6 +706,9 @@ def password_reset():
             conn.commit()
             logging.info("token inserted for user %(email)s", {'email': email})
             # TODO: send the email with rand_tok
+            # message: "Here is your token:
+            # <token>
+            # it will be valid for 24 hours. please use it to reset your password before then"
             return jsonify({"success": "email sent"}), 200
 
         if email:
