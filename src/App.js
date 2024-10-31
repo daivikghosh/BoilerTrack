@@ -24,6 +24,7 @@ import IndividualClaimView from "./components/ViewAllClaimsStaff/ClaimViewStaff.
 import DisputeClaimForm from "./components/DisputeClaimForm/DisputeClaimForm.js";
 import ListViewClaimRequestsStudent from "./components/ViewAllClaimsStudent/ViewAllClaimsStudent.js";
 import ModifyClaimForm from "./components/ClaimForm/ModifyClaimForm.js";
+import TokenResetForm from "./components/TokenResetForm/TokenResetForm.js";
 
 const App = () => {
   return (
@@ -83,6 +84,7 @@ const App = () => {
           path="/claim-modify-student/:claim_id"
           element={<ModifyClaimForm />}
         />
+        <Route path="/token-reset" element={<TokenResetForm />} />
       </Routes>
     </Router>
   );

@@ -663,9 +663,8 @@ def password_reset():
 
     try:
         data = request.get_json()
-        email = data.get('email')
+        email: str = data.get('email')
         old_password = data.get('oldPassword')
-        print(old_password)
         token = data.get('token')
 
         conn = create_connection_users()
@@ -674,12 +673,14 @@ def password_reset():
         if token:
             # check if the email is in the second table, and if the timestamp is less than 24 hours old
             cursor.execute(
-                "SELECT * FROM reset_password WHERE email=?, AND isDeleted = 0", (email))
+                '''SELECT * FROM reset_tokens WHERE user_email = ?''', (email,))
             row = cursor.fetchone()
+            dbtime = float(row[2])
             if not row:
-                return jsonify({'error': 'Email not found'}), 404
-            if 1 > (datetime.now().timestamp() - row[2]) / 3600:
+                return jsonify({'error': 'User not found'}), 404
+            if 1 > (datetime.now().timestamp() - dbtime) / 3600:
                 return jsonify({'error': 'Token expired'}), 401
+            print(f"tk: {token}\ndb: {row[1]}")
             if token != row[1]:
                 return jsonify({'error': 'Invalid token'}), 401
             new_password = data.get('newPassword')
@@ -736,7 +737,7 @@ def password_reset():
         else:
             return jsonify({'error': 'Email not provided'}), 400
     except sqlite3.Error as e:
-        logging.error("Database error: %(err)s", {'err', str(e)})
+        logging.error("Database error: %s",  e)
         return jsonify({'error': 'Database error occurred'}), 500
     finally:
         conn.close()
