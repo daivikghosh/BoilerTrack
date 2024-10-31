@@ -50,14 +50,17 @@ const ListViewClaimRequestsStudent = () => {
               <p>
                 <strong>Claim Status:</strong> {item.ClaimStatus}
               </p>
+              <p>
+                <strong>Reason Given:</strong> {item.Comments}
+              </p>
             </div>
             <div className="list-item-actions">
               <button
                 className="action-button"
                 onClick={() => {
-                  navigate(`/individual-request-staff/${item.ItemID}`)} }
+                  navigate(`/claim-modify-student/${item.ItemID}`)} }
               >
-                View/Modify Request
+                Modify Request
               </button>
             </div>
           </div>

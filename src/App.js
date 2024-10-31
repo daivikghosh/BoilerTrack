@@ -23,6 +23,7 @@ import ListViewClaimRequests from "./components/ViewAllClaimsStaff/ViewAllClaims
 import IndividualClaimView from "./components/ViewAllClaimsStaff/ClaimViewStaff.js";
 import DisputeClaimForm from "./components/DisputeClaimForm/DisputeClaimForm.js";
 import ListViewClaimRequestsStudent from "./components/ViewAllClaimsStudent/ViewAllClaimsStudent.js";
+import ModifyClaimForm from "./components/ClaimForm/ModifyClaimForm.js";
 
 const App = () => {
   return (
@@ -77,6 +78,10 @@ const App = () => {
         <Route
           path="/allclaim-requests-student/:emailId"
           element={<ListViewClaimRequestsStudent />}
+        />
+        <Route
+          path="/claim-modify-student/:claim_id"
+          element={<ModifyClaimForm />}
         />
       </Routes>
     </Router>
