@@ -1068,6 +1068,9 @@ def view_found_items():
 
     return jsonify(result), 200
 
+@app.route('/get-user-email', methods=['GET'])
+def get_user_email():
+    return jsonify({"user_email": GLOBAL_USER_EMAIL}), 200
 
 def get_all_claimrequests_staff():
     """Fetch all claim requests from the ClaimRequest database."""
