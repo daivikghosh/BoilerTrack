@@ -270,10 +270,9 @@ def add_lost_item_request():
     app.logger.info("Received POST request to /lost-item-request")
 
     # Ensure it's JSON data we're receiving
-    try:
-        data = request.get_json()
-    except Exception as e:
-        app.logger.error("Error parsing JSON: %s", e)
+    data = request.get_json(silent=True)
+    if data is None:
+        app.logger.error("Invalid JSON data format.")
         return jsonify({'error': 'Invalid data format. JSON expected.'}), 400
 
     # Log the received data for debugging
@@ -308,7 +307,10 @@ def add_lost_item_request():
         conn.close()
 
         app.logger.info(
-            f"Lost item added by {user_email}: {item_name}, {description}, {date_lost}, {location_lost}")
+            "Lost item added by %(user_email)s: %(item_name)s, %(description)s, %(date_lost)s, %(location_lost)s",
+            {"user_email": user_email, "item_name": item_name, "description": description,
+                "date_lost": date_lost, "location_lost": location_lost}
+        )
 
         return jsonify({'message': 'Lost item request added successfully'}), 201
     except sqlite3.Error as e:
@@ -318,9 +320,7 @@ def add_lost_item_request():
 
 @ app.route('/lost-item-requests', methods=['GET'])
 def get_lost_item_requests():
-    global GLOBAL_USER_EMAIL  # Assuming this stores the current user's email
-    # this variable is not assigned
-    user_email = GLOBAL_USER_EMAIL
+    user_email = GLOBAL_USER_EMAIL  # Assuming this stores the current user's email
 
     # Check if the user email is set
     if not user_email:
@@ -1078,6 +1078,7 @@ def get_all_claimrequests_staff():
     conn.close()
     return claim_requests
 
+
 def get_claim_by_id(item_id):
     """Fetch a single item from the database by its ID."""
     conn = create_connection_items(CLAIMS_DB)
@@ -1087,6 +1088,7 @@ def get_claim_by_id(item_id):
     conn.close()
     return claim_request
 
+
 def get_all_claimrequests_student(email):
     """Fetch all claim requests from the ClaimRequest database by email"""
     conn = create_connection_items(CLAIMS_DB)
@@ -1095,6 +1097,7 @@ def get_all_claimrequests_student(email):
     claim_requests = cursor.fetchall()
     conn.close()
     return claim_requests
+
 
 @ app.route('/allclaim-requests-student/<string:emailId>', methods=['GET'])
 def view_all_requests_student(emailId):
@@ -1113,7 +1116,7 @@ def view_all_requests_student(emailId):
             photo_data = item[2]
 
         item_deets = get_item_by_id(item[0])
-        
+
         status = "NA"
         if (item[4] == 2):
             status = "Acepted"
@@ -1137,9 +1140,11 @@ def view_all_requests_student(emailId):
 def update_claim(claim_id, comments, file_path):
     conn = create_connection_items(CLAIMS_DB)
     cursor = conn.cursor()
-    cursor.execute("UPDATE CLAIMREQUETS SET Comments = ?, PhotoProof = ?, ClaimStatus = 1 WHERE ItemID = ?", (comments, file_path, claim_id))
+    cursor.execute("UPDATE CLAIMREQUETS SET Comments = ?, PhotoProof = ?, ClaimStatus = 1 WHERE ItemID = ?",
+                   (comments, file_path, claim_id))
     conn.commit()
     conn.close()
+
 
 @app.route('/claim-modify-student/<int:claim_id>', methods=['PUT'])
 def modify_claim(claim_id):
@@ -1157,24 +1162,24 @@ def modify_claim(claim_id):
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
         app.logger.info(f"File saved to {file_path}")
-        
+
     with open(file_path, 'rb') as file:
         blob_data = file.read()
 
     try:
         # Uncomment and define `update_claim` to actually perform the DB update
         update_claim(claim_id, comments, blob_data)
-        
+
         itemz = get_item_by_id(claim_id)
         staffemail = itemz[5] + "@googlemail.com"
-        
+
         # Sending an email
         emailstr1 = f"Hello there<br><br>A modified claim request has been submitted and is awaiting review...<br><br>Item Id: {claim_id}<br><br>Reason Given: {comments}"
         emailstr2 = f"<br><br>Please open the portal to check status of the claim<br><br>Thank You!<br>~BoilerTrack Devs"
 
         msg = Message("BoilerTrack: Modified Claim Request for Review",
-                          sender="shloksbairagi07@gmail.com",
-                          recipients=[GLOBAL_USER_EMAIL, staffemail])
+                      sender="shloksbairagi07@gmail.com",
+                      recipients=[GLOBAL_USER_EMAIL, staffemail])
 
         msg.html = """
             <html>
@@ -1187,15 +1192,13 @@ def modify_claim(claim_id):
             </html>
             """.format(emailstr1.replace('\n', '<br>'), emailstr2.replace('\n', '<br>'))
 
-            # Attach the image
+        # Attach the image
         with open(file_path, 'rb') as fp:
-                msg.attach("image.jpg", "image/jpeg", fp.read(),
-                           headers={'Content-ID': '<image1>'})
+            msg.attach("image.jpg", "image/jpeg", fp.read(),
+                       headers={'Content-ID': '<image1>'})
 
         mail.send(msg)
         app.logger.info("Message sent!")
-        
-        
 
         if file_path:
             os.remove(file_path)  # Remove the uploaded file
