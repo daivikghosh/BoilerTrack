@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom';
 import './StaffInputForm.css';
 
-function StaffInputForm() {
+function BulkUpload() {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         itemName: '',
@@ -80,9 +80,9 @@ function StaffInputForm() {
 
     return (
         <div className="form-container">
-            <h1>Upload</h1>
-            <Link to={`/Bulk`}>
-                <button className="bulk-button">Bulk Upload</button>
+            <h1>Bulk Upload</h1>
+            <Link to={`/StaffInputForm`}>
+                <button className="regular-upload-button">Regular Upload</button>
             </Link>
             <form onSubmit={handleSubmit}>
                 <div className="file-upload">
@@ -96,39 +96,9 @@ function StaffInputForm() {
                 </div>
 
                 <div className="form-input">
-                    <label>Item Name</label>
-                    <input type="text" name="itemName" value={formData.itemName} onChange={handleChange} placeholder="Enter item name" required />
-                    {errors.itemName && <p className="error-text">{errors.itemName}</p>}
-                </div>
-
-                <div className="form-input">
-                    <label>Color</label>
-                    <input type="text" name="color" value={formData.color} onChange={handleChange} placeholder="Enter color" />
-                    {errors.color && <p className="error-text">{errors.color}</p>}
-                </div>
-
-                <div className="form-input">
-                    <label>Brand</label>
-                    <input type="text" name="brand" value={formData.brand} onChange={handleChange} placeholder="Enter brand" />
-                    {errors.brand && <p className="error-text">{errors.brand}</p>}
-                </div>
-
-                <div className="form-input">
-                    <label>Found At</label>
-                    <input type="text" name="foundAt" value={formData.foundAt} onChange={handleChange} placeholder="Enter found location" />
-                    {errors.foundAt && <p className="error-text">{errors.foundAt}</p>}
-                </div>
-
-                <div className="form-input">
                     <label>Turned In At</label>
                     <input type="text" name="turnedInAt" value={formData.turnedInAt} onChange={handleChange} placeholder="Enter where it was turned in" />
                     {errors.turnedInAt && <p className="error-text">{errors.turnedInAt}</p>}
-                </div>
-
-                <div className="form-input">
-                    <label>Description</label>
-                    <input type="text" name="description" value={formData.description} onChange={handleChange} placeholder="Enter item description" />
-                    {errors.description && <p className="error-text">{errors.description}</p>}
                 </div>
 
                 <button type="submit" className="upload-button">Submit</button>
@@ -137,4 +107,4 @@ function StaffInputForm() {
     );
 }
 
-export default StaffInputForm;
+export default BulkUpload;
