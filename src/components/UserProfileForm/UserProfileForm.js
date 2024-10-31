@@ -59,13 +59,13 @@ const UserProfileForm = ({
 
       <div className="additional-buttons">
         <button
-          onClick={() => navigate('/ClaimRequests')} // Use navigate to go to claim requests page
+          onClick={() => navigate("/ClaimRequests")} // Use navigate to go to claim requests page
           className="action-button"
         >
           View Claim Requests
         </button>
         <button
-          onClick={() => navigate('/Preregistered-items')} // Use navigate to go to registered items page
+          onClick={() => navigate("/Preregistered-items")} // Use navigate to go to registered items page
           className="action-button"
         >
           My Registered Items

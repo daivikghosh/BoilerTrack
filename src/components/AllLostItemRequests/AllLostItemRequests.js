@@ -1,23 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import './AllLostItemRequests.css';  // Import the CSS file for styling
-import { Link } from 'react-router-dom'; 
+import './AllLostItemRequests.css';
+import { Link } from 'react-router-dom';
 
 const AllLostItemRequests = () => {
   const [lostItems, setLostItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const handleDelete = async (itemId) => {
+    try {
+      await axios.delete(`/delete-lost-item/${itemId}`);
+      // Remove the item from the state after successful deletion
+      setLostItems(lostItems.filter((item) => item.ItemID !== itemId));
+      alert('Lost item request deleted successfully.');
+    } catch (error) {
+      console.error('Error deleting lost item request:', error);
+      alert('Failed to delete the lost item request.');
+    }
+  };
+
   // Fetch lost items entered by the user
   useEffect(() => {
     const fetchLostItems = async () => {
       try {
-        const response = await axios.get('/lost-item-requests');  // Call the Flask API
+        const response = await axios.get("/lost-item-requests"); // Call the Flask API
         setLostItems(response.data);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching lost items:', error);
-        setError('Error fetching lost item requests.');
+        console.error("Error fetching lost items:", error);
+        setError("Error fetching lost item requests.");
         setLoading(false);
       }
     };
@@ -42,16 +54,36 @@ const AllLostItemRequests = () => {
             <li key={item.ItemID} className="lost-item-card">
               <div className="lost-item-details">
                 <h3>{item.ItemName}</h3>
-                <p><strong>Description:</strong> {item.Description}</p>
-                <p><strong>Date Lost:</strong> {item.DateLost}</p>
-                <p><strong>Location:</strong> {item.LocationLost}</p>
-                <p><strong>Status:</strong> {item.status}</p>
-                
+                <p>
+                  <strong>Description:</strong> {item.Description}
+                </p>
+                <p>
+                  <strong>Date Lost:</strong> {item.DateLost}
+                </p>
+                <p>
+                  <strong>Location:</strong> {item.LocationLost}
+                </p>
+                <p>
+                  <strong>Status:</strong> {item.status}
+                </p>
+
                 <Link to={`/edit-lost-item/${item.ItemID}`}>
                   <button className="edit-button">Edit</button>
                 </Link>
                 
-                
+                {/* Conditionally render the matched item button */}
+                {item.ItemMatchID > -1 && (
+                  <Link to={`/item-view-student/${item.ItemMatchID}`}>
+                    <button className="view-matched-item-button">View Matched Item</button>
+                  </Link>
+                )}
+
+                <button
+                  className="delete-button"
+                  onClick={() => handleDelete(item.ItemID)}
+                >
+                  Delete
+                </button>
               </div>
             </li>
           ))}

@@ -5,18 +5,20 @@ import os
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 USERS_DB = os.path.join(base_dir, 'Databases', 'ItemListings.db')
 
-def convertToBinaryData(filename):
+
+def convert_to_binary(filename):
     # Convert digital data to binary format
     with open(filename, 'rb') as file:
-        blobData = file.read()
-    return blobData
+        blob_data = file.read()
+    return blob_data
 
-def insertItem(ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, Photo, ItemStatus, Date):
-    sqliteConnection = None
+
+def insertItem(item_name, color, brand, location_found, location_turned_in, description, photo, item_status, date):
+    connection = None
     try:
-        sqliteConnection = sqlite3.connect(USERS_DB)
-        cursor = sqliteConnection.cursor()
-        
+        connection = sqlite3.connect(USERS_DB)
+        cursor = connection.cursor()
+
         # Ensure the table exists
         cursor.execute('''CREATE TABLE IF NOT EXISTS FOUNDITEMS
          (ItemID            INTEGER PRIMARY KEY,
@@ -30,25 +32,28 @@ def insertItem(ItemName, Color, Brand, LocationFound, LocationTurnedIn, Descript
          ItemStatus         INTEGER,
          Date               TEXT,
          Archived           INTEGER DEFAULT 0);''')
-        
+
         print("Table created successfully")
-        
+
         sqlite_insert_query = """ INSERT INTO FOUNDITEMS
                                   (ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, Photo, Archived, ItemStatus, Date) 
                                   VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)"""
-        binaryPhoto = convertToBinaryData(Photo)
+        photo_bin = convert_to_binary(photo)
         # Convert data into tuple format
-        data_tuple = (ItemName, Color, Brand, LocationFound, LocationTurnedIn, Description, binaryPhoto, ItemStatus, Date)
+        data_tuple = (item_name, color, brand, location_found,
+                      location_turned_in, description, photo_bin, item_status, date)
         cursor.execute(sqlite_insert_query, data_tuple)
-        sqliteConnection.commit()
+        connection.commit()
+        new_item_id = cursor.lastrowid
         print("Item inserted into db successfully")
+        return new_item_id
 
     except sqlite3.Error as error:
         print("Failed to insert data into sqlite table", error)
         raise  # Re-raise the exception to be caught in the calling function
     finally:
-        if sqliteConnection:
-            sqliteConnection.close()
+        if connection:
+            connection.close()
             print("The sqlite connection is closed")
 
 # Uncomment these lines for testing

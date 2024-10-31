@@ -28,7 +28,8 @@
         "VisualStudioExptTeam.vscodeintellicode", //intellicode
         "qwtel.sqlite-viewer", //sqlite bworser
         "Continue.continue", //ai stuff
-        "esbenp.prettier-vscode" //js formatting
+        "esbenp.prettier-vscode", //js formatting
+        "ms-python.pylint" // python linter
       ]
     }
   },
