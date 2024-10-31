@@ -22,6 +22,10 @@ import PasswordChangeForm from "./components/PasswordChangeForm/PasswordChangeFo
 import ListViewClaimRequests from "./components/ViewAllClaimsStaff/ViewAllClaimsStaff.js";
 import IndividualClaimView from "./components/ViewAllClaimsStaff/ClaimViewStaff.js";
 import DisputeClaimForm from "./components/DisputeClaimForm/DisputeClaimForm.js";
+import ReleaseForm from "./components/ReleaseForm/ReleaseForm.js";
+import ProcessedClaimsPage from './components/ProcessedClaims/ProcessedClaims.js';
+import EditProcessedClaim from './components/EditProcessedClaim/EditProcessedClaim.js'; // Import the edit component if created
+
 
 const App = () => {
   return (
@@ -73,6 +77,10 @@ const App = () => {
           path="/individual-request-staff/:claimId"
           element={<IndividualClaimView />}
         />
+        <Route path="/release-form/:claimId" element={<ReleaseForm />} /> 
+        <Route path="/processed-claims" element={<ProcessedClaimsPage />} />
+        <Route path="/edit-processed-claim/:claimId" element={<EditProcessedClaim />} />
+
       </Routes>
     </Router>
   );

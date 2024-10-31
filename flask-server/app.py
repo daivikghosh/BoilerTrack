@@ -42,6 +42,7 @@ ITEMS_DB = os.path.join(db_dir, 'ItemListings.db')
 USERS_DB = os.path.join(db_dir, 'Accounts.db')
 CLAIMS_DB = os.path.join(db_dir, 'ClaimRequest.db')
 PREREG_DB = os.path.join(db_dir, 'ItemListings.db')
+PROCESSED_CLAIMS_DB = os.path.join(db_dir, 'ProcessedClaims.db')
 
 # trying error of no image avail
 DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
@@ -1093,7 +1094,148 @@ def approve_claim(claim_id):
     finally:
         conn.close()
 
+@app.route('/get-processed-claims', methods=['GET'])
+def get_processed_claims():
+    conn = create_connection_items(PROCESSED_CLAIMS_DB)
+    cursor = conn.cursor()
+    try:
+        cursor.execute('SELECT * FROM RELEASED')
+        processed_claims = cursor.fetchall()
+        conn.close()
+
+        if processed_claims:
+            processed_claims_list = [
+                {
+                    'ClaimID': claim[0],
+                    'DateClaimed': claim[1],
+                    'UserEmailID': claim[2],
+                    'StaffName': claim[3],
+                    'StudentID': claim[4]
+                }
+                for claim in processed_claims
+            ]
+            return jsonify(processed_claims_list), 200
+        else:
+            return jsonify([]), 200
+    except sqlite3.Error as e:
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    finally:
+        conn.close()
+
+@app.route('/edit-processed-claim/<int:claim_id>', methods=['PUT'])
+def edit_processed_claim(claim_id):
+    data = request.json
+    date_claimed = data.get('dateClaimed')
+    user_email_id = data.get('userEmailID')
+    staff_name = data.get('staffName')
+    student_id = data.get('studentID')
+
+    conn = create_connection_items(PROCESSED_CLAIMS_DB)
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+            UPDATE RELEASED
+            SET DateClaimed = ?, UserEmailID = ?, StaffName = ?, StudentID = ?
+            WHERE ClaimID = ?
+        ''', (date_claimed, user_email_id, staff_name, student_id, claim_id))
+
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'Processed claim not found or no changes made'}), 404
+
+        conn.commit()
+        return jsonify({'message': 'Processed claim updated successfully'}), 200
+    except sqlite3.Error as e:
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    finally:
+        conn.close()
+
+# @app.route('/get-release-form/<int:claim_id>', methods=['GET'])
+# def get_release_form(claim_id):
+#     conn = create_connection_items(PROCESSED_CLAIMS_DB)
+#     cursor = conn.cursor()
+#     try:
+#         cursor.execute('SELECT * FROM RELEASED WHERE ClaimID = ?', (claim_id,))
+#         release_form = cursor.fetchone()
+#         if release_form:
+#             release_data = {
+#                 'ClaimID': release_form[0],
+#                 'DateClaimed': release_form[1],
+#                 'UserEmailID': release_form[2],
+#                 'StaffName': release_form[3],
+#                 'StudentID': release_form[4]
+#             }
+#             return jsonify(release_data), 200
+#         else:
+#             return jsonify({'error': 'Release form not found'}), 404
+#     except sqlite3.Error as e:
+#         return jsonify({'error': f'Database error: {str(e)}'}), 500
+#     finally:
+#         conn.close()
+        
+# @app.route('/update-release-form/<int:claim_id>', methods=['PUT'])
+# def update_release_form(claim_id):
+#     data = request.json
+#     date_claimed = data.get('dateClaimed')
+#     user_email_id = data.get('userEmailID')
+#     staff_name = data.get('staffName')
+#     student_id = data.get('studentID')
+
+#     conn = create_connection_processed_claims()
+#     cursor = conn.cursor()
+#     try:
+#         cursor.execute('''
+#             UPDATE RELEASED
+#             SET DateClaimed = ?, UserEmailID = ?, StaffName = ?, StudentID = ?
+#             WHERE ClaimID = ?
+#         ''', (date_claimed, user_email_id, staff_name, student_id, claim_id))
+
+#         if cursor.rowcount == 0:
+#             return jsonify({'error': 'Release form not found or no changes made'}), 404
+
+#         conn.commit()
+#         return jsonify({'message': 'Release form updated successfully'}), 200
+#     except sqlite3.Error as e:
+#         return jsonify({'error': f'Database error: {str(e)}'}), 500
+#     finally:
+#         conn.close()
 # Route to reject a claim request
+
+@app.route('/submit-release-form', methods=['POST'])
+def submit_release_form():
+    
+    data = request.json
+    claim_id = data.get('claimId')
+    date_claimed = data.get('dateClaimed')
+    user_email_id = data.get('userEmailID')
+    staff_name = data.get('staffName')
+    student_id = data.get('studentID')
+
+    conn = create_connection_items(PROCESSED_CLAIMS_DB)
+    cursor = conn.cursor()
+
+    # Create the RELEASED table if it doesn't exist
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS RELEASED (
+            ClaimID INTEGER,
+            DateClaimed TEXT,
+            UserEmailID TEXT,
+            StaffName TEXT,
+            StudentID TEXT
+        )
+    ''')
+
+    try:
+        cursor.execute('''
+            INSERT INTO RELEASED (ClaimID, DateClaimed, UserEmailID, StaffName, StudentID)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (claim_id, date_claimed, user_email_id, staff_name, student_id))
+
+        conn.commit()
+        return jsonify({'message': 'Release form data submitted successfully'}), 201
+    except sqlite3.Error as e:
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    finally:
+        conn.close()
 
 
 @app.route('/individual-request-staff/<int:claim_id>/reject', methods=['POST'])

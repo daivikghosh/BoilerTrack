@@ -204,6 +204,11 @@ function AllItemsPage() {
           All Claim Requests
       </Link>
 
+      <Link to="/processed-claims" className="processed-claims-button">
+        View Processed Claims
+      </Link>
+
+
       <div className="main-content">
         <FilterPane onFilterChange={handleFilterChange} />
 
