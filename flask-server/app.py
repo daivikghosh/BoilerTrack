@@ -728,7 +728,6 @@ def password_reset():
             return jsonify({"success": "email sent"}), 200
 
         if email:
-
             cursor.execute(
                 '''SELECT * FROM UserListing WHERE Email = ? AND isDeleted = ?''',
                 (email, 0)
