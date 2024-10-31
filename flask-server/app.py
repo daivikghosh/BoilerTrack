@@ -1248,6 +1248,51 @@ def reject_claim(claim_id):
     finally:
         conn.close()
 
+@app.route('/individual-request-staff/<int:claim_id>/request-more-info', methods=['POST'])
+def reject_claim_more_info(claim_id):
+    rationale = 'Please provide more information.'
+    conn = create_connection_items(CLAIMS_DB)
+    cursor = conn.cursor()
+    claim = get_claim_by_id(claim_id)
+    itemid = claim[0]
+    item = get_item_by_id(itemid)
+    name = item[1]
+    claimed_email = claim[3]
+    try:
+        # Update claim status to 'rejected' and store the rationale
+        cursor.execute(
+            "UPDATE CLAIMREQUETS SET ClaimStatus = 3, RejectRationale = ? WHERE ItemID = ?", (rationale, claim_id))
+
+        # cursor.execute("DELETE FROM CLAIMREQUETS WHERE ItemID = ?", (claim_id,))
+        conn.commit()
+
+        emailstr1 = f"Hello there<br><br>Your claim request has been rejected<br><br>Item Id: {itemid}<br><br>"
+        emailstr2 = f"Here is why your request for the {name} was rejected: <br><br> {rationale}"
+        emailstr3 = f"<br><br>Thank You!<br>~BoilerTrack Devs"
+
+        msg = Message("BoilerTrack: Claim Request Rejected",
+                        sender="shloksbairagi07@gmail.com",
+                        recipients=[claimed_email])
+
+        msg.html = """
+        <html>
+            <body>
+                <p>{}</p>
+                <p>{}</p>
+                <p>{}</p>
+            </body>
+        </html>
+        """.format(emailstr1.replace('\n', '<br>'), emailstr2.replace('\n', '<br>'), emailstr3.replace('\n', '<br>'))
+
+        mail.send(msg)
+        app.logger.info("Message sent!")
+
+        return jsonify({'message': 'Claim rejected and rationale saved'}), 200
+    except sqlite3.Error:
+        return jsonify({'error': 'Failed to reject claim and save rationale'}), 500
+    finally:
+        conn.close()
+
 
 if __name__ == '__main__':
     if not os.path.exists(os.path.dirname(USERS_DB)):

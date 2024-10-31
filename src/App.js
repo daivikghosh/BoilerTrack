@@ -22,6 +22,7 @@ import PasswordChangeForm from "./components/PasswordChangeForm/PasswordChangeFo
 import ListViewClaimRequests from "./components/ViewAllClaimsStaff/ViewAllClaimsStaff.js";
 import IndividualClaimView from "./components/ViewAllClaimsStaff/ClaimViewStaff.js";
 import DisputeClaimForm from "./components/DisputeClaimForm/DisputeClaimForm.js";
+import PrintItem from "./components/ItemView/PrintItem.js";
 
 const App = () => {
   return (
@@ -73,6 +74,7 @@ const App = () => {
           path="/individual-request-staff/:claimId"
           element={<IndividualClaimView />}
         />
+        <Route path="/print-item/:id" element={<PrintItem />} />{" "}
       </Routes>
     </Router>
   );
