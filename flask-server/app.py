@@ -1068,16 +1068,18 @@ def view_found_items():
 
     return jsonify(result), 200
 
+@app.route('/get-user-email', methods=['GET'])
+def get_user_email():
+    return jsonify({"user_email": GLOBAL_USER_EMAIL}), 200
 
 def get_all_claimrequests_staff():
     """Fetch all claim requests from the ClaimRequest database."""
     conn = create_connection_items(CLAIMS_DB)
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM CLAIMREQUETS")
+    cursor.execute("SELECT * FROM CLAIMREQUETS WHERE ClaimStatus = 1")
     claim_requests = cursor.fetchall()
     conn.close()
     return claim_requests
-
 
 def get_claim_by_id(item_id):
     """Fetch a single item from the database by its ID."""
@@ -1087,6 +1089,124 @@ def get_claim_by_id(item_id):
     claim_request = cursor.fetchone()
     conn.close()
     return claim_request
+
+def get_all_claimrequests_student(email):
+    """Fetch all claim requests from the ClaimRequest database by email"""
+    conn = create_connection_items(CLAIMS_DB)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM CLAIMREQUETS WHERE UserEmail = ?", (email,))
+    claim_requests = cursor.fetchall()
+    conn.close()
+    return claim_requests
+
+@ app.route('/allclaim-requests-student/<string:emailId>', methods=['GET'])
+def view_all_requests_student(emailId):
+    app.logger.info("Fetching all claims")
+    id = emailId
+    claims = get_all_claimrequests_student(id)
+    claims_list = []
+
+    for item in claims:
+
+        if isinstance(item[2], bytes):  # Photo exists and is in bytes
+            photo_data = base64.b64encode(item[2]).decode('utf-8')
+        elif item[2] is None:  # Photo is NULL or None, use the placeholder
+            photo_data = get_image_base64(DEFAULT_IMAGE_PATH)
+        else:
+            photo_data = item[2]
+
+        item_deets = get_item_by_id(item[0])
+        
+        status = "NA"
+        if (item[4] == 2):
+            status = "Acepted"
+        elif (item[4] == 3):
+            status = "Rejected"
+        else:
+            status = "Pending"
+
+        claims_list.append({
+            'ItemID': item[0],
+            'Comments': item[1],
+            'PhotoProof': photo_data,
+            'ClaimStatus': status,
+            'ItemName': item_deets[1],
+            'LocationTurnedIn': item_deets[5]
+        })
+
+    return jsonify(claims_list), 200
+
+
+def update_claim(claim_id, comments, file_path):
+    conn = create_connection_items(CLAIMS_DB)
+    cursor = conn.cursor()
+    cursor.execute("UPDATE CLAIMREQUETS SET Comments = ?, PhotoProof = ?, ClaimStatus = 1 WHERE ItemID = ?", (comments, file_path, claim_id))
+    conn.commit()
+    conn.close()
+
+@app.route('/claim-modify-student/<int:claim_id>', methods=['PUT'])
+def modify_claim(claim_id):
+    app.logger.info(f"Received modify request for claim ID: {claim_id}")
+    if 'file' not in request.files and 'comments' not in request.form:
+        app.logger.warning("No file or comments provided in request")
+        return jsonify({'error': 'No file or comments provided'}), 400
+
+    file = request.files.get('file', None)
+    comments = request.form.get('comments', None)
+
+    file_path = None
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        app.logger.info(f"File saved to {file_path}")
+        
+    with open(file_path, 'rb') as file:
+        blob_data = file.read()
+
+    try:
+        # Uncomment and define `update_claim` to actually perform the DB update
+        update_claim(claim_id, comments, blob_data)
+        
+        itemz = get_item_by_id(claim_id)
+        staffemail = itemz[5] + "@googlemail.com"
+        
+        # Sending an email
+        emailstr1 = f"Hello there<br><br>A modified claim request has been submitted and is awaiting review...<br><br>Item Id: {claim_id}<br><br>Reason Given: {comments}"
+        emailstr2 = f"<br><br>Please open the portal to check status of the claim<br><br>Thank You!<br>~BoilerTrack Devs"
+
+        msg = Message("BoilerTrack: Modified Claim Request for Review",
+                          sender="shloksbairagi07@gmail.com",
+                          recipients=[GLOBAL_USER_EMAIL, staffemail])
+
+        msg.html = """
+            <html>
+                <body>
+                    <p>{}</p>
+                    <p>Image uploaded as proof of ownership:</p>
+                    <img src="cid:image1">
+                    <p>{}</p>
+                </body>
+            </html>
+            """.format(emailstr1.replace('\n', '<br>'), emailstr2.replace('\n', '<br>'))
+
+            # Attach the image
+        with open(file_path, 'rb') as fp:
+                msg.attach("image.jpg", "image/jpeg", fp.read(),
+                           headers={'Content-ID': '<image1>'})
+
+        mail.send(msg)
+        app.logger.info("Message sent!")
+        
+        
+
+        if file_path:
+            os.remove(file_path)  # Remove the uploaded file
+
+        return jsonify({'success': 'Claim modified successfully'}), 200
+    except Exception as e:
+        app.logger.error(f"Error modifying claim: {str(e)}")
+        return jsonify({'error': 'Failed to modify claim'}), 500
 
 
 @ app.route('/allclaim-requests-staff', methods=['GET'])

@@ -17,6 +17,21 @@ function AllItemsPage() {
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [pinnedItems, setPinnedItems] = useState([]); // New state for pinned items
+  const [userEmail, setUserEmail] = useState(""); // Add state to store user email
+
+  // Fetch user email from the backend
+  useEffect(() => {
+    const fetchUserEmail = async () => {
+      try {
+        const response = await axios.get("/get-user-email");
+        setUserEmail(response.data.user_email);
+      } catch (error) {
+        console.error("Error fetching user email:", error);
+      }
+    };
+
+    fetchUserEmail();
+  }, []);
 
   const fakeItems = [
     {
@@ -197,6 +212,12 @@ function AllItemsPage() {
         <Link to="/all-lost-item-requests">
           <button className="view-requests-button">
             View Your Lost Item Requests
+          </button>
+        </Link>
+
+        <Link to={`/allclaim-requests-student/${userEmail}`}>
+          <button className="view-claims-button">
+            View Your Claim Requests
           </button>
         </Link>
       </div>
