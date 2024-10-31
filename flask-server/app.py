@@ -3,6 +3,7 @@ import os
 import sqlite3
 import base64
 import time
+import difflib
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -268,6 +269,27 @@ def add_lost_item_request():
         app.logger.error(f"Database error: {e}")
         return jsonify({'error': 'Failed to add lost item request to the database'}), 500
 
+@app.route('/delete-lost-item/<int:item_id>', methods=['DELETE'])
+def delete_lost_item(item_id):
+    try:
+        # Connect to the LostItemRequest.db database
+        lost_item_db = os.path.join(os.path.dirname(base_dir), 'databases', 'LostItemRequest.db')
+        conn = sqlite3.connect(lost_item_db)
+        cursor = conn.cursor()
+
+        # Delete the item from the LostItems table
+        cursor.execute("DELETE FROM LostItems WHERE ItemID = ?", (item_id,))
+        conn.commit()
+        conn.close()
+
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'Lost item request not found'}), 404
+
+        return jsonify({'message': 'Lost item request deleted successfully'}), 200
+    except sqlite3.Error as e:
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+
+
 
 @ app.route('/lost-item-requests', methods=['GET'])
 def get_lost_item_requests():
@@ -370,29 +392,42 @@ def update_lost_item(item_id):
 @app.route('/check-lost-item-request', methods=['POST'])
 def check_lost_item_request():
     data = request.get_json()
-    
+
     # Extract item details from the request
     item_name = data.get('itemName')
     description = data.get('description')
-    location_lost = data.get('foundAt')  # Assuming `foundAt` is equivalent to `LocationLost`
+    location_found = data.get('foundAt')  # Assuming `foundAt` is equivalent to `LocationFound`
     found_item_id = data.get('foundItemId')
-    
+
     # Connect to LostItemRequest.db
     lost_item_db = os.path.join(os.path.dirname(base_dir), 'databases', 'LostItemRequest.db')
     conn = sqlite3.connect(lost_item_db)
     cursor = conn.cursor()
-    
-    # Query to find a matching item in the LostItems table
-    cursor.execute("""
-        SELECT ItemID FROM LostItems
-        WHERE ItemName = ? AND Description = ? AND LocationLost = ? AND status = 'pending'
-    """, (item_name, description, location_lost))
-    
-    matching_item = cursor.fetchone()
-    
-    if matching_item:
-        matching_item_id = matching_item[0]
 
+    # Query to find potential matches in the LostItems table
+    cursor.execute("""
+        SELECT ItemID, ItemName, Description, LocationLost 
+        FROM LostItems 
+        WHERE status = 'pending'
+    """)
+    potential_matches = cursor.fetchall()
+
+    matching_item_id = None
+    for lost_item in potential_matches:
+        lost_item_id, lost_item_name, lost_item_description, location_lost = lost_item
+
+        if item_name.lower() == lost_item_name.lower() and location_found.lower() == location_lost.lower():
+            # Exact match on ItemName and Location
+            matching_item_id = lost_item_id
+            break
+        elif item_name.lower() == lost_item_name.lower() and location_found.lower() != location_lost.lower():
+            # Check for description similarity
+            similarity_ratio = difflib.SequenceMatcher(None, description.lower(), lost_item_description.lower()).ratio()
+            if similarity_ratio >= 0.5:  # 50% similarity threshold
+                matching_item_id = lost_item_id
+                break
+
+    if matching_item_id:
         # Update status to "in review" and set ItemMatchID for the matched item
         cursor.execute("""
             UPDATE LostItems
@@ -400,8 +435,8 @@ def check_lost_item_request():
             WHERE ItemID = ?
         """, (found_item_id, matching_item_id))
         conn.commit()
-
         conn.close()
+
         # Return matching_item_id to the frontend for further processing
         return jsonify({'matchFound': True, 'message': 'Matching lost item found and updated to "in review".', 'matchingItemId': matching_item_id}), 200
     else:
