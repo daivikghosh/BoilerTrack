@@ -7,17 +7,16 @@ import './StaffInputForm.css';
 function BulkUpload() {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        itemName: '',
-        color: '',
-        brand: '',
-        foundAt: '',
         turnedInAt: '',
-        description: '',
+        description: 'bottle', // Default to the first dropdown value
     });
-    const [selectedFile, setSelectedFile] = useState(null);
+    const [selectedFiles, setSelectedFiles] = useState([]);
     const [errors, setErrors] = useState({});
 
-    const handleFileChange = (event) => setSelectedFile(event.target.files[0]);
+    const handleFileChange = (event) => {
+        setSelectedFiles([...event.target.files]);
+    };
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
         setErrors({ ...errors, [e.target.name]: '' });
@@ -26,16 +25,17 @@ function BulkUpload() {
     const validateForm = () => {
         let formErrors = {};
         let isValid = true;
-        for (let key in formData) {
-            if (!formData[key]) {
-                formErrors[key] = 'This field is required';
-                isValid = false;
-            }
-        }
-        if (!selectedFile) {
-            formErrors.image = 'An image file is required';
+
+        if (!formData.turnedInAt) {
+            formErrors.turnedInAt = 'This field is required';
             isValid = false;
         }
+
+        if (selectedFiles.length === 0) {
+            formErrors.image = 'At least one image file is required';
+            isValid = false;
+        }
+
         setErrors(formErrors);
         return isValid;
     };
@@ -44,37 +44,32 @@ function BulkUpload() {
         e.preventDefault();
         if (!validateForm()) return;
 
-        const data = new FormData();
-        data.append('image', selectedFile);
-        for (let key in formData) {
-            data.append(key, formData[key]);
-        }
-
+        // Loop through all selected files and submit each one
         try {
-            const response = await axios.post('/items', data, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            for (let file of selectedFiles) {
+                const data = new FormData();
+                data.append('image', file);
+                data.append('turnedInAt', formData.turnedInAt);
+                data.append('description', formData.description);
+                data.append('itemName', formData.description);
+                data.append('color', 'N/A');
+                data.append('brand', 'N/A');
+                data.append('foundAt', 'N/A');
+                data.append('archived', 0);
+                data.append('itemStatus', 1);
 
-            const newItemId = response.data.ItemID; // Retrieve new item ID from response
-
-            // Now check for a lost item match after adding the item
-            const checkResponse = await axios.post('/check-lost-item-request', { ...formData, foundItemId: newItemId }, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-
-            if (checkResponse.data.matchFound) {
-                alert(checkResponse.data.message);
-            } else {
-                alert(checkResponse.data.message);
+                await axios.post('/items', data, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
             }
 
-            // Reset form
-            setFormData({ itemName: '', color: '', brand: '', foundAt: '', turnedInAt: '', description: '' });
-            setSelectedFile(null);
+            alert('Items uploaded successfully!');
+            setFormData({ turnedInAt: '', description: 'bottle' });
+            setSelectedFiles([]);
             setErrors({});
             navigate('/all-items-staff');
         } catch (error) {
-            console.error('Error processing the item!', error);
+            console.error('Error processing the items!', error);
         }
     };
 
@@ -88,16 +83,44 @@ function BulkUpload() {
                 <div className="file-upload">
                     <label htmlFor="image-upload" className="custom-file-upload">
                         <img src={process.env.PUBLIC_URL + '/uploadsymbol.webp'} alt="Upload Icon" />
-                        <span>Choose File</span>
+                        <span>Choose Files</span>
                     </label>
-                    <input id="image-upload" type="file" onChange={handleFileChange} accept="image/*" />
-                    {selectedFile && <p>{selectedFile.name}</p>}
+                    <input
+                        id="image-upload"
+                        type="file"
+                        onChange={handleFileChange}
+                        accept="image/*"
+                        multiple
+                    />
+                    {selectedFiles.length > 0 && (
+                        <p>{selectedFiles.map((file) => file.name).join(', ')}</p>
+                    )}
                     {errors.image && <p className="error-text">{errors.image}</p>}
                 </div>
 
                 <div className="form-input">
+                    <label>Item Type</label>
+                    <select
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                    >
+                        <option value="bottle">Bottle</option>
+                        <option value="laptop">Laptop</option>
+                        <option value="headphone">Headphone</option>
+                        <option value="wallet">Wallet</option>
+                    </select>
+                </div>
+
+                <div className="form-input">
                     <label>Turned In At</label>
-                    <input type="text" name="turnedInAt" value={formData.turnedInAt} onChange={handleChange} placeholder="Enter where it was turned in" />
+                    <input
+                        type="text"
+                        name="turnedInAt"
+                        value={formData.turnedInAt}
+                        onChange={handleChange}
+                        placeholder="Enter where it was turned in"
+                    />
                     {errors.turnedInAt && <p className="error-text">{errors.turnedInAt}</p>}
                 </div>
 
