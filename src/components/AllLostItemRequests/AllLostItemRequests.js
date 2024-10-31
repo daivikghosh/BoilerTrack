@@ -8,6 +8,18 @@ const AllLostItemRequests = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const handleDelete = async (itemId) => {
+    try {
+      await axios.delete(`/delete-lost-item/${itemId}`);
+      // Remove the item from the state after successful deletion
+      setLostItems(lostItems.filter((item) => item.ItemID !== itemId));
+      alert('Lost item request deleted successfully.');
+    } catch (error) {
+      console.error('Error deleting lost item request:', error);
+      alert('Failed to delete the lost item request.');
+    }
+  };
+
   // Fetch lost items entered by the user
   useEffect(() => {
     const fetchLostItems = async () => {
@@ -65,6 +77,13 @@ const AllLostItemRequests = () => {
                     <button className="view-matched-item-button">View Matched Item</button>
                   </Link>
                 )}
+
+                <button
+                  className="delete-button"
+                  onClick={() => handleDelete(item.ItemID)}
+                >
+                  Delete
+                </button>
               </div>
             </li>
           ))}

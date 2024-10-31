@@ -28,15 +28,23 @@ const IndividualClaimView = () => {
   }, [claimId]);
 
   const handleApprove = async () => {
-    try {
-      // Make an API call to approve the claim request
-      await axios.post(`/individual-request-staff/${claimId}/approve`);
-      alert("Claim approved successfully!");
-      navigate("/all-request-staff"); // Navigate back to the claim list
-    } catch (err) {
-      console.error("Error approving claim:", err);
-      alert("Failed to approve the claim. Please try again.");
-    }
+    // try {
+    //   // Make an API call to approve the claim request
+    //   await axios.post(`/individual-request-staff/${claimId}/approve`);
+
+      
+    //   alert("Claim approved successfully!");
+    //   navigate("/all-request-staff"); // Navigate back to the claim list
+    // } catch (err) {
+    //   console.error("Error approving claim:", err);
+    //   alert("Failed to approve the claim. Please try again.");
+    // }
+    navigate(`/release-form/${claimId}`);
+  };
+
+  const onSubmitSuccess = () => {
+    alert("Claim approved successfully!");
+    navigate("/all-request-staff");
   };
 
   const handleReject = async () => {
