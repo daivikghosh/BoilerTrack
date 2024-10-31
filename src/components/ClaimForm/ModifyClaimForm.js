@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from "axios";
 import "./ClaimForm.css";
@@ -9,6 +9,7 @@ const ModifyClaimForm = () => {
   const [comments, setComments] = useState("");
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+  const fileInputRef = useRef();
 
   useEffect(() => {
     const fetchClaimData = async () => {
@@ -16,7 +17,7 @@ const ModifyClaimForm = () => {
         const response = await axios.get(`/item/${claim_id}`);
         const claim = response.data;
         setComments(claim.comments);
-        setFile(null); // Reset file input as we'll not preload it.
+        setFile(null);
       } catch (err) {
         console.error("Error fetching claim details:", err);
       }
@@ -59,13 +60,31 @@ const ModifyClaimForm = () => {
     }
   };
 
+  const handleFileUploadClick = () => {
+    fileInputRef.current.click();
+  };
+
   return (
     <div className="claim-form-container">
       <h2>Modify Claim</h2>
       <form onSubmit={handleSubmit}>
         <div className="file-upload">
-          <label htmlFor="image-upload" className="file-upload-label">Upload New File</label>
-          <input id="image-upload" type="file" onChange={handleFileChange} accept="image/*" />
+        <label htmlFor="comments">Update Image Proof</label>
+          <button 
+            type="button" 
+            className="upload-button" 
+            onClick={handleFileUploadClick}
+          >
+            Upload File
+          </button>
+          <input 
+            id="image-upload" 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            accept="image/*" 
+            style={{ display: "none" }}
+          />
           {file && <p>{file.name}</p>}
         </div>
 
@@ -73,7 +92,7 @@ const ModifyClaimForm = () => {
           <label htmlFor="comments">Update Comments</label>
           <textarea
             id="comments"
-            placeholder="Modify your comments here"
+            placeholder="Add new comments here"
             value={comments}
             onChange={handleCommentChange}
             maxLength={2000}
