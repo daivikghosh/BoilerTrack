@@ -117,7 +117,7 @@ const ItemView = () => {
               : "Transfer to Central Lost and Found Facility"}
           </button>
           <Link to={`/print-item/${item.ItemID}`}>
-          <button className="print-button">Print Item</button>
+            <button className="print-button">Print Item</button>
           </Link>
         </div>
       </div>

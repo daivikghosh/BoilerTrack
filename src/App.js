@@ -29,6 +29,7 @@ import EditProcessedClaim from './components/EditProcessedClaim/EditProcessedCla
 import ListViewClaimRequestsStudent from "./components/ViewAllClaimsStudent/ViewAllClaimsStudent.js";
 import ModifyClaimForm from "./components/ClaimForm/ModifyClaimForm.js";
 import PrintItem from "./components/ItemView/PrintItem.js";
+import BulkUpload from "./components/StaffInputForm/BulkUpload.js";
 
 const App = () => {
   return (
@@ -93,6 +94,7 @@ const App = () => {
           element={<ModifyClaimForm />}
         />
         <Route path="/print-item/:id" element={<PrintItem />} />{" "}
+        <Route path="/bulk" element={<BulkUpload />} />{" "}
       </Routes>
     </Router>
   );

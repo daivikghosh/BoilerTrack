@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { Link } from "react-router-dom";
 import './StaffInputForm.css';
 
 function StaffInputForm() {
@@ -80,6 +81,9 @@ function StaffInputForm() {
     return (
         <div className="form-container">
             <h1>Upload</h1>
+            <Link to={`/Bulk`}>
+                <button className="bulk-button">Bulk Upload</button>
+            </Link>
             <form onSubmit={handleSubmit}>
                 <div className="file-upload">
                     <label htmlFor="image-upload" className="custom-file-upload">
