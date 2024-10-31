@@ -42,7 +42,7 @@ GLOBAL_USER_EMAIL: str
 # Get the absolute path to the Databases directory
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(os.path.dirname(base_dir),
-                      'Databases')
+                      'databases')
 ITEMS_DB = os.path.join(db_dir, 'ItemListings.db')
 USERS_DB = os.path.join(db_dir, 'Accounts.db')
 CLAIMS_DB = os.path.join(db_dir, 'ClaimRequest.db')
@@ -665,6 +665,7 @@ def password_reset():
         data = request.get_json()
         email = data.get('email')
         old_password = data.get('oldPassword')
+        print(old_password)
         token = data.get('token')
 
         conn = create_connection_users()
@@ -687,21 +688,21 @@ def password_reset():
             conn.commit()
             return jsonify({'success': 'Password reset successfully'}), 200
 
-        if old_password == '':
+        if not old_password:
 
             rand_tok = str(uuid4())
             print("token: "+rand_tok)
-            timestamp = datetime.datetime.now()
+            timestamp = datetime.now().timestamp()
 
             cursor.execute('''
-                SELECT * FROM UserListing WHERE email = ? AND isDeleteted = 0;''', (email,))
+                SELECT * FROM UserListing WHERE email = ? AND isDeleted = 0;''', (email,))
             row = cursor.fetchone()
             if not row:
                 # returning success even if user not found for ✨security reasons✨
                 return jsonify({'success': 'email sent'}), 200
 
-            insert_query = "INSERT INTO reset_tokens (user_email, token, timestamp) VALUES (%s,%s,%s)"
-            cursor.execute(insert_query, (email, rand_tok, timestamp))
+            cursor.execute(
+                "INSERT INTO reset_tokens (user_email, token, timestamp) VALUES (?, ?, ?)", (email, rand_tok, timestamp))
             conn.commit()
             logging.info("token inserted for user %(email)s", {'email': email})
             # TODO: send the email with rand_tok
@@ -732,7 +733,7 @@ def password_reset():
         else:
             return jsonify({'error': 'Email not provided'}), 400
     except sqlite3.Error as e:
-        logging.error("Database error: %(err)s", {'err', e})
+        logging.error("Database error: %(err)s", {'err', str(e)})
         return jsonify({'error': 'Database error occurred'}), 500
     finally:
         conn.close()
