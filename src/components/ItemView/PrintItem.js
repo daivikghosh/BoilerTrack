@@ -35,6 +35,7 @@ const PrintItem = () => {
         }
 
         setLoading(false);
+        window.print();
       } catch (err) {
         console.error("Error fetching item or claim details:", err);
         setError("Failed to load item details.");
