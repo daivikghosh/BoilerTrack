@@ -1,3 +1,6 @@
+"""
+Main file for the boilertrack backend
+"""
 import logging
 import os
 import sqlite3
@@ -6,6 +9,8 @@ import time
 import difflib
 from datetime import datetime
 from timeit import default_timer as timer
+from uuid import uuid4
+
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -14,6 +19,7 @@ from werkzeug.utils import secure_filename
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from PreregistedItemsdb import insert_preregistered_item
 
 from database_cleaner import delete_deleted_items
 from AddFoundItemPic import insertItem
@@ -32,18 +38,19 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 # Store the accoung info in a global var
-GLOBAL_USER_EMAIL = ""
+GLOBAL_USER_EMAIL: str
 
 
 # Get the absolute path to the Databases directory
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(os.path.dirname(base_dir),
-                      'Databases')
+                      'databases')
 ITEMS_DB = os.path.join(db_dir, 'ItemListings.db')
 USERS_DB = os.path.join(db_dir, 'Accounts.db')
 CLAIMS_DB = os.path.join(db_dir, 'ClaimRequest.db')
 PREREG_DB = os.path.join(db_dir, 'ItemListings.db')
 PROCESSED_CLAIMS_DB = os.path.join(db_dir, 'ProcessedClaims.db')
+DISPUTES_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'ItemListings.db')
 
 # trying error of no image avail
 DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
@@ -196,6 +203,39 @@ def home():
     app.logger.info("Accessed root route")
     return jsonify({"message": "Welcome to the Lost and Found API"}), 200
 
+@app.route('/preregister-item', methods=['POST'])
+def preregister_item():
+    try:
+        # Get the form data from the request
+        item_name = request.form.get('ItemName')
+        color = request.form.get('Color')
+        brand = request.form.get('Brand')
+        description = request.form.get('Description')
+        date = request.form.get('Date')
+        user_email = request.form.get('UserEmail')
+        
+        # Set default QR code path
+        qr_code_path = 'uploads/care.png'
+        
+        # Check if the photo file is provided and save it
+        photo = request.files.get('Photo')
+        if photo and photo.filename:
+            filename = secure_filename(photo.filename)
+            photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            photo.save(photo_path)
+        else:
+            pass
+        
+        # Insert the item into the database
+        insertPreRegisteredItem(item_name, color, brand, description, photo_path, date, qr_code_path, user_email)
+        
+        return jsonify({"message": "Pre-registered item added successfully"}), 201
+    
+    except Exception as e:
+        app.logger.error(f"Error adding pre-registered item: {e}")
+        return jsonify({"error": "Failed to add pre-registered item"}), 500
+
+
 
 @ app.route('/pre-registered-items', methods=['GET'])
 def get_pre_registered_items():
@@ -272,10 +312,9 @@ def add_lost_item_request():
     app.logger.info("Received POST request to /lost-item-request")
 
     # Ensure it's JSON data we're receiving
-    try:
-        data = request.get_json()
-    except Exception as e:
-        app.logger.error("Error parsing JSON: %s", e)
+    data = request.get_json(silent=True)
+    if data is None:
+        app.logger.error("Invalid JSON data format.")
         return jsonify({'error': 'Invalid data format. JSON expected.'}), 400
 
     # Log the received data for debugging
@@ -310,7 +349,10 @@ def add_lost_item_request():
         conn.close()
 
         app.logger.info(
-            f"Lost item added by {user_email}: {item_name}, {description}, {date_lost}, {location_lost}")
+            "Lost item added by %(user_email)s: %(item_name)s, %(description)s, %(date_lost)s, %(location_lost)s",
+            {"user_email": user_email, "item_name": item_name, "description": description,
+                "date_lost": date_lost, "location_lost": location_lost}
+        )
 
         return jsonify({'message': 'Lost item request added successfully'}), 201
     except sqlite3.Error as e:
@@ -341,9 +383,7 @@ def delete_lost_item(item_id):
 
 @ app.route('/lost-item-requests', methods=['GET'])
 def get_lost_item_requests():
-    global GLOBAL_USER_EMAIL  # Assuming this stores the current user's email
-    # this variable is not assigned
-    user_email = GLOBAL_USER_EMAIL
+    user_email = GLOBAL_USER_EMAIL  # Assuming this stores the current user's email
 
     # Check if the user email is set
     if not user_email:
@@ -690,34 +730,86 @@ def password_reset():
 
     :return: JSON response indicating success or failure
     """
+
     try:
         data = request.get_json()
-        email = data.get('email')
+        email: str = data.get('email')
         old_password = data.get('oldPassword')
+        token = data.get('token')
 
         conn = create_connection_users()
         cursor = conn.cursor()
 
-        if old_password == '':
-            # TODO do the stuff for email reset
-            '''procedure should be: send email with token, store token in db with a creation timestamp,
-            update schedlued task to delete the token if the timestamp is > 24hours old
-            add a new function to handle the reset with the token.'''
-            return jsonify({'server error': 'unimplemented'}), 501
-        if email:
+        if token:
+            # check if the email is in the second table, and if the timestamp is less than 24 hours old
+            cursor.execute(
+                '''SELECT * FROM reset_tokens WHERE user_email = ?''', (email,))
+            row = cursor.fetchone()
+            dbtime = float(row[2])
+            if not row:
+                return jsonify({'error': 'User not found'}), 404
+            if 1 > (datetime.now().timestamp() - dbtime) / 3600:
+                return jsonify({'error': 'Token expired'}), 401
 
+            if token != row[1]:
+                return jsonify({'error': 'Invalid token'}), 401
+            new_password = data.get('newPassword')
+            cursor.execute('''UPDATE UserListing SET password = ? WHERE Email = ?''',
+                           (new_password, email))
+            conn.commit()
+            return jsonify({'success': 'Password reset successfully'}), 200
+
+        if not old_password:
+
+            rand_tok = str(uuid4())
+            timestamp = datetime.now().timestamp()
+
+            cursor.execute('''
+                SELECT * FROM UserListing WHERE email = ? AND isDeleted = 0;''', (email,))
+            row = cursor.fetchone()
+            if not row:
+                # returning success even if user not found for ✨security reasons✨
+                return jsonify({'success': 'email sent'}), 200
+
+            cursor.execute(
+                "INSERT INTO reset_tokens (user_email, token, timestamp) VALUES (?, ?, ?)", (email, rand_tok, timestamp))
+            conn.commit()
+            logging.info("token inserted for user %(email)s", {'email': email})
+            # Sending an email
+            emailstr1 = f"Hello there!<br><br>A new new token has been generated for your recent password reset request:<br><br>Token: {rand_tok}<br>User email: {email}"
+            emailstr2 = "<br><br>It will be valid for 24 hours, so please use it to reset your password before then.<br><br>Thank You!<br>~BoilerTrack Devs"
+
+            msg = Message("BoilerTrack: Password Reset Request",
+                          sender="shloksbairagi07@gmail.com",
+                          recipients=[email])
+
+            msg.html = """
+            <html>
+                <body>
+                    <p>{}</p>
+                    <p>{}</p>
+                </body>
+            </html>
+            """.format(emailstr1.replace('\n', '<br>'), emailstr2.replace('\n', '<br>'))
+
+            mail.send(msg)
+            app.logger.info("Message sent!")
+
+            return jsonify({"success": "email sent"}), 200
+
+        if email:
             cursor.execute(
                 '''SELECT * FROM UserListing WHERE Email = ? AND isDeleted = ?''',
                 (email, 0)
             )
             row = cursor.fetchone()
             if row is None:
-                logging.warning(f"User not found: {email}")
+                logging.warning("User not found: %(email)s", {'email': email})
                 return jsonify({'error': 'User Not Found'}), 404
             if row[2] != old_password:
-                logging.warning(f"Incorrect password for user: {email}")
-                print("db: {}, old: {}".format(
-                    row[2], old_password))
+                logging.warning(
+                    "Incorrect password for user: %(email)s", {'email': email})
+
                 return jsonify({'error': 'Incorrect Password'}), 401
             new_password = data.get('newPassword')
             cursor.execute(
@@ -729,7 +821,7 @@ def password_reset():
         else:
             return jsonify({'error': 'Email not provided'}), 400
     except sqlite3.Error as e:
-        logging.error(f"Database error: {e}")
+        logging.error("Database error: %s",  e)
         return jsonify({'error': 'Database error occurred'}), 500
     finally:
         conn.close()
@@ -761,22 +853,24 @@ def delete_acct():
                 '''SELECT * FROM UserListing WHERE Email = ? AND isDeleted = ?''', (email, 0))
             row = cursor.fetchone()
             if row is None:
-                logging.warning(f"User not found: {email}")
+                logging.warning("User not found: %(email)s", {'email': email})
                 return jsonify({'error': 'Incorrect password'}), 404
             if row[2] != password:
-                logging.warning(f"Incorrect password for user: {email}")
+                logging.warning(
+                    "Incorrect password for user: %(email)s", {'email': email})
                 return jsonify({'error': 'Incorrect password'}), 401
 
             cursor.execute(
                 "UPDATE UserListing SET isDeleted = 1 WHERE email = ?", (email,))
             conn.commit()
             if cursor.rowcount == 0:
-                logging.warning(f"No rows updated for email: {email}")
+                logging.warning(
+                    "No rows updated for email: %(email)s", {'email': email})
                 return jsonify({'error': 'User not found'}), 404
 
         return jsonify({'success': 'Account deleted successfully'}), 200
     except sqlite3.Error as e:
-        logging.error(f"Database error: {e}")
+        logging.error("Database error: %(err)s)", {'err': e})
         return jsonify({'error': 'Database error occurred'}), 500
 
     finally:
@@ -1116,6 +1210,7 @@ def get_all_claimrequests_staff():
     conn.close()
     return claim_requests
 
+
 def get_claim_by_id(item_id):
     """Fetch a single item from the database by its ID."""
     conn = create_connection_items(CLAIMS_DB)
@@ -1125,6 +1220,7 @@ def get_claim_by_id(item_id):
     conn.close()
     return claim_request
 
+
 def get_all_claimrequests_student(email):
     """Fetch all claim requests from the ClaimRequest database by email"""
     conn = create_connection_items(CLAIMS_DB)
@@ -1133,6 +1229,7 @@ def get_all_claimrequests_student(email):
     claim_requests = cursor.fetchall()
     conn.close()
     return claim_requests
+
 
 @ app.route('/allclaim-requests-student/<string:emailId>', methods=['GET'])
 def view_all_requests_student(emailId):
@@ -1151,7 +1248,7 @@ def view_all_requests_student(emailId):
             photo_data = item[2]
 
         item_deets = get_item_by_id(item[0])
-        
+
         status = "NA"
         if (item[4] == 2):
             status = "Acepted"
@@ -1175,11 +1272,13 @@ def view_all_requests_student(emailId):
 def update_claim(claim_id, comments, file_path):
     conn = create_connection_items(CLAIMS_DB)
     cursor = conn.cursor()
-    cursor.execute("UPDATE CLAIMREQUETS SET Comments = ?, PhotoProof = ?, ClaimStatus = 1 WHERE ItemID = ?", (comments, file_path, claim_id))
+    cursor.execute("UPDATE CLAIMREQUETS SET Comments = ?, PhotoProof = ?, ClaimStatus = 1 WHERE ItemID = ?",
+                   (comments, file_path, claim_id))
     conn.commit()
     conn.close()
 
-@app.route('/claim-modify-student/<int:claim_id>', methods=['PUT'])
+
+@ app.route('/claim-modify-student/<int:claim_id>', methods=['PUT'])
 def modify_claim(claim_id):
     app.logger.info(f"Received modify request for claim ID: {claim_id}")
     if 'file' not in request.files and 'comments' not in request.form:
@@ -1195,24 +1294,24 @@ def modify_claim(claim_id):
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
         app.logger.info(f"File saved to {file_path}")
-        
+
     with open(file_path, 'rb') as file:
         blob_data = file.read()
 
     try:
         # Uncomment and define `update_claim` to actually perform the DB update
         update_claim(claim_id, comments, blob_data)
-        
+
         itemz = get_item_by_id(claim_id)
         staffemail = itemz[5] + "@googlemail.com"
-        
+
         # Sending an email
         emailstr1 = f"Hello there<br><br>A modified claim request has been submitted and is awaiting review...<br><br>Item Id: {claim_id}<br><br>Reason Given: {comments}"
         emailstr2 = f"<br><br>Please open the portal to check status of the claim<br><br>Thank You!<br>~BoilerTrack Devs"
 
         msg = Message("BoilerTrack: Modified Claim Request for Review",
-                          sender="shloksbairagi07@gmail.com",
-                          recipients=[GLOBAL_USER_EMAIL, staffemail])
+                      sender="shloksbairagi07@gmail.com",
+                      recipients=[GLOBAL_USER_EMAIL, staffemail])
 
         msg.html = """
             <html>
@@ -1225,15 +1324,13 @@ def modify_claim(claim_id):
             </html>
             """.format(emailstr1.replace('\n', '<br>'), emailstr2.replace('\n', '<br>'))
 
-            # Attach the image
+        # Attach the image
         with open(file_path, 'rb') as fp:
-                msg.attach("image.jpg", "image/jpeg", fp.read(),
-                           headers={'Content-ID': '<image1>'})
+            msg.attach("image.jpg", "image/jpeg", fp.read(),
+                       headers={'Content-ID': '<image1>'})
 
         mail.send(msg)
         app.logger.info("Message sent!")
-        
-        
 
         if file_path:
             os.remove(file_path)  # Remove the uploaded file
@@ -1307,7 +1404,7 @@ def view_claim(item_id):
         return jsonify({'error': 'Item not found'}), 404
 
 
-@app.route('/individual-request-staff/<int:claim_id>/approve', methods=['POST'])
+@ app.route('/individual-request-staff/<int:claim_id>/approve', methods=['POST'])
 def approve_claim(claim_id):
     conn = create_connection_items(CLAIMS_DB)
     cursor = conn.cursor()
@@ -1486,6 +1583,10 @@ def submit_release_form():
         )
     ''')
 
+    # pre register item here
+    # get item deials from claimID which is itemID
+    
+
     try:
         cursor.execute('''
             INSERT INTO RELEASED (ClaimID, DateClaimed, UserEmailID, StaffName, StudentID)
@@ -1590,6 +1691,132 @@ def reject_claim_more_info(claim_id):
         return jsonify({'error': 'Failed to reject claim and save rationale'}), 500
     finally:
         conn.close()
+
+@app.route('/dispute-claim/<int:item_id>', methods=['POST'])
+def dispute_claim(item_id):
+    try:
+        # Connect to the disputes database
+        conn = sqlite3.connect(DISPUTES_DB)
+        cursor = conn.cursor()
+
+        # Fetch the user who initially claimed the item from CLAIMREQUETS
+        claims_conn = sqlite3.connect(CLAIMS_DB)
+        claims_cursor = claims_conn.cursor()
+        claims_cursor.execute("SELECT UserEmail FROM CLAIMREQUETS WHERE ItemID = ?", (item_id,))
+        claimed_by = claims_cursor.fetchone()
+        claims_conn.close()
+
+        # Check if the item was claimed
+        if not claimed_by:
+            return jsonify({"error": "No claim found for this item ID"}), 404
+
+        # The user submitting the dispute
+        dispute_by = GLOBAL_USER_EMAIL
+
+        # Get the form data
+        reason = request.form.get('reason')
+        additional_comments = request.form.get('notes')
+
+        # Check if dispute photo is provided and convert it to binary data
+        dispute_photo = request.files.get('file')
+        if dispute_photo and dispute_photo.filename:
+            # Save the file to the uploads folder
+            filename = secure_filename(dispute_photo.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            dispute_photo.save(file_path)
+
+            # Convert image to binary data
+            with open(file_path, 'rb') as file:
+                image_data = file.read()
+
+        
+        else:
+            return jsonify({"error": "Dispute photo proof is required"}), 400
+
+        # SQL to insert data into ClaimDisputes table
+        insert_query = """
+            INSERT INTO ClaimDisputes (ItemID, ClaimedBy, DisputeBy, Reason, AdditionalComments, DisputePhotoProof)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """
+        # Data to be inserted
+        data_tuple = (item_id, claimed_by[0], dispute_by, reason, additional_comments, image_data)
+
+        # Execute the insert query
+        cursor.execute(insert_query, data_tuple)
+        conn.commit()
+
+        return jsonify({"message": "Dispute claim submitted successfully"}), 201
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return jsonify({"error": "Failed to submit dispute claim"}), 500
+
+    finally:
+        if conn:
+            conn.close()
+
+@app.route('/dispute-claim/<int:item_id>', methods=['POST'])
+def dispute_claim(item_id):
+    try:
+        # Connect to the disputes database
+        conn = sqlite3.connect(DISPUTES_DB)
+        cursor = conn.cursor()
+
+        # Fetch the user who initially claimed the item from CLAIMREQUETS
+        claims_conn = sqlite3.connect(CLAIMS_DB)
+        claims_cursor = claims_conn.cursor()
+        claims_cursor.execute("SELECT UserEmail FROM CLAIMREQUETS WHERE ItemID = ?", (item_id,))
+        claimed_by = claims_cursor.fetchone()
+        claims_conn.close()
+
+        # Check if the item was claimed
+        if not claimed_by:
+            return jsonify({"error": "No claim found for this item ID"}), 404
+
+        # The user submitting the dispute
+        dispute_by = GLOBAL_USER_EMAIL
+
+        # Get the form data
+        reason = request.form.get('reason')
+        additional_comments = request.form.get('notes')
+
+        # Check if dispute photo is provided and convert it to binary data
+        dispute_photo = request.files.get('file')
+        if dispute_photo and dispute_photo.filename:
+            # Save the file to the uploads folder
+            filename = secure_filename(dispute_photo.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            dispute_photo.save(file_path)
+
+            # Convert image to binary data
+            with open(file_path, 'rb') as file:
+                image_data = file.read()
+
+        
+        else:
+            return jsonify({"error": "Dispute photo proof is required"}), 400
+
+        # SQL to insert data into ClaimDisputes table
+        insert_query = """
+            INSERT INTO ClaimDisputes (ItemID, ClaimedBy, DisputeBy, Reason, AdditionalComments, DisputePhotoProof)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """
+        # Data to be inserted
+        data_tuple = (item_id, claimed_by[0], dispute_by, reason, additional_comments, image_data)
+
+        # Execute the insert query
+        cursor.execute(insert_query, data_tuple)
+        conn.commit()
+
+        return jsonify({"message": "Dispute claim submitted successfully"}), 201
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return jsonify({"error": "Failed to submit dispute claim"}), 500
+
+    finally:
+        if conn:
+            conn.close()
 
 if __name__ == '__main__':
     if not os.path.exists(os.path.dirname(USERS_DB)):
