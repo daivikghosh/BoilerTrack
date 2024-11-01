@@ -21,5 +21,5 @@ WORKDIR /app
 
 
 RUN echo 'source /workspaces/CS-307-Group-19/flask-server/.venv/bin/activate' >> /home/vscode/.bashrc
-
+RUN echo 'export BROWSER=none' >> /home/vscode/.bashrc
 EXPOSE 5000 3000

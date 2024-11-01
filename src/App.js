@@ -31,6 +31,7 @@ import TokenResetForm from "./components/TokenResetForm/TokenResetForm.js";
 import PrintItem from "./components/ItemView/PrintItem.js";
 import BulkUpload from "./components/StaffInputForm/BulkUpload.js";
 import LayoutBar from "./components/LayoutBar/LayoutBar.js";
+import LostItemRequestsStaffView from "./components/LostItemRequestsStaffView/LostItemRequestsStaffView.js";
 
 const App = () => {
   return (
@@ -73,6 +74,10 @@ const App = () => {
           path="/all-lost-item-requests"
           element={<AllLostItemRequests />}
         />
+        <Route
+          path="/lost-items-staff"
+          element={<LostItemRequestsStaffView />}
+        />{" "}
         <Route
           path="/edit-lost-item/:itemId"
           element={<EditLostItemRequest />}
