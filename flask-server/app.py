@@ -1756,6 +1756,22 @@ def dispute_claim(item_id):
         if conn:
             conn.close()
 
+@app.route('/api/categories', methods=['GET'])
+def get_categories():
+    conn = create_connection_items(ITEMS_DB)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT CategoryName, ItemCount FROM CATEGORIES ORDER BY ItemCount DESC")
+        categories = cursor.fetchall()
+        categories_list = [
+            {"CategoryName": row[0], "ItemCount": row[1]} for row in categories
+        ]
+        return jsonify(categories_list), 200
+    except sqlite3.Error as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
 
 if __name__ == '__main__':
     if not os.path.exists(os.path.dirname(USERS_DB)):

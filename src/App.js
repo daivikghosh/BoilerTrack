@@ -31,6 +31,7 @@ import TokenResetForm from "./components/TokenResetForm/TokenResetForm.js";
 import PrintItem from "./components/ItemView/PrintItem.js";
 import BulkUpload from "./components/StaffInputForm/BulkUpload.js";
 import LayoutBar from "./components/LayoutBar/LayoutBar.js";
+import StudentAnalyticsPage from "./pages/StudentAnalyticsPage";
 
 const App = () => {
   return (
@@ -100,6 +101,9 @@ const App = () => {
         <Route path="/token-reset" element={<TokenResetForm />} />
         <Route path="/print-item/:id" element={<PrintItem />} />{" "}
         <Route path="/bulk" element={<BulkUpload />} />{" "}
+
+        {/* Analytics page route */}
+        <Route path="/student-analytics" element={<StudentAnalyticsPage />} />
       </Routes>
     </Router>
   );
