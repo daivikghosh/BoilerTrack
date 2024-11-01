@@ -1557,7 +1557,29 @@ def get_processed_claims():
     finally:
         conn.close()
 
-
+@app.route('/get-processed-claim/<int:claim_id>', methods=['GET'])
+def get_processed_claim(claim_id):
+    conn = create_connection_items(PROCESSED_CLAIMS_DB)
+    cursor = conn.cursor()
+    try:
+        cursor.execute('SELECT * FROM RELEASED WHERE ClaimID = ?', (claim_id,))
+        processed_claim = cursor.fetchone()
+        if processed_claim:
+            processed_claim_data = {
+                'ClaimID': processed_claim[0],
+                'DateClaimed': processed_claim[1],
+                'UserEmailID': processed_claim[2],
+                'StaffName': processed_claim[3],
+                'StudentID': processed_claim[4]
+            }
+            return jsonify(processed_claim_data), 200
+        else:
+            return jsonify({'error': 'Processed claim not found'}), 404
+    except sqlite3.Error as e:
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    finally:
+        conn.close()
+        
 @app.route('/edit-processed-claim/<int:claim_id>', methods=['PUT'])
 def edit_processed_claim(claim_id):
     data = request.json
@@ -1585,28 +1607,28 @@ def edit_processed_claim(claim_id):
     finally:
         conn.close()
 
-# @app.route('/get-release-form/<int:claim_id>', methods=['GET'])
-# def get_release_form(claim_id):
-#     conn = create_connection_items(PROCESSED_CLAIMS_DB)
-#     cursor = conn.cursor()
-#     try:
-#         cursor.execute('SELECT * FROM RELEASED WHERE ClaimID = ?', (claim_id,))
-#         release_form = cursor.fetchone()
-#         if release_form:
-#             release_data = {
-#                 'ClaimID': release_form[0],
-#                 'DateClaimed': release_form[1],
-#                 'UserEmailID': release_form[2],
-#                 'StaffName': release_form[3],
-#                 'StudentID': release_form[4]
-#             }
-#             return jsonify(release_data), 200
-#         else:
-#             return jsonify({'error': 'Release form not found'}), 404
-#     except sqlite3.Error as e:
-#         return jsonify({'error': f'Database error: {str(e)}'}), 500
-#     finally:
-#         conn.close()
+@app.route('/get-release-form/<int:claim_id>', methods=['GET'])
+def get_release_form(claim_id):
+    conn = create_connection_items(PROCESSED_CLAIMS_DB)
+    cursor = conn.cursor()
+    try:
+        cursor.execute('SELECT * FROM RELEASED WHERE ClaimID = ?', (claim_id,))
+        release_form = cursor.fetchone()
+        if release_form:
+            release_data = {
+                'ClaimID': release_form[0],
+                'DateClaimed': release_form[1],
+                'UserEmailID': release_form[2],
+                'StaffName': release_form[3],
+                'StudentID': release_form[4]
+            }
+            return jsonify(release_data), 200
+        else:
+            return jsonify({'error': 'Release form not found'}), 404
+    except sqlite3.Error as e:
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    finally:
+        conn.close()
 
 # @app.route('/update-release-form/<int:claim_id>', methods=['PUT'])
 # def update_release_form(claim_id):

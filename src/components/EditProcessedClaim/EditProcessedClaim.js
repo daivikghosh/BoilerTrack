@@ -19,8 +19,14 @@ const EditProcessedClaim = () => {
     // Fetch the existing claim data
     const fetchClaimData = async () => {
       try {
-        const response = await axios.get(`/get-release-form/${claimId}`);
-        setFormData(response.data);
+        const response = await axios.get(`/get-processed-claim/${claimId}`);
+        setFormData({
+          dateClaimed: response.data.DateClaimed || "", // Replace keys if they differ
+          userEmailID: response.data.UserEmailID || "",
+          staffName: response.data.StaffName || "",
+          studentID: response.data.StudentID || ""
+        });
+        console.log(response)
         setLoading(false);
       } catch (err) {
         setError("Failed to load claim data.");
