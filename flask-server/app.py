@@ -1470,7 +1470,9 @@ def view_claim(item_id):
             'LocationTurnedIn': item[5],
             'Comments': claim[1],
             'UserEmail': claim[3],
-            'PhotoProof': image_data
+            'PhotoProof': image_data,
+            'ClaimStatus': claim[4],
+            'RejectRationale': claim[5]
         }
         return jsonify(claim_data), 200
     else:
