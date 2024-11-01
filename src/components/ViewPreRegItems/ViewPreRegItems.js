@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./ViewPreRegItems.css";
 
-// dummy data
-
 const ViewPreRegItems = () => {
   const [preRegItems, setPreRegItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +54,9 @@ const ViewPreRegItems = () => {
               </p>
               <p>
                 <strong>Description:</strong> {item.Description}
+              </p>
+              <p>
+                <strong>Status:</strong> Pre-registered
               </p>
             </div>
             <div className="qr-code-details">
