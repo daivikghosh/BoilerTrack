@@ -6,44 +6,52 @@ import "./ItemView.css";
 const PrintItem = () => {
   const { id } = useParams(); // Get the item ID from the URL
   const [item, setItem] = useState(null);
-  const [user, setUser] = useState({ name: "N/A", pronouns: "N/A", email: "N/A" });
+  const [user, setUser] = useState({ name: "N/A", email: "N/A", pronouns: "N/A" });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchItemData = async () => {
+    const fetchItemAndClaimDetails = async () => {
       try {
-        // Fetch the item details
-        const itemResponse = await axios.get(`/item/${id}`);
-        setItem(itemResponse.data);
-        console.log("Item data:", itemResponse.data); // Log item data for debugging
+        console.log(`Fetching item details for item ID: ${id}`);
 
-        // Fetch claim requests related to the item
-        const claimResponse = await axios.get(`/claim-requests?itemId=${id}`);
-        const claims = claimResponse.data;
-        console.log("Claim requests:", claims); // Log claim requests for debugging
+        // Fetch the item information
+        const response = await axios.get(`/item/${id}`);
+        console.log("Item data received:", response.data);
+        setItem(response.data);
 
-        // Check if there is an approved claim
-        const approvedClaim = claims.find(claim => claim.ClaimStatus === 2);
-        if (approvedClaim) {
-          console.log("Approved claim found:", approvedClaim); // Log approved claim for debugging
-          
-          // Fetch user information if an approved claim exists
-          const userResponse = await axios.get(`/profile?email=${approvedClaim.UserEmail}`);
-          setUser({ ...userResponse.data, email: approvedClaim.UserEmail });
-          console.log("User data:", userResponse.data); // Log user data for debugging
+        // Fetch claim details to check if a claim exists
+        console.log(`Fetching claim details for item ID: ${id}`);
+        const claimResponse = await axios.get(`/individual-request-staff/${id}`);
+        const claimData = claimResponse.data;
+        console.log("Claim data received:", claimData);
+
+        // Check if the claim is approved
+        if (claimData && claimData.ClaimStatus === 2) {
+          console.log("Claim is approved, fetching user info...");
+          const userEmail = claimData.UserEmail;
+          console.log("User email from claim:", userEmail);
+
+          // Fetch user profile using the user email from the claim request
+          const userResponse = await axios.get(`/profile?email=${userEmail}`);
+          console.log("User data received:", userResponse.data);
+          setUser({ ...userResponse.data, email: userEmail });
+        } else {
+          console.log("No approved claim found for this item.");
+          // Set the email from the claim data even if not approved
+          setUser((prevUser) => ({ ...prevUser, email: claimData?.UserEmail || "N/A" }));
         }
-
-        setLoading(false);
-        window.print();
       } catch (err) {
         console.error("Error fetching item or claim details:", err);
-        setError("Failed to load item details.");
+        setError("Failed to load item details. Please try again later.");
+      } finally {
+        console.log("Finished fetching item and claim details");
         setLoading(false);
+        window.print();
       }
     };
 
-    fetchItemData();
+    fetchItemAndClaimDetails();
   }, [id]);
 
   if (loading) {
@@ -57,6 +65,7 @@ const PrintItem = () => {
   return (
     <div className="item-view-container">
       <div className="item-view-card">
+        {/* Display the fetched image */}
         {item && item.ImageURL && (
           <img
             src={`data:image/jpeg;base64,${item.ImageURL}`}
@@ -80,9 +89,9 @@ const PrintItem = () => {
           </p>
           <p className="item-description">{item?.Description}</p>
           <h3>User Information</h3>
-          <p><strong>Name:</strong> {user.name}</p>
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Pronouns:</strong> {user.pronouns}</p>
+          <p><strong>Name:</strong> {user?.name}</p>
+          <p><strong>Email:</strong> {user?.email}</p> {/* Email is displayed from the claim */}
+          <p><strong>Pronouns:</strong> {user?.pronouns || "N/A"}</p>
         </div>
       </div>
     </div>

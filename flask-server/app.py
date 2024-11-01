@@ -1296,7 +1296,9 @@ def view_claim(item_id):
             'LocationTurnedIn': item[5],
             'Comments': claim[1],
             'UserEmail': claim[3],
-            'PhotoProof': image_data
+            'PhotoProof': image_data,
+            'ClaimStatus': claim[4],
+            'RejectRationale': claim[5]
         }
         return jsonify(claim_data), 200
     else:
@@ -1588,7 +1590,6 @@ def reject_claim_more_info(claim_id):
         return jsonify({'error': 'Failed to reject claim and save rationale'}), 500
     finally:
         conn.close()
-
 
 if __name__ == '__main__':
     if not os.path.exists(os.path.dirname(USERS_DB)):
