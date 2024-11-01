@@ -1,0 +1,98 @@
+/* StaffCreateAccountForm.css */
+
+.form-container {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 100%;
+  margin: 20px auto;
+  text-align: center;
+
+  /* Center the form-container vertically and horizontally */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form-container h2 {
+  font-size: 24px;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  color: #2225c1;
+}
+
+.form-input {
+  width: 100%; /* Ensure form inputs take full width of the container */
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.form-input label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-input input,
+.form-input select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+.form-input input:focus,
+.form-input select:focus {
+  border-color: #2225c1;
+  background-color: white;
+  outline: none;
+}
+
+.success-text {
+  color: green;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.error-text {
+  color: red;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.signup-button {
+  width: 100%;
+  padding: 0.8rem;
+  background-color: #2225c1;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.125rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.signup-button:hover {
+  background-color: #1a1c99;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #2225c1;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 1rem;
+  padding: 0;
+}
+
+.link-button:hover {
+  color: #1a1c99;
+}

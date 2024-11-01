@@ -1898,6 +1898,70 @@ def get_staff_analytics():
         if conn:
             conn.close()
 
+def create_connection_staff():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.join(base_dir, '../databases/StaffAccounts.db')
+    conn = sqlite3.connect(db_path)
+    return conn
+
+@app.route('/api/staff/signup', methods=['POST'])
+def staff_signup():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+    name = data.get('name')
+    building_dept = data.get('buildingDept')
+
+    if not email or not password or not name or not building_dept:
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    conn = create_connection_staff()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute('''
+            INSERT INTO StaffListing (Email, Password, Name, Dept, isApproved)
+            VALUES (?, ?, ?, ?, 0)
+        ''', (email, password, name, building_dept))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        return jsonify({'error': 'Email already exists'}), 400
+    except sqlite3.Error as e:
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    finally:
+        conn.close()
+
+    return jsonify({'message': 'Account created successfully. Awaiting approval.'}), 201
+
+@app.route('/api/staff/login', methods=['POST'])
+def staff_login():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+    building_dept = data.get('buildingDept')
+
+    if not email or not password or not building_dept:
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    conn = create_connection_staff()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT StaffID, isApproved FROM StaffListing
+        WHERE Email = ? AND Password = ? AND Dept = ?
+    ''', (email, password, building_dept))
+    user = cursor.fetchone()
+    conn.close()
+
+    if user:
+        staff_id, is_approved = user
+        if is_approved:
+            return jsonify({'message': 'Login successful', 'isApproved': is_approved}), 200
+        else:
+            return jsonify({'error': 'Account not approved yet.'}), 403
+    else:
+        return jsonify({'error': 'Invalid credentials.'}), 401
+
 if __name__ == '__main__':
     if not os.path.exists(os.path.dirname(USERS_DB)):
         os.makedirs(os.path.dirname(USERS_DB))
