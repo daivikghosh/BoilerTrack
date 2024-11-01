@@ -19,6 +19,7 @@ from werkzeug.utils import secure_filename
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from PreregistedItemsdb import insert_preregistered_item
 
 from database_cleaner import delete_deleted_items
 from AddFoundItemPic import insertItem
@@ -49,6 +50,7 @@ USERS_DB = os.path.join(db_dir, 'Accounts.db')
 CLAIMS_DB = os.path.join(db_dir, 'ClaimRequest.db')
 PREREG_DB = os.path.join(db_dir, 'ItemListings.db')
 PROCESSED_CLAIMS_DB = os.path.join(db_dir, 'ProcessedClaims.db')
+DISPUTES_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'ItemListings.db')
 
 # trying error of no image avail
 DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
@@ -200,6 +202,39 @@ def home():
     """
     app.logger.info("Accessed root route")
     return jsonify({"message": "Welcome to the Lost and Found API"}), 200
+
+@app.route('/preregister-item', methods=['POST'])
+def preregister_item():
+    try:
+        # Get the form data from the request
+        item_name = request.form.get('ItemName')
+        color = request.form.get('Color')
+        brand = request.form.get('Brand')
+        description = request.form.get('Description')
+        date = request.form.get('Date')
+        user_email = request.form.get('UserEmail')
+        
+        # Set default QR code path
+        qr_code_path = 'uploads/care.png'
+        
+        # Check if the photo file is provided and save it
+        photo = request.files.get('Photo')
+        if photo and photo.filename:
+            filename = secure_filename(photo.filename)
+            photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            photo.save(photo_path)
+        else:
+            pass
+        
+        # Insert the item into the database
+        insertPreRegisteredItem(item_name, color, brand, description, photo_path, date, qr_code_path, user_email)
+        
+        return jsonify({"message": "Pre-registered item added successfully"}), 201
+    
+    except Exception as e:
+        app.logger.error(f"Error adding pre-registered item: {e}")
+        return jsonify({"error": "Failed to add pre-registered item"}), 500
+
 
 
 @ app.route('/pre-registered-items', methods=['GET'])
@@ -1522,8 +1557,49 @@ def edit_processed_claim(claim_id):
 #         conn.close()
 # Route to reject a claim request
 
+@app.route('/submit-release-form', methods=['POST'])
+def submit_release_form():
+    
+    data = request.json
+    claim_id = data.get('claimId')
+    date_claimed = data.get('dateClaimed')
+    user_email_id = data.get('userEmailID')
+    staff_name = data.get('staffName')
+    student_id = data.get('studentID')
 
-@ app.route('/individual-request-staff/<int:claim_id>/reject', methods=['POST'])
+    conn = create_connection_items(PROCESSED_CLAIMS_DB)
+    cursor = conn.cursor()
+
+    # Create the RELEASED table if it doesn't exist
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS RELEASED (
+            ClaimID INTEGER,
+            DateClaimed TEXT,
+            UserEmailID TEXT,
+            StaffName TEXT,
+            StudentID TEXT
+        )
+    ''')
+
+    # pre register item here
+    # get item deials from claimID which is itemID
+    
+
+    try:
+        cursor.execute('''
+            INSERT INTO RELEASED (ClaimID, DateClaimed, UserEmailID, StaffName, StudentID)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (claim_id, date_claimed, user_email_id, staff_name, student_id))
+
+        conn.commit()
+        return jsonify({'message': 'Release form data submitted successfully'}), 201
+    except sqlite3.Error as e:
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/individual-request-staff/<int:claim_id>/reject', methods=['POST'])
 def reject_claim(claim_id):
     # Get the rationale from the request
     rationale = request.json.get('rationale', '')
@@ -1613,6 +1689,69 @@ def reject_claim_more_info(claim_id):
         return jsonify({'error': 'Failed to reject claim and save rationale'}), 500
     finally:
         conn.close()
+
+@app.route('/dispute-claim/<int:item_id>', methods=['POST'])
+def dispute_claim(item_id):
+    try:
+        # Connect to the disputes database
+        conn = sqlite3.connect(DISPUTES_DB)
+        cursor = conn.cursor()
+
+        # Fetch the user who initially claimed the item from CLAIMREQUETS
+        claims_conn = sqlite3.connect(CLAIMS_DB)
+        claims_cursor = claims_conn.cursor()
+        claims_cursor.execute("SELECT UserEmail FROM CLAIMREQUETS WHERE ItemID = ?", (item_id,))
+        claimed_by = claims_cursor.fetchone()
+        claims_conn.close()
+
+        # Check if the item was claimed
+        if not claimed_by:
+            return jsonify({"error": "No claim found for this item ID"}), 404
+
+        # The user submitting the dispute
+        dispute_by = GLOBAL_USER_EMAIL
+
+        # Get the form data
+        reason = request.form.get('reason')
+        additional_comments = request.form.get('notes')
+
+        # Check if dispute photo is provided and convert it to binary data
+        dispute_photo = request.files.get('file')
+        if dispute_photo and dispute_photo.filename:
+            # Save the file to the uploads folder
+            filename = secure_filename(dispute_photo.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            dispute_photo.save(file_path)
+
+            # Convert image to binary data
+            with open(file_path, 'rb') as file:
+                image_data = file.read()
+
+        
+        else:
+            return jsonify({"error": "Dispute photo proof is required"}), 400
+
+        # SQL to insert data into ClaimDisputes table
+        insert_query = """
+            INSERT INTO ClaimDisputes (ItemID, ClaimedBy, DisputeBy, Reason, AdditionalComments, DisputePhotoProof)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """
+        # Data to be inserted
+        data_tuple = (item_id, claimed_by[0], dispute_by, reason, additional_comments, image_data)
+
+        # Execute the insert query
+        cursor.execute(insert_query, data_tuple)
+        conn.commit()
+
+        return jsonify({"message": "Dispute claim submitted successfully"}), 201
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return jsonify({"error": "Failed to submit dispute claim"}), 500
+
+    finally:
+        if conn:
+            conn.close()
 
 
 if __name__ == '__main__':
