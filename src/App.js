@@ -32,6 +32,7 @@ import PrintItem from "./components/ItemView/PrintItem.js";
 import BulkUpload from "./components/StaffInputForm/BulkUpload.js";
 import LayoutBar from "./components/LayoutBar/LayoutBar.js";
 import StudentAnalyticsPage from "./pages/StudentAnalyticsPage";
+import StaffAnalyticsPage from "./pages/StaffAnalyticsPage";
 
 const App = () => {
   return (
@@ -104,6 +105,7 @@ const App = () => {
 
         {/* Analytics page route */}
         <Route path="/student-analytics" element={<StudentAnalyticsPage />} />
+        <Route path="/staff-analytics" element={<StaffAnalyticsPage />} />
       </Routes>
     </Router>
   );

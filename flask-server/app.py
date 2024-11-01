@@ -1773,6 +1773,52 @@ def get_categories():
         if conn:
             conn.close()
 
+@app.route('/api/staff-analytics', methods=['GET'])
+def get_staff_analytics():
+    conn = create_connection_items(ITEMS_DB)
+    cursor = conn.cursor()
+    try:
+        # Count claimed items
+        cursor.execute("SELECT COUNT(*) FROM FOUNDITEMS WHERE ItemStatus = 3")  # Assuming 1 = claimed
+        claimed_count = cursor.fetchone()[0]
+
+        # Count unclaimed items
+        cursor.execute("SELECT COUNT(*) FROM FOUNDITEMS WHERE ItemStatus = 1")  # Assuming 0 = unclaimed
+        unclaimed_count = cursor.fetchone()[0]
+
+        # Most frequent missing locations
+        cursor.execute("""
+            SELECT LocationFound, COUNT(*) as Count 
+            FROM FOUNDITEMS 
+            GROUP BY LocationFound 
+            ORDER BY Count DESC 
+            LIMIT 5
+        """)
+        missing_locations = [{"Location": row[0], "Count": row[1]} for row in cursor.fetchall()]
+
+        # Most common categories
+        cursor.execute("""
+            SELECT CategoryName, ItemCount 
+            FROM CATEGORIES 
+            ORDER BY ItemCount DESC 
+            LIMIT 5
+        """)
+        common_categories = [{"CategoryName": row[0], "ItemCount": row[1]} for row in cursor.fetchall()]
+
+        analytics_data = {
+            "claimedCount": claimed_count,
+            "unclaimedCount": unclaimed_count,
+            "missingLocations": missing_locations,
+            "commonCategories": common_categories
+        }
+
+        return jsonify(analytics_data), 200
+    except sqlite3.Error as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
+
 if __name__ == '__main__':
     if not os.path.exists(os.path.dirname(USERS_DB)):
         os.makedirs(os.path.dirname(USERS_DB))
