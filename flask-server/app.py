@@ -38,7 +38,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 # Store the accoung info in a global var
-GLOBAL_USER_EMAIL: str
+GLOBAL_USER_EMAIL = ""
 
 
 # Get the absolute path to the Databases directory
