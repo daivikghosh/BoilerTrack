@@ -1297,9 +1297,12 @@ def modify_claim(claim_id):
 
     with open(file_path, 'rb') as file:
         blob_data = file.read()
+        
+    claimer = get_claim_by_id(claim_id)
+    if claimer[4] == 2:
+        return jsonify({'error': 'This item has already been claimed'}), 500
 
     try:
-        # Uncomment and define `update_claim` to actually perform the DB update
         update_claim(claim_id, comments, blob_data)
 
         itemz = get_item_by_id(claim_id)

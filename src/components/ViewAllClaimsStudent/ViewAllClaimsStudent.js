@@ -55,13 +55,16 @@ const ListViewClaimRequestsStudent = () => {
               </p>
             </div>
             <div className="list-item-actions">
-              <button
-                className="action-button"
-                onClick={() => {
-                  navigate(`/claim-modify-student/${item.ItemID}`)} }
-              >
-                Modify Request
-              </button>
+              {item.ClaimStatus !== "Acepted" && (
+                <button
+                  className="action-button"
+                  onClick={() => {
+                    navigate(`/claim-modify-student/${item.ItemID}`);
+                  }}
+                >
+                  Modify Request
+                </button>
+              )}
             </div>
           </div>
         ))
