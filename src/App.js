@@ -25,16 +25,17 @@ import DisputeClaimForm from "./components/DisputeClaimForm/DisputeClaimForm.js"
 import ReleaseForm from "./components/ReleaseForm/ReleaseForm.js";
 import ProcessedClaimsPage from "./components/ProcessedClaims/ProcessedClaims.js";
 import EditProcessedClaim from "./components/EditProcessedClaim/EditProcessedClaim.js"; // Import the edit component if created
-
 import ListViewClaimRequestsStudent from "./components/ViewAllClaimsStudent/ViewAllClaimsStudent.js";
 import ModifyClaimForm from "./components/ClaimForm/ModifyClaimForm.js";
 import TokenResetForm from "./components/TokenResetForm/TokenResetForm.js";
 import PrintItem from "./components/ItemView/PrintItem.js";
 import BulkUpload from "./components/StaffInputForm/BulkUpload.js";
+import LayoutBar from "./components/LayoutBar/LayoutBar.js";
 
 const App = () => {
   return (
     <Router>
+      <LayoutBar />
       <Routes>
         <Route path="/" element={<LoginSignupPage />} />{" "}
         <Route path="/UploadImage" element={<ImageUpload />} />{" "}

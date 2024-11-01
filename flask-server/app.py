@@ -38,7 +38,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 # Store the accoung info in a global var
-GLOBAL_USER_EMAIL: str
+GLOBAL_USER_EMAIL = ""
 
 
 # Get the absolute path to the Databases directory
@@ -227,7 +227,7 @@ def preregister_item():
             pass
         
         # Insert the item into the database
-        insertPreRegisteredItem(item_name, color, brand, description, photo_path, date, qr_code_path, user_email)
+        insert_preregistered_item(item_name, color, brand, description, photo_path, date, qr_code_path, user_email)
         
         return jsonify({"message": "Pre-registered item added successfully"}), 201
     
@@ -1297,9 +1297,12 @@ def modify_claim(claim_id):
 
     with open(file_path, 'rb') as file:
         blob_data = file.read()
+        
+    claimer = get_claim_by_id(claim_id)
+    if claimer[4] == 2:
+        return jsonify({'error': 'This item has already been claimed'}), 500
 
     try:
-        # Uncomment and define `update_claim` to actually perform the DB update
         update_claim(claim_id, comments, blob_data)
 
         itemz = get_item_by_id(claim_id)
@@ -1583,7 +1586,7 @@ def submit_release_form():
 
     # pre register item here
     # get item deials from claimID which is itemID
-    
+
 
     try:
         cursor.execute('''
