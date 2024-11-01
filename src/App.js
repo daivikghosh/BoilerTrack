@@ -30,9 +30,10 @@ import ModifyClaimForm from "./components/ClaimForm/ModifyClaimForm.js";
 import TokenResetForm from "./components/TokenResetForm/TokenResetForm.js";
 import PrintItem from "./components/ItemView/PrintItem.js";
 import BulkUpload from "./components/StaffInputForm/BulkUpload.js";
-import LayoutBar from "./components/LayoutBar/LayoutBar.js";
+import LayoutBar from "./components/LayoutBar/LayoutBar.js"
 import StudentAnalyticsPage from "./pages/StudentAnalyticsPage";
 import StaffAnalyticsPage from "./pages/StaffAnalyticsPage";
+import LostItemRequestsStaffView from "./components/LostItemRequestsStaffView/LostItemRequestsStaffView.js";
 
 const App = () => {
   return (
@@ -75,6 +76,10 @@ const App = () => {
           path="/all-lost-item-requests"
           element={<AllLostItemRequests />}
         />
+        <Route
+          path="/lost-items-staff"
+          element={<LostItemRequestsStaffView />}
+        />{" "}
         <Route
           path="/edit-lost-item/:itemId"
           element={<EditLostItemRequest />}

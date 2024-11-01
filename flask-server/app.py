@@ -50,7 +50,8 @@ USERS_DB = os.path.join(db_dir, 'Accounts.db')
 CLAIMS_DB = os.path.join(db_dir, 'ClaimRequest.db')
 PREREG_DB = os.path.join(db_dir, 'ItemListings.db')
 PROCESSED_CLAIMS_DB = os.path.join(db_dir, 'ProcessedClaims.db')
-DISPUTES_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'ItemListings.db')
+DISPUTES_DB = os.path.join(os.path.dirname(
+    base_dir), 'Databases', 'ItemListings.db')
 
 # trying error of no image avail
 DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
@@ -203,6 +204,7 @@ def home():
     app.logger.info("Accessed root route")
     return jsonify({"message": "Welcome to the Lost and Found API"}), 200
 
+
 @app.route('/preregister-item', methods=['POST'])
 def preregister_item():
     try:
@@ -213,10 +215,10 @@ def preregister_item():
         description = request.form.get('Description')
         date = request.form.get('Date')
         user_email = request.form.get('UserEmail')
-        
+
         # Set default QR code path
         qr_code_path = 'uploads/care.png'
-        
+
         # Check if the photo file is provided and save it
         photo = request.files.get('Photo')
         if photo and photo.filename:
@@ -225,16 +227,16 @@ def preregister_item():
             photo.save(photo_path)
         else:
             pass
-        
+
         # Insert the item into the database
-        insert_preregistered_item(item_name, color, brand, description, photo_path, date, qr_code_path, user_email)
-        
+        insert_preregistered_item(
+            item_name, color, brand, description, photo_path, date, qr_code_path, user_email)
+
         return jsonify({"message": "Pre-registered item added successfully"}), 201
-    
+
     except Exception as e:
         app.logger.error(f"Error adding pre-registered item: {e}")
         return jsonify({"error": "Failed to add pre-registered item"}), 500
-
 
 
 @ app.route('/pre-registered-items', methods=['GET'])
@@ -313,6 +315,7 @@ def add_lost_item_request():
 
     # Ensure it's JSON data we're receiving
     data = request.get_json(silent=True)
+    print(f"data: {data}")
     if data is None:
         app.logger.error("Invalid JSON data format.")
         return jsonify({'error': 'Invalid data format. JSON expected.'}), 400
@@ -359,11 +362,13 @@ def add_lost_item_request():
         app.logger.error("Database error: %s", e)
         return jsonify({'error': 'Failed to add lost item request to the database'}), 500
 
+
 @app.route('/delete-lost-item/<int:item_id>', methods=['DELETE'])
 def delete_lost_item(item_id):
     try:
         # Connect to the LostItemRequest.db database
-        lost_item_db = os.path.join(os.path.dirname(base_dir), 'databases', 'LostItemRequest.db')
+        lost_item_db = os.path.join(os.path.dirname(
+            base_dir), 'databases', 'LostItemRequest.db')
         conn = sqlite3.connect(lost_item_db)
         cursor = conn.cursor()
 
@@ -380,18 +385,51 @@ def delete_lost_item(item_id):
         return jsonify({'error': f'Database error: {str(e)}'}), 500
 
 
-
 @ app.route('/lost-item-requests', methods=['GET'])
 def get_lost_item_requests():
+
+    # data = request.get_json()
+
+    # email: str = data['userEmail']
+    # print(data)
+
     user_email = GLOBAL_USER_EMAIL  # Assuming this stores the current user's email
 
     # Check if the user email is set
-    if not user_email:
+    if not user_email:  # or not email:
         return jsonify({'error': 'User email not set'}), 400
 
     # Connect to the LostItemRequest.db database
     lost_item_db = os.path.join(os.path.dirname(
         base_dir), 'databases', 'LostItemRequest.db')
+    # check if the user is staff
+    conn = create_connection_users()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT isStaff FROM UserListing WHERE email=?", (user_email,))
+    is_staff = cursor.fetchone()[0]
+    print(is_staff)
+    if is_staff:
+        # get all lost items
+        conn = sqlite3.connect(lost_item_db)
+        cursor = conn.cursor()
+        # get all lost items
+        cursor.execute("SELECT * FROM lostItems")
+        items = cursor.fetchall()
+        conn.close()
+        items_list = [{
+            'ItemID': item[0],
+            'ItemName': item[1],
+            'Description': item[2],
+            'DateLost': item[3],
+            'LocationLost': item[4],
+            'userEmail': item[5],
+            'status': item[6],
+            'ItemMatchID': item[7]
+        }for item in items]
+        return jsonify(items_list)
+
     conn = sqlite3.connect(lost_item_db)
     cursor = conn.cursor()
 
@@ -486,7 +524,8 @@ def check_lost_item_request():
     # Extract item details from the request
     item_name = data.get('itemName')
     description = data.get('description')
-    location_found = data.get('foundAt')  # Assuming `foundAt` is equivalent to `LocationFound`
+    # Assuming `foundAt` is equivalent to `LocationFound`
+    location_found = data.get('foundAt')
     found_item_id = data.get('foundItemId')
 
     # Connect to LostItemRequest.db
@@ -513,7 +552,8 @@ def check_lost_item_request():
             break
         elif item_name.lower() == lost_item_name.lower() and location_found.lower() != location_lost.lower():
             # Check for description similarity
-            similarity_ratio = difflib.SequenceMatcher(None, description.lower(), lost_item_description.lower()).ratio()
+            similarity_ratio = difflib.SequenceMatcher(
+                None, description.lower(), lost_item_description.lower()).ratio()
             if similarity_ratio >= 0.5:  # 50% similarity threshold
                 matching_item_id = lost_item_id
                 break
@@ -1197,9 +1237,11 @@ def view_found_items():
 
     return jsonify(result), 200
 
+
 @app.route('/get-user-email', methods=['GET'])
 def get_user_email():
     return jsonify({"user_email": GLOBAL_USER_EMAIL}), 200
+
 
 def get_all_claimrequests_staff():
     """Fetch all claim requests from the ClaimRequest database."""
@@ -1297,7 +1339,7 @@ def modify_claim(claim_id):
 
     with open(file_path, 'rb') as file:
         blob_data = file.read()
-        
+
     claimer = get_claim_by_id(claim_id)
     if claimer[4] == 2:
         return jsonify({'error': 'This item has already been claimed'}), 500
@@ -1421,8 +1463,8 @@ def approve_claim(claim_id):
             "UPDATE CLAIMREQUETS SET ClaimStatus = 2 WHERE ItemID = ?", (claim_id,))
 
         # Remove the claim from the claim requests table
-        #cursor.execute(
-            #"DELETE FROM CLAIMREQUETS WHERE ItemID = ?", (claim_id,))
+        # cursor.execute(
+        # "DELETE FROM CLAIMREQUETS WHERE ItemID = ?", (claim_id,))
 
         conn.commit()
         conn.close()
@@ -1432,8 +1474,8 @@ def approve_claim(claim_id):
         emailstr3 = f"<br><br>Thank You!<br>~BoilerTrack Devs"
 
         msg = Message("BoilerTrack: Claim Request Accepted",
-                        sender="shloksbairagi07@gmail.com",
-                        recipients=[claimed_email])
+                      sender="shloksbairagi07@gmail.com",
+                      recipients=[claimed_email])
 
         msg.html = """
         <html>
@@ -1453,6 +1495,7 @@ def approve_claim(claim_id):
         return jsonify({'error': 'Failed to approve claim and remove item'}), 500
     finally:
         conn.close()
+
 
 @app.route('/get-processed-claims', methods=['GET'])
 def get_processed_claims():
@@ -1481,6 +1524,7 @@ def get_processed_claims():
         return jsonify({'error': f'Database error: {str(e)}'}), 500
     finally:
         conn.close()
+
 
 @app.route('/edit-processed-claim/<int:claim_id>', methods=['PUT'])
 def edit_processed_claim(claim_id):
@@ -1531,7 +1575,7 @@ def edit_processed_claim(claim_id):
 #         return jsonify({'error': f'Database error: {str(e)}'}), 500
 #     finally:
 #         conn.close()
-        
+
 # @app.route('/update-release-form/<int:claim_id>', methods=['PUT'])
 # def update_release_form(claim_id):
 #     data = request.json
@@ -1560,9 +1604,10 @@ def edit_processed_claim(claim_id):
 #         conn.close()
 # Route to reject a claim request
 
+
 @app.route('/submit-release-form', methods=['POST'])
 def submit_release_form():
-    
+
     data = request.json
     claim_id = data.get('claimId')
     date_claimed = data.get('dateClaimed')
@@ -1586,7 +1631,6 @@ def submit_release_form():
 
     # pre register item here
     # get item deials from claimID which is itemID
-
 
     try:
         cursor.execute('''
@@ -1626,8 +1670,8 @@ def reject_claim(claim_id):
         emailstr3 = f"<br><br>Thank You!<br>~BoilerTrack Devs"
 
         msg = Message("BoilerTrack: Claim Request Rejected",
-                        sender="shloksbairagi07@gmail.com",
-                        recipients=[claimed_email])
+                      sender="shloksbairagi07@gmail.com",
+                      recipients=[claimed_email])
 
         msg.html = """
         <html>
@@ -1647,6 +1691,7 @@ def reject_claim(claim_id):
         return jsonify({'error': 'Failed to reject claim and save rationale'}), 500
     finally:
         conn.close()
+
 
 @app.route('/individual-request-staff/<int:claim_id>/request-more-info', methods=['POST'])
 def reject_claim_more_info(claim_id):
@@ -1671,8 +1716,8 @@ def reject_claim_more_info(claim_id):
         emailstr3 = f"<br><br>Thank You!<br>~BoilerTrack Devs"
 
         msg = Message("BoilerTrack: Claim Request Rejected",
-                        sender="shloksbairagi07@gmail.com",
-                        recipients=[claimed_email])
+                      sender="shloksbairagi07@gmail.com",
+                      recipients=[claimed_email])
 
         msg.html = """
         <html>
@@ -1693,6 +1738,7 @@ def reject_claim_more_info(claim_id):
     finally:
         conn.close()
 
+
 @app.route('/dispute-claim/<int:item_id>', methods=['POST'])
 def dispute_claim(item_id):
     try:
@@ -1703,7 +1749,8 @@ def dispute_claim(item_id):
         # Fetch the user who initially claimed the item from CLAIMREQUETS
         claims_conn = sqlite3.connect(CLAIMS_DB)
         claims_cursor = claims_conn.cursor()
-        claims_cursor.execute("SELECT UserEmail FROM CLAIMREQUETS WHERE ItemID = ?", (item_id,))
+        claims_cursor.execute(
+            "SELECT UserEmail FROM CLAIMREQUETS WHERE ItemID = ?", (item_id,))
         claimed_by = claims_cursor.fetchone()
         claims_conn.close()
 
@@ -1730,7 +1777,6 @@ def dispute_claim(item_id):
             with open(file_path, 'rb') as file:
                 image_data = file.read()
 
-        
         else:
             return jsonify({"error": "Dispute photo proof is required"}), 400
 
@@ -1740,7 +1786,8 @@ def dispute_claim(item_id):
             VALUES (?, ?, ?, ?, ?, ?)
         """
         # Data to be inserted
-        data_tuple = (item_id, claimed_by[0], dispute_by, reason, additional_comments, image_data)
+        data_tuple = (
+            item_id, claimed_by[0], dispute_by, reason, additional_comments, image_data)
 
         # Execute the insert query
         cursor.execute(insert_query, data_tuple)
