@@ -9,6 +9,7 @@ function FilterPane({ onFilterChange }) {
   const [keyword, setKeyword] = useState("");
   const [keywords, setKeywords] = useState([]);
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
+  const [sortOlderThanWeek, setSortOlderThanWeek] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   const [locations, setLocations] = useState([]);
@@ -114,6 +115,19 @@ function FilterPane({ onFilterChange }) {
     });
   };
 
+  const handleWeekOlderChange = () => {
+    setSortOlderThanWeek(!sortOlderThanWeek);
+    onFilterChange({
+      includePast,
+      categories,
+      keywords,
+      sortAlphabetically,
+      locations,
+      dates: selectedDates,
+      sortOlderThanWeek: !sortOlderThanWeek,
+    });
+  };
+
   const handleSortChange = () => {
     setSortAlphabetically(!sortAlphabetically);
     onFilterChange({
@@ -166,14 +180,27 @@ function FilterPane({ onFilterChange }) {
 
       {/* Sort Alphabetically */}
       <div className="filter-option">
-        <label>
+        <label className="switch">
           <input
             type="checkbox"
             checked={sortAlphabetically}
             onChange={handleSortChange}
           />
-          Sort items alphabetically
+          <span className="slider"></span>
         </label>
+        <span>Sort items alphabetically</span>
+      </div>
+      {/* Sort by Older than a Week*/}
+      <div className="filter-option">
+        <label className="switch">
+          <input
+            type="checkbox"
+            checked={sortOlderThanWeek}
+            onChange={handleWeekOlderChange}
+          />
+          <span className="slider"></span>
+        </label>
+        <span>Show only items older than 1 week</span>
       </div>
 
       {/* Keyword Search Bar */}
@@ -185,7 +212,7 @@ function FilterPane({ onFilterChange }) {
           value={keyword}
           onChange={handleKeywordChange}
           onKeyDown={handleAddKeyword}
-          style={{ width: "100%" }}
+          style={{ width: "92%" }}
         />
         <div className="keyword-list">
           {keywords.map((kw) => (
