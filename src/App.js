@@ -30,7 +30,11 @@ import ModifyClaimForm from "./components/ClaimForm/ModifyClaimForm.js";
 import TokenResetForm from "./components/TokenResetForm/TokenResetForm.js";
 import PrintItem from "./components/ItemView/PrintItem.js";
 import BulkUpload from "./components/StaffInputForm/BulkUpload.js";
-import LayoutBar from "./components/LayoutBar/LayoutBar.js";
+import LayoutBar from "./components/LayoutBar/LayoutBar.js"
+import StudentAnalyticsPage from "./pages/StudentAnalyticsPage";
+import StaffAnalyticsPage from "./pages/StaffAnalyticsPage";
+import LostItemRequestsStaffView from "./components/LostItemRequestsStaffView/LostItemRequestsStaffView.js";
+import StaffLoginSignUpPage from "./pages/StaffLoginSignUpPage.js";
 
 const App = () => {
   return (
@@ -74,6 +78,10 @@ const App = () => {
           element={<AllLostItemRequests />}
         />
         <Route
+          path="/lost-items-staff"
+          element={<LostItemRequestsStaffView />}
+        />{" "}
+        <Route
           path="/edit-lost-item/:itemId"
           element={<EditLostItemRequest />}
         />
@@ -100,6 +108,13 @@ const App = () => {
         <Route path="/token-reset" element={<TokenResetForm />} />
         <Route path="/print-item/:id" element={<PrintItem />} />{" "}
         <Route path="/bulk" element={<BulkUpload />} />{" "}
+
+        {/* Analytics page route */}
+        <Route path="/student-analytics" element={<StudentAnalyticsPage />} />
+        <Route path="/staff-analytics" element={<StaffAnalyticsPage />} />
+
+        {/* Staff Authentication */}
+        <Route path="/staff-auth" element={<StaffLoginSignUpPage />} /> 
       </Routes>
     </Router>
   );

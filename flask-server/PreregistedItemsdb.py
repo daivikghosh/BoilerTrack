@@ -10,6 +10,11 @@ def convert_to_binary(filename):
     """
     Convert digital data to binary format for storing images in the database.
     """
+    if not isinstance(filename, str) or '\0' in filename:
+        with open("uploads/TestImage.png", 'rb') as file:
+            data = file.read()
+         
+    
     with open(filename, 'rb') as file:
         data = file.read()
     return data

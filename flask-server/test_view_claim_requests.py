@@ -1,7 +1,6 @@
-# unit tests for viewing claim requests
 import pytest
 from unittest.mock import patch, MagicMock
-from app import app  # Assuming your Flask app is named 'app'
+from app import app  # Ensure 'app' refers to the correct Flask app instance
 
 @pytest.fixture
 def client():
@@ -66,14 +65,15 @@ def test_view_claim_requests_db_error(mock_get_all_claim_requests, client):
     
     assert response.status_code == 500
     data = response.get_json()
+    assert 'error' in data
     assert data['error'] == 'Failed to fetch claim requests due to server error.'
 
-# Test for invalid item ID handling
+# Test for handling missing item details for a claim request
 @patch('app.get_all_claim_requests')
 @patch('app.get_found_items_by_ids')
 def test_view_claim_requests_missing_item(mock_get_found_items_by_ids, mock_get_all_claim_requests, client):
     mock_get_all_claim_requests.return_value = mock_claim_requests()
-    mock_get_found_items_by_ids.return_value = []
+    mock_get_found_items_by_ids.return_value = []  # Simulate missing item details
     
     response = client.get('/claim-requests')
     
@@ -81,5 +81,7 @@ def test_view_claim_requests_missing_item(mock_get_found_items_by_ids, mock_get_
     data = response.get_json()
     
     assert len(data) == 1
-    assert data[0]['ItemName'] is None
+    assert data[0]['ItemID'] == 1
+    assert 'ItemName' not in data[0] or data[0]['ItemName'] is None
+    assert 'error' in data[0]
     assert data[0]['error'] == "Item details not found for claim request."
