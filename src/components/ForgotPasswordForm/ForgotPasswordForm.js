@@ -19,6 +19,30 @@ const ForgotPassword = ({ onBackToLogin }) => {
       return;
     }
 
+    fetch("http://localhost:5000/reset_password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+        // Handle successful password reset request
+        if (data.success) {
+          setError(
+            "success! if your account exists, we have sent you an email with a token to reset your password"
+          );
+        } else {
+          setError("An error occurred while processing your request.");
+        }
+      })
+      .catch((error) => {
+        setError("An error occurred while processing your request.");
+        console.error(error);
+      });
+
     setError("");
 
     console.log("Reset link sent to: ", email);

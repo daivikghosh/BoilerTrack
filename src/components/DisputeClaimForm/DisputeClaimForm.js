@@ -85,7 +85,6 @@ const DisputeClaimForm = () => {
 
     try {
       const response = await axios.post(`/dispute-claim/${id}`, formData, {
-
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -126,10 +125,18 @@ const DisputeClaimForm = () => {
             />
           )}
           <h3>{item.ItemName}</h3>
-          <p><strong>Brand:</strong> {item.Brand}</p>
-          <p><strong>Color:</strong> {item.Color}</p>
-          <p><strong>Found at:</strong> {item.LocationFound}</p>
-          <p><strong>Turned In At:</strong> {item.LocationTurnedIn}</p>
+          <p>
+            <strong>Brand:</strong> {item.Brand}
+          </p>
+          <p>
+            <strong>Color:</strong> {item.Color}
+          </p>
+          <p>
+            <strong>Found at:</strong> {item.LocationFound}
+          </p>
+          <p>
+            <strong>Turned In At:</strong> {item.LocationTurnedIn}
+          </p>
           <p className="item-description">{item.Description}</p>
         </div>
       )}
@@ -144,7 +151,9 @@ const DisputeClaimForm = () => {
             onChange={handleReasonChange}
             maxLength={1000}
           />
-          {formErrors.reason && <p className="error-text">{formErrors.reason}</p>}
+          {formErrors.reason && (
+            <p className="error-text">{formErrors.reason}</p>
+          )}
           <p className="char-limit">Max. 1000 characters</p>
         </div>
 
