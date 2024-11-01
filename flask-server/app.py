@@ -14,6 +14,7 @@ from werkzeug.utils import secure_filename
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from PreregistedItemsdb import insert_preregistered_item
 
 from database_cleaner import delete_deleted_items
 from AddFoundItemPic import insertItem
@@ -196,6 +197,39 @@ def home():
     """
     app.logger.info("Accessed root route")
     return jsonify({"message": "Welcome to the Lost and Found API"}), 200
+
+@app.route('/preregister-item', methods=['POST'])
+def preregister_item():
+    try:
+        # Get the form data from the request
+        item_name = request.form.get('ItemName')
+        color = request.form.get('Color')
+        brand = request.form.get('Brand')
+        description = request.form.get('Description')
+        date = request.form.get('Date')
+        user_email = request.form.get('UserEmail')
+        
+        # Set default QR code path
+        qr_code_path = 'uploads/care.png'
+        
+        # Check if the photo file is provided and save it
+        photo = request.files.get('Photo')
+        if photo and photo.filename:
+            filename = secure_filename(photo.filename)
+            photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            photo.save(photo_path)
+        else:
+            pass
+        
+        # Insert the item into the database
+        insertPreRegisteredItem(item_name, color, brand, description, photo_path, date, qr_code_path, user_email)
+        
+        return jsonify({"message": "Pre-registered item added successfully"}), 201
+    
+    except Exception as e:
+        app.logger.error(f"Error adding pre-registered item: {e}")
+        return jsonify({"error": "Failed to add pre-registered item"}), 500
+
 
 
 @ app.route('/pre-registered-items', methods=['GET'])
@@ -1484,6 +1518,10 @@ def submit_release_form():
             StudentID TEXT
         )
     ''')
+
+    # pre register item here
+    # get item deials from claimID which is itemID
+    
 
     try:
         cursor.execute('''
