@@ -14,7 +14,9 @@ const IndividualClaimView = () => {
   useEffect(() => {
     const fetchClaimDetails = async () => {
       try {
-        const response = await axios.get(`/individual-request-staff/${claimId}`);
+        const response = await axios.get(
+          `/individual-request-staff/${claimId}`
+        );
         setClaim(response.data);
         setLoading(false);
       } catch (err) {
@@ -32,7 +34,6 @@ const IndividualClaimView = () => {
     //   // Make an API call to approve the claim request
     //   await axios.post(`/individual-request-staff/${claimId}/approve`);
 
-      
     //   alert("Claim approved successfully!");
     //   navigate("/all-request-staff"); // Navigate back to the claim list
     // } catch (err) {
@@ -53,7 +54,9 @@ const IndividualClaimView = () => {
         alert("Please provide a rationale for rejection.");
         return;
       }
-      await axios.post(`/individual-request-staff/${claimId}/reject`, { rationale });
+      await axios.post(`/individual-request-staff/${claimId}/reject`, {
+        rationale,
+      });
       alert("Claim rejected with rationale!");
       navigate("/all-request-staff");
     } catch (err) {
@@ -65,7 +68,9 @@ const IndividualClaimView = () => {
   const handleRequestMoreInfo = async () => {
     try {
       // Make an API call to approve the claim request
-      await axios.post(`/individual-request-staff/${claimId}/request-more-info`);
+      await axios.post(
+        `/individual-request-staff/${claimId}/request-more-info`
+      );
       alert("Claim rejected with info request successfully!");
       navigate("/all-request-staff"); // Navigate back to the claim list
     } catch (err) {
@@ -119,7 +124,7 @@ const IndividualClaimView = () => {
           <textarea
             placeholder="Provide rationale for rejection..."
             value={rationale}
-            onChange={(e) => setRationale(e.target.value)}  // Capture rationale input
+            onChange={(e) => setRationale(e.target.value)} // Capture rationale input
             className="rationale-textarea"
           ></textarea>
           <div className="staff-actions">
@@ -129,14 +134,17 @@ const IndividualClaimView = () => {
             <button className="reject-button" onClick={handleReject}>
               Reject
             </button>
-            <button className="request-more-info" onClick={handleRequestMoreInfo}>
+            <button
+              className="request-more-info"
+              onClick={handleRequestMoreInfo}
+            >
               Request Info
             </button>
           </div>
         </div>
       </div>
     </div>
-  );  
+  );
 };
 
 export default IndividualClaimView;

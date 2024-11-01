@@ -9,7 +9,6 @@ def delete_deleted_items(db_path, table_name):
     :param table_name: Name of the table to delete rows from
     """
     try:
-
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
 

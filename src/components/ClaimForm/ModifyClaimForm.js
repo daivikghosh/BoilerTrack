@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./ClaimForm.css";
 
@@ -47,13 +47,17 @@ const ModifyClaimForm = () => {
     formData.append("comments", comments);
 
     try {
-        const response = await axios.put(`/claim-modify-student/${claim_id}`, formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            }
-        });
+      const response = await axios.put(
+        `/claim-modify-student/${claim_id}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
       alert("Claim modified successfully!");
-      navigate('/all-items');
+      navigate("/all-items");
     } catch (err) {
       console.error("Error modifying claim:", err);
       alert("Failed to modify claim. Please try again.");
@@ -69,20 +73,20 @@ const ModifyClaimForm = () => {
       <h2>Modify Claim</h2>
       <form onSubmit={handleSubmit}>
         <div className="file-upload">
-        <label htmlFor="comments">Update Image Proof</label>
-          <button 
-            type="button" 
-            className="upload-button" 
+          <label htmlFor="comments">Update Image Proof</label>
+          <button
+            type="button"
+            className="upload-button"
             onClick={handleFileUploadClick}
           >
             Upload File
           </button>
-          <input 
-            id="image-upload" 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileChange} 
-            accept="image/*" 
+          <input
+            id="image-upload"
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="image/*"
             style={{ display: "none" }}
           />
           {file && <p>{file.name}</p>}

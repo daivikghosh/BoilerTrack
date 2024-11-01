@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./LoginForm.css"; // Link to your CSS for styling
+import "./LoginForm.css";
 
 const LoginForm = ({ onSignupClick, onForgotPasswordClick }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate(); // Initialize the useNavigate hook
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,13 +16,13 @@ const LoginForm = ({ onSignupClick, onForgotPasswordClick }) => {
       return;
     }
 
-    setError(""); // Clear errors
+    setError("");
 
     try {
-      const response = await fetch('/login', {
-        method: 'POST',
+      const response = await fetch("/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
       });
@@ -30,16 +30,16 @@ const LoginForm = ({ onSignupClick, onForgotPasswordClick }) => {
       if (response.ok) {
         const data = await response.json();
         console.log("Login successful: ", data);
-        localStorage.setItem('userEmail', email);
+        localStorage.setItem("userEmail", email);
         alert("Login successful!");
-        navigate('/all-items'); // Redirect to the all-items page
+        navigate("/all-items");
       } else {
         const errorData = await response.json();
         setError(errorData.error);
       }
     } catch (error) {
-      console.error('Error:', error);
-      setError('An error occurred while logging in.');
+      console.error("Error:", error);
+      setError("An error occurred while logging in.");
     }
   };
 
@@ -81,6 +81,10 @@ const LoginForm = ({ onSignupClick, onForgotPasswordClick }) => {
         <div className="forgot-password-link">
           <a href="#" onClick={onForgotPasswordClick}>
             Forgot Password?
+          </a>{" "}
+          |{" "}
+          <a href="#" onClick={() => navigate("/token-reset")}>
+            Have a token?
           </a>
         </div>
       </form>
