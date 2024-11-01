@@ -6,7 +6,11 @@ import "./ItemView.css";
 const PrintItem = () => {
   const { id } = useParams(); // Get the item ID from the URL
   const [item, setItem] = useState(null);
-  const [user, setUser] = useState({ name: "N/A", pronouns: "N/A", email: "N/A" });
+  const [user, setUser] = useState({
+    name: "N/A",
+    pronouns: "N/A",
+    email: "N/A",
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -24,12 +28,14 @@ const PrintItem = () => {
         console.log("Claim requests:", claims); // Log claim requests for debugging
 
         // Check if there is an approved claim
-        const approvedClaim = claims.find(claim => claim.ClaimStatus === 2);
+        const approvedClaim = claims.find((claim) => claim.ClaimStatus === 2);
         if (approvedClaim) {
           console.log("Approved claim found:", approvedClaim); // Log approved claim for debugging
-          
+
           // Fetch user information if an approved claim exists
-          const userResponse = await axios.get(`/profile?email=${approvedClaim.UserEmail}`);
+          const userResponse = await axios.get(
+            `/profile?email=${approvedClaim.UserEmail}`
+          );
           setUser({ ...userResponse.data, email: approvedClaim.UserEmail });
           console.log("User data:", userResponse.data); // Log user data for debugging
         }
@@ -80,9 +86,15 @@ const PrintItem = () => {
           </p>
           <p className="item-description">{item?.Description}</p>
           <h3>User Information</h3>
-          <p><strong>Name:</strong> {user.name}</p>
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Pronouns:</strong> {user.pronouns}</p>
+          <p>
+            <strong>Name:</strong> {user.name}
+          </p>
+          <p>
+            <strong>Email:</strong> {user.email}
+          </p>
+          <p>
+            <strong>Pronouns:</strong> {user.pronouns}
+          </p>
         </div>
       </div>
     </div>

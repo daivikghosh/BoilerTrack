@@ -151,16 +151,19 @@ function AllItemsPage() {
       );
     }
 
-    
-    // Apply date filter
-    if (filter.dates && filter.dates.length > 0) {
-      nonPinnedItems = nonPinnedItems.filter((item) =>
-        filter.dates.includes(item.DateFound)
-      );
+    // Apply date filter if filter.sortOlderThanWeek is true
+    if (filter.sortOlderThanWeek) {
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+      nonPinnedItems = nonPinnedItems.filter((item) => {
+        const itemDate = new Date(item.DateFound);
+        console.log("itemDate", itemDate, "oneWeekAgo", oneWeekAgo);
+        return itemDate < oneWeekAgo;
+      });
     }
 
     // Apply search filter
-    
     if (search) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
         item.ItemName.toLowerCase().includes(search.toLowerCase())
@@ -197,17 +200,16 @@ function AllItemsPage() {
         />
       </div>
       <Link to="/StaffInputForm" className="add-item-button">
-          Add New Item
+        Add New Item
       </Link>
 
       <Link to="/all-request-staff" className="claim-request-view-button">
-          All Claim Requests
+        All Claim Requests
       </Link>
 
       <Link to="/processed-claims" className="processed-claims-button">
         View Processed Claims
       </Link>
-
 
       <div className="main-content">
         <FilterPane onFilterChange={handleFilterChange} />
