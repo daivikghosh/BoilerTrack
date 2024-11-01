@@ -34,6 +34,7 @@ import LayoutBar from "./components/LayoutBar/LayoutBar.js"
 import StudentAnalyticsPage from "./pages/StudentAnalyticsPage";
 import StaffAnalyticsPage from "./pages/StaffAnalyticsPage";
 import LostItemRequestsStaffView from "./components/LostItemRequestsStaffView/LostItemRequestsStaffView.js";
+import StaffLoginSignUpPage from "./pages/StaffLoginSignUpPage.js";
 
 const App = () => {
   return (
@@ -111,6 +112,9 @@ const App = () => {
         {/* Analytics page route */}
         <Route path="/student-analytics" element={<StudentAnalyticsPage />} />
         <Route path="/staff-analytics" element={<StaffAnalyticsPage />} />
+
+        {/* Staff Authentication */}
+        <Route path="/staff-auth" element={<StaffLoginSignUpPage />} /> 
       </Routes>
     </Router>
   );
