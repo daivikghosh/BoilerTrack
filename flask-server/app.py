@@ -6,6 +6,7 @@ import os
 import sqlite3
 import base64
 import time
+import difflib
 from datetime import datetime
 from timeit import default_timer as timer
 from uuid import uuid4
@@ -47,6 +48,7 @@ ITEMS_DB = os.path.join(db_dir, 'ItemListings.db')
 USERS_DB = os.path.join(db_dir, 'Accounts.db')
 CLAIMS_DB = os.path.join(db_dir, 'ClaimRequest.db')
 PREREG_DB = os.path.join(db_dir, 'ItemListings.db')
+PROCESSED_CLAIMS_DB = os.path.join(db_dir, 'ProcessedClaims.db')
 
 # trying error of no image avail
 DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
@@ -322,6 +324,27 @@ def add_lost_item_request():
         app.logger.error("Database error: %s", e)
         return jsonify({'error': 'Failed to add lost item request to the database'}), 500
 
+@app.route('/delete-lost-item/<int:item_id>', methods=['DELETE'])
+def delete_lost_item(item_id):
+    try:
+        # Connect to the LostItemRequest.db database
+        lost_item_db = os.path.join(os.path.dirname(base_dir), 'databases', 'LostItemRequest.db')
+        conn = sqlite3.connect(lost_item_db)
+        cursor = conn.cursor()
+
+        # Delete the item from the LostItems table
+        cursor.execute("DELETE FROM LostItems WHERE ItemID = ?", (item_id,))
+        conn.commit()
+        conn.close()
+
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'Lost item request not found'}), 404
+
+        return jsonify({'message': 'Lost item request deleted successfully'}), 200
+    except sqlite3.Error as e:
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+
+
 
 @ app.route('/lost-item-requests', methods=['GET'])
 def get_lost_item_requests():
@@ -428,8 +451,7 @@ def check_lost_item_request():
     # Extract item details from the request
     item_name = data.get('itemName')
     description = data.get('description')
-    # Assuming `foundAt` is equivalent to `LocationLost`
-    location_lost = data.get('foundAt')
+    location_found = data.get('foundAt')  # Assuming `foundAt` is equivalent to `LocationFound`
     found_item_id = data.get('foundItemId')
 
     # Connect to LostItemRequest.db
@@ -438,17 +460,30 @@ def check_lost_item_request():
     conn = sqlite3.connect(lost_item_db)
     cursor = conn.cursor()
 
-    # Query to find a matching item in the LostItems table
+    # Query to find potential matches in the LostItems table
     cursor.execute("""
-        SELECT ItemID FROM LostItems
-        WHERE ItemName = ? AND Description = ? AND LocationLost = ? AND status = 'pending'
-    """, (item_name, description, location_lost))
+        SELECT ItemID, ItemName, Description, LocationLost 
+        FROM LostItems 
+        WHERE status = 'pending'
+    """)
+    potential_matches = cursor.fetchall()
 
-    matching_item = cursor.fetchone()
+    matching_item_id = None
+    for lost_item in potential_matches:
+        lost_item_id, lost_item_name, lost_item_description, location_lost = lost_item
 
-    if matching_item:
-        matching_item_id = matching_item[0]
+        if item_name.lower() == lost_item_name.lower() and location_found.lower() == location_lost.lower():
+            # Exact match on ItemName and Location
+            matching_item_id = lost_item_id
+            break
+        elif item_name.lower() == lost_item_name.lower() and location_found.lower() != location_lost.lower():
+            # Check for description similarity
+            similarity_ratio = difflib.SequenceMatcher(None, description.lower(), lost_item_description.lower()).ratio()
+            if similarity_ratio >= 0.5:  # 50% similarity threshold
+                matching_item_id = lost_item_id
+                break
 
+    if matching_item_id:
         # Update status to "in review" and set ItemMatchID for the matched item
         cursor.execute("""
             UPDATE LostItems
@@ -456,8 +491,8 @@ def check_lost_item_request():
             WHERE ItemID = ?
         """, (found_item_id, matching_item_id))
         conn.commit()
-
         conn.close()
+
         # Return matching_item_id to the frontend for further processing
         return jsonify({'matchFound': True, 'message': 'Matching lost item found and updated to "in review".', 'matchingItemId': matching_item_id}), 200
     else:
@@ -1127,6 +1162,9 @@ def view_found_items():
 
     return jsonify(result), 200
 
+@app.route('/get-user-email', methods=['GET'])
+def get_user_email():
+    return jsonify({"user_email": GLOBAL_USER_EMAIL}), 200
 
 def get_all_claimrequests_staff():
     """Fetch all claim requests from the ClaimRequest database."""
@@ -1333,23 +1371,155 @@ def view_claim(item_id):
 def approve_claim(claim_id):
     conn = create_connection_items(CLAIMS_DB)
     cursor = conn.cursor()
+    claim = get_claim_by_id(claim_id)
+    itemid = claim[0]
+    item = get_item_by_id(itemid)
+    location = item[5]
+    name = item[1]
+    claimed_email = claim[3]
     try:
         # Update claim status to 'approved'
         cursor.execute(
-            "UPDATE CLAIMREQUETS SET ClaimStatus = 'approved' WHERE ItemID = ?", (claim_id,))
+            "UPDATE CLAIMREQUETS SET ClaimStatus = 2 WHERE ItemID = ?", (claim_id,))
 
         # Remove the claim from the claim requests table
-        cursor.execute(
-            "DELETE FROM CLAIMREQUETS WHERE ItemID = ?", (claim_id,))
+        #cursor.execute(
+            #"DELETE FROM CLAIMREQUETS WHERE ItemID = ?", (claim_id,))
 
         conn.commit()
         conn.close()
+
+        emailstr1 = f"Hello there<br><br>Your claim request has been approved<br><br>Item Id: {itemid}<br><br>"
+        emailstr2 = f"Come pick up the {name} at {location} and bring your student ID"
+        emailstr3 = f"<br><br>Thank You!<br>~BoilerTrack Devs"
+
+        msg = Message("BoilerTrack: Claim Request Accepted",
+                        sender="shloksbairagi07@gmail.com",
+                        recipients=[claimed_email])
+
+        msg.html = """
+        <html>
+            <body>
+                <p>{}</p>
+                <p>{}</p>
+                <p>{}</p>
+            </body>
+        </html>
+        """.format(emailstr1.replace('\n', '<br>'), emailstr2.replace('\n', '<br>'), emailstr3.replace('\n', '<br>'))
+
+        mail.send(msg)
+        app.logger.info("Message sent!")
+
         return jsonify({'message': 'Claim approved and item removed successfully'}), 200
     except sqlite3.Error:
         return jsonify({'error': 'Failed to approve claim and remove item'}), 500
     finally:
         conn.close()
 
+@app.route('/get-processed-claims', methods=['GET'])
+def get_processed_claims():
+    conn = create_connection_items(PROCESSED_CLAIMS_DB)
+    cursor = conn.cursor()
+    try:
+        cursor.execute('SELECT * FROM RELEASED')
+        processed_claims = cursor.fetchall()
+        conn.close()
+
+        if processed_claims:
+            processed_claims_list = [
+                {
+                    'ClaimID': claim[0],
+                    'DateClaimed': claim[1],
+                    'UserEmailID': claim[2],
+                    'StaffName': claim[3],
+                    'StudentID': claim[4]
+                }
+                for claim in processed_claims
+            ]
+            return jsonify(processed_claims_list), 200
+        else:
+            return jsonify([]), 200
+    except sqlite3.Error as e:
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    finally:
+        conn.close()
+
+@app.route('/edit-processed-claim/<int:claim_id>', methods=['PUT'])
+def edit_processed_claim(claim_id):
+    data = request.json
+    date_claimed = data.get('dateClaimed')
+    user_email_id = data.get('userEmailID')
+    staff_name = data.get('staffName')
+    student_id = data.get('studentID')
+
+    conn = create_connection_items(PROCESSED_CLAIMS_DB)
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+            UPDATE RELEASED
+            SET DateClaimed = ?, UserEmailID = ?, StaffName = ?, StudentID = ?
+            WHERE ClaimID = ?
+        ''', (date_claimed, user_email_id, staff_name, student_id, claim_id))
+
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'Processed claim not found or no changes made'}), 404
+
+        conn.commit()
+        return jsonify({'message': 'Processed claim updated successfully'}), 200
+    except sqlite3.Error as e:
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    finally:
+        conn.close()
+
+# @app.route('/get-release-form/<int:claim_id>', methods=['GET'])
+# def get_release_form(claim_id):
+#     conn = create_connection_items(PROCESSED_CLAIMS_DB)
+#     cursor = conn.cursor()
+#     try:
+#         cursor.execute('SELECT * FROM RELEASED WHERE ClaimID = ?', (claim_id,))
+#         release_form = cursor.fetchone()
+#         if release_form:
+#             release_data = {
+#                 'ClaimID': release_form[0],
+#                 'DateClaimed': release_form[1],
+#                 'UserEmailID': release_form[2],
+#                 'StaffName': release_form[3],
+#                 'StudentID': release_form[4]
+#             }
+#             return jsonify(release_data), 200
+#         else:
+#             return jsonify({'error': 'Release form not found'}), 404
+#     except sqlite3.Error as e:
+#         return jsonify({'error': f'Database error: {str(e)}'}), 500
+#     finally:
+#         conn.close()
+        
+# @app.route('/update-release-form/<int:claim_id>', methods=['PUT'])
+# def update_release_form(claim_id):
+#     data = request.json
+#     date_claimed = data.get('dateClaimed')
+#     user_email_id = data.get('userEmailID')
+#     staff_name = data.get('staffName')
+#     student_id = data.get('studentID')
+
+#     conn = create_connection_processed_claims()
+#     cursor = conn.cursor()
+#     try:
+#         cursor.execute('''
+#             UPDATE RELEASED
+#             SET DateClaimed = ?, UserEmailID = ?, StaffName = ?, StudentID = ?
+#             WHERE ClaimID = ?
+#         ''', (date_claimed, user_email_id, staff_name, student_id, claim_id))
+
+#         if cursor.rowcount == 0:
+#             return jsonify({'error': 'Release form not found or no changes made'}), 404
+
+#         conn.commit()
+#         return jsonify({'message': 'Release form updated successfully'}), 200
+#     except sqlite3.Error as e:
+#         return jsonify({'error': f'Database error: {str(e)}'}), 500
+#     finally:
+#         conn.close()
 # Route to reject a claim request
 
 
@@ -1359,13 +1529,85 @@ def reject_claim(claim_id):
     rationale = request.json.get('rationale', '')
     conn = create_connection_items(CLAIMS_DB)
     cursor = conn.cursor()
+    claim = get_claim_by_id(claim_id)
+    itemid = claim[0]
+    item = get_item_by_id(itemid)
+    name = item[1]
+    claimed_email = claim[3]
     try:
         # Update claim status to 'rejected' and store the rationale
         cursor.execute(
-            "UPDATE CLAIMREQUETS SET ClaimStatus = 'rejected', RejectRationale = ? WHERE ItemID = ?", (rationale, claim_id))
+            "UPDATE CLAIMREQUETS SET ClaimStatus = 3, RejectRationale = ? WHERE ItemID = ?", (rationale, claim_id))
 
         # cursor.execute("DELETE FROM CLAIMREQUETS WHERE ItemID = ?", (claim_id,))
         conn.commit()
+
+        emailstr1 = f"Hello there<br><br>Your claim request has been rejected<br><br>Item Id: {itemid}<br><br>"
+        emailstr2 = f"Here is why your request for the {name} was rejected: <br><br> {rationale}"
+        emailstr3 = f"<br><br>Thank You!<br>~BoilerTrack Devs"
+
+        msg = Message("BoilerTrack: Claim Request Rejected",
+                        sender="shloksbairagi07@gmail.com",
+                        recipients=[claimed_email])
+
+        msg.html = """
+        <html>
+            <body>
+                <p>{}</p>
+                <p>{}</p>
+                <p>{}</p>
+            </body>
+        </html>
+        """.format(emailstr1.replace('\n', '<br>'), emailstr2.replace('\n', '<br>'), emailstr3.replace('\n', '<br>'))
+
+        mail.send(msg)
+        app.logger.info("Message sent!")
+
+        return jsonify({'message': 'Claim rejected and rationale saved'}), 200
+    except sqlite3.Error:
+        return jsonify({'error': 'Failed to reject claim and save rationale'}), 500
+    finally:
+        conn.close()
+
+@app.route('/individual-request-staff/<int:claim_id>/request-more-info', methods=['POST'])
+def reject_claim_more_info(claim_id):
+    rationale = 'Please provide more information.'
+    conn = create_connection_items(CLAIMS_DB)
+    cursor = conn.cursor()
+    claim = get_claim_by_id(claim_id)
+    itemid = claim[0]
+    item = get_item_by_id(itemid)
+    name = item[1]
+    claimed_email = claim[3]
+    try:
+        # Update claim status to 'rejected' and store the rationale
+        cursor.execute(
+            "UPDATE CLAIMREQUETS SET ClaimStatus = 3, RejectRationale = ? WHERE ItemID = ?", (rationale, claim_id))
+
+        # cursor.execute("DELETE FROM CLAIMREQUETS WHERE ItemID = ?", (claim_id,))
+        conn.commit()
+
+        emailstr1 = f"Hello there<br><br>Your claim request has been rejected<br><br>Item Id: {itemid}<br><br>"
+        emailstr2 = f"Here is why your request for the {name} was rejected: <br><br> {rationale}"
+        emailstr3 = f"<br><br>Thank You!<br>~BoilerTrack Devs"
+
+        msg = Message("BoilerTrack: Claim Request Rejected",
+                        sender="shloksbairagi07@gmail.com",
+                        recipients=[claimed_email])
+
+        msg.html = """
+        <html>
+            <body>
+                <p>{}</p>
+                <p>{}</p>
+                <p>{}</p>
+            </body>
+        </html>
+        """.format(emailstr1.replace('\n', '<br>'), emailstr2.replace('\n', '<br>'), emailstr3.replace('\n', '<br>'))
+
+        mail.send(msg)
+        app.logger.info("Message sent!")
+
         return jsonify({'message': 'Claim rejected and rationale saved'}), 200
     except sqlite3.Error:
         return jsonify({'error': 'Failed to reject claim and save rationale'}), 500

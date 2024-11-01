@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import "./ItemView.css";
 
@@ -10,7 +11,6 @@ const ItemView = () => {
   const [item, setItem] = useState(null);
   const [user, setUser] = useState({});
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState(null);
   const [isArchived, setIsArchived] = useState(false);
 
@@ -75,10 +75,6 @@ const ItemView = () => {
     }
   };
 
-  const handlePrint = () => {
-    window.print(); // You can style for print using @media print in CSS
-  };
-
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -113,10 +109,6 @@ const ItemView = () => {
             <strong>Turned In At:</strong> {item?.LocationTurnedIn}
           </p>
           <p className="item-description">{item?.Description}</p>
-          <h3>User Information</h3>
-          <p><strong>Name:</strong> {user?.name || 'N/A'}</p>
-          <p><strong>Email:</strong> {localStorage.getItem("userEmail")}</p>
-          <p><strong>Pronouns:</strong> {user?.pronouns || 'N/A'}</p>
         </div>
         <div className="button-container">
           <button className="archive-button" onClick={handleArchiveToggle}>
@@ -124,7 +116,9 @@ const ItemView = () => {
               ? "Undo Move to Central Lost and Found Facility"
               : "Transfer to Central Lost and Found Facility"}
           </button>
-          <button className="print-button" onClick={handlePrint}>Print Item</button>
+          <Link to={`/print-item/${item.ItemID}`}>
+            <button className="print-button">Print Item</button>
+          </Link>
         </div>
       </div>
     </div>

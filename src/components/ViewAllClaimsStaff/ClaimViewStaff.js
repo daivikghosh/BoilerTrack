@@ -14,7 +14,9 @@ const IndividualClaimView = () => {
   useEffect(() => {
     const fetchClaimDetails = async () => {
       try {
-        const response = await axios.get(`/individual-request-staff/${claimId}`);
+        const response = await axios.get(
+          `/individual-request-staff/${claimId}`
+        );
         setClaim(response.data);
         setLoading(false);
       } catch (err) {
@@ -28,15 +30,22 @@ const IndividualClaimView = () => {
   }, [claimId]);
 
   const handleApprove = async () => {
-    try {
-      // Make an API call to approve the claim request
-      await axios.post(`/individual-request-staff/${claimId}/approve`);
-      alert("Claim approved successfully!");
-      navigate("/all-request-staff"); // Navigate back to the claim list
-    } catch (err) {
-      console.error("Error approving claim:", err);
-      alert("Failed to approve the claim. Please try again.");
-    }
+    // try {
+    //   // Make an API call to approve the claim request
+    //   await axios.post(`/individual-request-staff/${claimId}/approve`);
+
+    //   alert("Claim approved successfully!");
+    //   navigate("/all-request-staff"); // Navigate back to the claim list
+    // } catch (err) {
+    //   console.error("Error approving claim:", err);
+    //   alert("Failed to approve the claim. Please try again.");
+    // }
+    navigate(`/release-form/${claimId}`);
+  };
+
+  const onSubmitSuccess = () => {
+    alert("Claim approved successfully!");
+    navigate("/all-request-staff");
   };
 
   const handleReject = async () => {
@@ -45,12 +54,28 @@ const IndividualClaimView = () => {
         alert("Please provide a rationale for rejection.");
         return;
       }
-      await axios.post(`/individual-request-staff/${claimId}/reject`, { rationale });
+      await axios.post(`/individual-request-staff/${claimId}/reject`, {
+        rationale,
+      });
       alert("Claim rejected with rationale!");
       navigate("/all-request-staff");
     } catch (err) {
       console.error("Error rejecting claim:", err);
       alert("Failed to reject the claim. Please try again.");
+    }
+  };
+
+  const handleRequestMoreInfo = async () => {
+    try {
+      // Make an API call to approve the claim request
+      await axios.post(
+        `/individual-request-staff/${claimId}/request-more-info`
+      );
+      alert("Claim rejected with info request successfully!");
+      navigate("/all-request-staff"); // Navigate back to the claim list
+    } catch (err) {
+      console.error("Error approving claim:", err);
+      alert("Failed to approve the claim. Please try again.");
     }
   };
 
@@ -96,24 +121,30 @@ const IndividualClaimView = () => {
               <strong>Reason provided by user:</strong> {claim?.Comments}
             </p>
           </div>
+          <textarea
+            placeholder="Provide rationale for rejection..."
+            value={rationale}
+            onChange={(e) => setRationale(e.target.value)} // Capture rationale input
+            className="rationale-textarea"
+          ></textarea>
           <div className="staff-actions">
             <button className="approve-button" onClick={handleApprove}>
               Approve
             </button>
-            <textarea
-              placeholder="Provide rationale for rejection..."
-              value={rationale}
-              onChange={(e) => setRationale(e.target.value)}  // Capture rationale input
-              className="rationale-textarea"
-            ></textarea>
             <button className="reject-button" onClick={handleReject}>
               Reject
+            </button>
+            <button
+              className="request-more-info"
+              onClick={handleRequestMoreInfo}
+            >
+              Request Info
             </button>
           </div>
         </div>
       </div>
     </div>
-  );  
+  );
 };
 
 export default IndividualClaimView;

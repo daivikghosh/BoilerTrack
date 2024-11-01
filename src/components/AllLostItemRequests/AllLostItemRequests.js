@@ -1,12 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import './AllLostItemRequests.css';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import "./AllLostItemRequests.css";
+import { Link } from "react-router-dom";
 
 const AllLostItemRequests = () => {
   const [lostItems, setLostItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const handleDelete = async (itemId) => {
+    try {
+      await axios.delete(`/delete-lost-item/${itemId}`);
+      // Remove the item from the state after successful deletion
+      setLostItems(lostItems.filter((item) => item.ItemID !== itemId));
+      alert("Lost item request deleted successfully.");
+    } catch (error) {
+      console.error("Error deleting lost item request:", error);
+      alert("Failed to delete the lost item request.");
+    }
+  };
 
   // Fetch lost items entered by the user
   useEffect(() => {
@@ -58,13 +70,22 @@ const AllLostItemRequests = () => {
                 <Link to={`/edit-lost-item/${item.ItemID}`}>
                   <button className="edit-button">Edit</button>
                 </Link>
-                
+
                 {/* Conditionally render the matched item button */}
                 {item.ItemMatchID > -1 && (
                   <Link to={`/item-view-student/${item.ItemMatchID}`}>
-                    <button className="view-matched-item-button">View Matched Item</button>
+                    <button className="view-matched-item-button">
+                      View Matched Item
+                    </button>
                   </Link>
                 )}
+
+                <button
+                  className="delete-button"
+                  onClick={() => handleDelete(item.ItemID)}
+                >
+                  Delete
+                </button>
               </div>
             </li>
           ))}

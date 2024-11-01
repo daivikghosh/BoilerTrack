@@ -36,6 +36,7 @@
   flex: 1; /* Allow details to take up remaining space */
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .individual-claim-header {
@@ -54,22 +55,34 @@
 }
 
 .staff-actions {
-  margin-top: 1.5rem;
+  position: absolute; /* Position absolutely within the parent */
+  bottom: 0; /* Align to the bottom */
+  right: 0; /* Align to the right */
   display: flex;
   gap: 10px;
-  justify-content: flex-start;
+}
+
+
+.rationale-textarea {
+  width: 100%;
+  height: 100px; /* Set a fixed height for the text area */
+  margin-bottom: 3rem; /* Add space between the textarea and the buttons */
+  resize: vertical; /* Allow the user to resize vertically, if needed */
+  display:flex;
 }
 
 .approve-button,
-.reject-button {
-  padding: 0.8rem;
-  width: 45%;
-  border-radius: 10px;
-  font-size: 1rem;
+.reject-button,
+.request-more-info {
+  width: 100px; /* Fixed width for the buttons */
+  padding: 0.5rem; /* Adjust padding */
+  border-radius: 5px;
+  font-size: 0.9rem;
   cursor: pointer;
   border: none;
   color: white;
   transition: background-color 0.3s ease;
+  height: auto; /* Ensure buttons have a consistent height */
 }
 
 .approve-button {
@@ -86,4 +99,12 @@
 
 .reject-button:hover {
   background-color: #e53935;
+}
+
+.request-more-info {
+  background-color:#E4D00A;
+}
+
+.request-more-info:hover {
+  background-color: #DAA520;
 }
