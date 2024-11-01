@@ -1661,6 +1661,10 @@ def submit_release_form():
         )
     ''')
 
+    # get item details from claimID = ItemID
+    # get item_name color, brand, descroption, photo, (current_date), (qr_code = "uploads/care.png"), user_email = user_email_id and then
+    # insert_preregistered_item(item_name, color, brand, description, photo, date, qr_code, user_email):
+
     # pre register item here
     # get item deials from claimID which is itemID
 
@@ -1671,11 +1675,37 @@ def submit_release_form():
         ''', (claim_id, date_claimed, user_email_id, staff_name, student_id))
 
         conn.commit()
-        return jsonify({'message': 'Release form data submitted successfully'}), 201
+        item_conn = create_connection_items(ITEMS_DB)
+        item_cursor = item_conn.cursor()
+        item_cursor.execute('''
+            SELECT ItemName, Color, Brand, Description, Photo 
+            FROM FOUNDITEMS 
+            WHERE ItemID = ?
+        ''', (claim_id,))
+
+        item = item_cursor.fetchone()
+        if item:
+            item_name, color, brand, description, photo = item
+            if photo is None:
+                image_data = DEFAULT_IMAGE_PATH
+            else:
+                image_data = photo
+            current_date = date_claimed  # Use the provided `date_claimed` for date
+            qr_code = "uploads/care.png"  # Default QR code path
+
+            # Call the `insertPreRegisteredItem` function to insert the item into the PREREGISTERED table
+            insert_preregistered_item(item_name, color, brand, description, "uploads/TestImage.png", current_date, qr_code, user_email_id)
+
+            return jsonify({'message': 'Release form data submitted and item added to preregistered successfully'}), 201
+        else:
+            return jsonify({'error': 'Item not found in FOUNDITEMS table'}), 404
     except sqlite3.Error as e:
         return jsonify({'error': f'Database error: {str(e)}'}), 500
     finally:
-        conn.close()
+        if conn:
+            conn.close()
+        if item_conn:
+            item_conn.close()
 
 
 @app.route('/individual-request-staff/<int:claim_id>/reject', methods=['POST'])
