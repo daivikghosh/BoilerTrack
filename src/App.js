@@ -23,17 +23,19 @@ import ListViewClaimRequests from "./components/ViewAllClaimsStaff/ViewAllClaims
 import IndividualClaimView from "./components/ViewAllClaimsStaff/ClaimViewStaff.js";
 import DisputeClaimForm from "./components/DisputeClaimForm/DisputeClaimForm.js";
 import ReleaseForm from "./components/ReleaseForm/ReleaseForm.js";
-import ProcessedClaimsPage from './components/ProcessedClaims/ProcessedClaims.js';
-import EditProcessedClaim from './components/EditProcessedClaim/EditProcessedClaim.js'; // Import the edit component if created
-
+import ProcessedClaimsPage from "./components/ProcessedClaims/ProcessedClaims.js";
+import EditProcessedClaim from "./components/EditProcessedClaim/EditProcessedClaim.js"; // Import the edit component if created
 import ListViewClaimRequestsStudent from "./components/ViewAllClaimsStudent/ViewAllClaimsStudent.js";
 import ModifyClaimForm from "./components/ClaimForm/ModifyClaimForm.js";
+import TokenResetForm from "./components/TokenResetForm/TokenResetForm.js";
 import PrintItem from "./components/ItemView/PrintItem.js";
 import BulkUpload from "./components/StaffInputForm/BulkUpload.js";
+import LayoutBar from "./components/LayoutBar/LayoutBar.js";
 
 const App = () => {
   return (
     <Router>
+      <LayoutBar />
       <Routes>
         <Route path="/" element={<LoginSignupPage />} />{" "}
         <Route path="/UploadImage" element={<ImageUpload />} />{" "}
@@ -81,10 +83,12 @@ const App = () => {
           path="/individual-request-staff/:claimId"
           element={<IndividualClaimView />}
         />
-        <Route path="/release-form/:claimId" element={<ReleaseForm />} /> 
+        <Route path="/release-form/:claimId" element={<ReleaseForm />} />
         <Route path="/processed-claims" element={<ProcessedClaimsPage />} />
-        <Route path="/edit-processed-claim/:claimId" element={<EditProcessedClaim />} />
-
+        <Route
+          path="/edit-processed-claim/:claimId"
+          element={<EditProcessedClaim />}
+        />
         <Route
           path="/allclaim-requests-student/:emailId"
           element={<ListViewClaimRequestsStudent />}
@@ -93,6 +97,7 @@ const App = () => {
           path="/claim-modify-student/:claim_id"
           element={<ModifyClaimForm />}
         />
+        <Route path="/token-reset" element={<TokenResetForm />} />
         <Route path="/print-item/:id" element={<PrintItem />} />{" "}
         <Route path="/bulk" element={<BulkUpload />} />{" "}
       </Routes>
