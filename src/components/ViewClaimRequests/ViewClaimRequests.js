@@ -64,6 +64,9 @@ const ViewClaimRequests = () => {
               <p>
                 <strong>Date Found:</strong> {item.Date}
               </p>
+              <p>
+                <strong>Status:</strong> Claim request submitted
+              </p>
             </div>
             <div className="claim-details">
               <h4>Claim Request Details</h4>
