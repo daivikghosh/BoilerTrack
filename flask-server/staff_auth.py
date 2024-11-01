@@ -42,6 +42,8 @@ def run():
         process_approvals()
 
 if __name__ == "__main__":
+    print("Waiting for Staff Approval Requests...")
+
     approval_thread = threading.Thread(target=run, daemon=True)
     approval_thread.start()
     approval_thread.join()
