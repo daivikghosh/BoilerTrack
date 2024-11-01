@@ -40,7 +40,7 @@ const PrintItem = () => {
           } else {
             console.log("Claim exists but is not approved.");
             // Set the email from the claim data, even if not approved
-            setUser((prevUser) => ({ ...prevUser, email: claimData?.UserEmail || "N/A" }));
+            //setUser((prevUser) => ({ ...prevUser, email: claimData?.UserEmail || "N/A" }));
           }
         } catch (claimError) {
           // Handle cases where the claim request is not found (404 error)
