@@ -20,6 +20,25 @@ const AllLostItemRequests = () => {
     }
   };
 
+  const toggleCompleteStatus = async (itemId, currentStatus) => {
+    try {
+      const newStatus = currentStatus === "complete" ? "pending" : "complete";
+      await axios.put(`/toggle-status/${itemId}`, { status: newStatus });
+
+      // Update the local state to reflect the status change
+      setLostItems((prevItems) =>
+        prevItems.map((item) =>
+          item.ItemID === itemId ? { ...item, status: newStatus } : item
+        )
+      );
+
+      alert(`Status changed to "${newStatus}".`);
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("Failed to change status.");
+    }
+  };
+
   // Fetch lost items entered by the user
   useEffect(() => {
     const fetchLostItems = async () => {
@@ -70,6 +89,13 @@ const AllLostItemRequests = () => {
                 <Link to={`/edit-lost-item/${item.ItemID}`}>
                   <button className="edit-button">Edit</button>
                 </Link>
+
+                <button
+                  className="complete-button"
+                  onClick={() => toggleCompleteStatus(item.ItemID, item.status)}
+                >
+                  {item.status === "complete" ? "Undo Complete" : "Complete"}
+                </button>
 
                 {/* Conditionally render the matched item button */}
                 {item.ItemMatchID > -1 && (

@@ -516,6 +516,38 @@ def update_lost_item(item_id):
     except sqlite3.Error as e:
         return jsonify({'error': f'Failed to update lost item request in the database: {str(e)}'}), 500
 
+@app.route('/toggle-status/<int:item_id>', methods=['PUT'])
+def toggle_status(item_id):
+    data = request.get_json()
+    new_status = data.get('status')
+
+    if not new_status:
+        return jsonify({'error': 'New status not provided'}), 400
+
+    # Connect to LostItemRequest.db
+    lost_item_db = os.path.join(os.path.dirname(base_dir), 'databases', 'LostItemRequest.db')
+    conn = sqlite3.connect(lost_item_db)
+    cursor = conn.cursor()
+
+    try:
+        # Update the status of the lost item request
+        cursor.execute("""
+            UPDATE LostItems
+            SET status = ?
+            WHERE ItemID = ?
+        """, (new_status, item_id))
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'Item not found'}), 404
+
+        return jsonify({'message': f'Status updated to "{new_status}".'}), 200
+    except sqlite3.Error as e:
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    finally:
+        conn.close()
+
+
 
 @app.route('/check-lost-item-request', methods=['POST'])
 def check_lost_item_request():
