@@ -222,7 +222,7 @@ def preregister_item():
             pass
         
         # Insert the item into the database
-        insertPreRegisteredItem(item_name, color, brand, description, photo_path, date, qr_code_path, user_email)
+        insert_preregistered_item(item_name, color, brand, description, photo_path, date, qr_code_path, user_email)
         
         return jsonify({"message": "Pre-registered item added successfully"}), 201
     
@@ -1521,7 +1521,7 @@ def submit_release_form():
 
     # pre register item here
     # get item deials from claimID which is itemID
-    
+
 
     try:
         cursor.execute('''
