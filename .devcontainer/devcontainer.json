@@ -26,10 +26,11 @@
         "ms-python.black-formatter", //python formatter
         "ms-python.isort", //python import sorter
         "VisualStudioExptTeam.vscodeintellicode", //intellicode
-        "qwtel.sqlite-viewer", //sqlite bworser
+        "yy0931.vscode-sqlite3-editor", //sqlite bworser
         "Continue.continue", //ai stuff
         "esbenp.prettier-vscode", //js formatting
-        "ms-python.pylint" // python linter
+        "ms-python.pylint", // python linter
+        "ms-python.vscode-pylance" //pylance
       ]
     }
   },
