@@ -238,6 +238,24 @@ def preregister_item():
         app.logger.error(f"Error adding pre-registered item: {e}")
         return jsonify({"error": "Failed to add pre-registered item"}), 500
 
+@app.route("/found-items", methods=["GET"])
+def fetch_all_items():
+    items = get_all_items()
+    # Convert the list of tuples into a list of dictionaries for JSON response
+    items_dict = [
+        {
+            "ItemID": item[0],
+            "ItemName": item[1],
+            "Color": item[2],
+            "Brand": item[3],
+            "LocationFound": item[4],
+            "LocationTurnedIn": item[5],
+            "Description": item[6]
+        }
+        for item in items
+    ]
+    return jsonify(items_dict)
+
 
 @ app.route('/pre-registered-items', methods=['GET'])
 def get_pre_registered_items():
@@ -949,12 +967,17 @@ def delete_acct():
         conn.close()
 
 
+
+
+
 # Function to read and encode an image file to base64
 def get_image_base64(image_path):
     with open(image_path, 'rb') as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
 
 # Endpoint to get all items
+
+
 
 
 @ app.route('/items', methods=['GET'])

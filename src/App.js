@@ -35,6 +35,7 @@ import StudentAnalyticsPage from "./pages/StudentAnalyticsPage";
 import StaffAnalyticsPage from "./pages/StaffAnalyticsPage";
 import LostItemRequestsStaffView from "./components/LostItemRequestsStaffView/LostItemRequestsStaffView.js";
 import StaffLoginSignUpPage from "./pages/StaffLoginSignUpPage.js";
+import MapView from "./components/MapView/MapView.js";
 
 const App = () => {
   return (
@@ -115,6 +116,7 @@ const App = () => {
 
         {/* Staff Authentication */}
         <Route path="/staff-auth" element={<StaffLoginSignUpPage />} /> 
+        <Route path="/map-view" element={<MapView />} />
       </Routes>
     </Router>
   );
