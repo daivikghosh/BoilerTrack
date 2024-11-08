@@ -162,11 +162,17 @@ def clear_deleted_entries():
 
 def send_mail(message_pairs: list[tuple[str, str]], subject: str):
     """
-    Sends emails to users if they are in the database
+    Sends emails to users if they are in the database.
 
-    Params:
-    Dict holding pairs of recipients, and messages to send
+    Args:
+        message_pairs (list[tuple[str, str]]): A list of tuples where each tuple contains a recipient email and the corresponding message to send.
+        subject (str): The subject of the email.
 
+    Returns:
+        None
+
+    Raises:
+        None
     """
     num_send = len(message_pairs)
 
@@ -189,15 +195,43 @@ def send_mail(message_pairs: list[tuple[str, str]], subject: str):
             except Exception as e:
                 app.logger.error("Failed to send email to %s: %s",
                                  recipient, str(e))
+            # sleep for potential rate limit reasons
             time.sleep(10)
+
+
+def send_reminders():
+    """
+    Sends reminser email to staff that don't disable it to transfer items to the central lost and found
+    """
+    # get all users who have not disabled reminders
+    conn = create_connection_users()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT * FROM UserListing WHERE isStaff=1 AND wantsReminders=1 AND isDeleted=0")
+    rows = cur.fetchall()
+    emails = [row[1] for row in rows]
+    names = [row[3].split()[0] for row in rows]
+    if len(emails) == 0:
+        app.logger.info("No staff with enabled reminders to send emails to")
+    subj = "BoilerTrack reminder: Please transfer items to the central lost and found"
+    mail_pairs: list[tuple[str, str]] = []
+    for _, (email, name) in enumerate(zip(emails, names)):
+        message = f"Hello there, {name}!<br> <br > It's 5pm: you know what that means!<br> Time to transfer items to the central lost and found.<br><br>Best,<br>The BoilerTrack Team<br><br><span style='font-size: 0.6em'>To disable email reminders, TODO < /span >"
+        html_message = f"<html><body>{message}</body></html>"
+        mail_pairs.append((email, html_message))
+    send_mail(mail_pairs, subj)
 
 
 # initialize scheduler for deleted items clearing task
 scheduler = BackgroundScheduler()
-cron_trigger = CronTrigger(hour=0, minute=0)
 # Runs every sunday at midnight
+cron_trigger = CronTrigger(day_of_week="sun", hour=0, minute=0)
 scheduler.add_job(func=clear_deleted_entries, trigger=cron_trigger)
+# TODO uncomment when in prod
+# cron_trigger2 = CronTrigger(day_of_week="mon,wed,fri", hour=5, minute=0)
+# scheduler.add_job(func=send_reminders, trigger=cron_trigger2)
 scheduler.start()
+# currently timse depend on the tz of the server, so we may need to change it if the docker is utc like mine
 
 
 def get_all_items():
@@ -2070,6 +2104,5 @@ if __name__ == '__main__':
     if not os.path.exists(os.path.dirname(USERS_DB)):
         os.makedirs(os.path.dirname(USERS_DB))
     # os.makedirs(DEFAULT_IMAGE_PATH, exist_ok=True)
-
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     app.run(debug=True, host='0.0.0.0', port=5000)
