@@ -72,21 +72,21 @@ function ClaimRequestsPage() {
   // Apply filters and search
   useEffect(() => {
     let nonPinnedItems = items.filter(
-      (item) => !pinnedItems.includes(item.ItemID)
+      (item) => !pinnedItems.includes(item.ItemID),
     );
     let pinned = items.filter((item) => pinnedItems.includes(item.ItemID));
 
     // Apply status filter to non-pinned items
     if (filter.status.length > 0) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
-        filter.status.includes(item.Status)
+        filter.status.includes(item.Status),
       );
     }
 
     // Apply search filter to non-pinned items
     if (search) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
-        item.ItemName.toLowerCase().includes(search.toLowerCase())
+        item.ItemName.toLowerCase().includes(search.toLowerCase()),
       );
     }
 
