@@ -220,6 +220,12 @@ function AllItemsPage() {
             View Your Claim Requests
           </button>
         </Link>
+
+        <Link to="">
+          <button className="feedback-button">
+            Leave Feedback
+          </button>
+        </Link>
       </div>
 
 
