@@ -221,7 +221,7 @@ function AllItemsPage() {
           </button>
         </Link>
 
-        <Link to="">
+        <Link to="/FeedbackForm">
           <button className="feedback-button">
             Leave Feedback
           </button>

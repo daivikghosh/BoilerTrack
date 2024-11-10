@@ -52,6 +52,7 @@ PREREG_DB = os.path.join(db_dir, 'ItemListings.db')
 PROCESSED_CLAIMS_DB = os.path.join(db_dir, 'ProcessedClaims.db')
 DISPUTES_DB = os.path.join(os.path.dirname(
     base_dir), 'Databases', 'ItemListings.db')
+FEEDBACK_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'feedback.db')
 
 # trying error of no image avail
 DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
@@ -2038,6 +2039,38 @@ def staff_login():
             return jsonify({'error': 'Account not approved yet.'}), 403
     else:
         return jsonify({'error': 'Invalid credentials.'}), 401
+    
+# Define the path to the feedback database
+base_dir = "CS-307-Group-19/databases"
+feedback_db_path = os.path.join(base_dir, "feedback.db")
+
+@app.route('/feedback', methods=['POST'])
+def submit_feedback():
+    data = request.get_json()
+    description = data.get('description', '')
+
+    if not description:
+        return jsonify({'error': 'Feedback description is required'}), 400
+
+    # Insert the feedback into the database
+    try:
+        conn = sqlite3.connect(FEEDBACK_DB)
+        cursor = conn.cursor()
+
+        # Insert into Feedback table
+        cursor.execute('''
+            INSERT INTO Feedback (Description) VALUES (?)
+        ''', (description,))
+
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Feedback submitted successfully'}), 201
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return jsonify({'error': 'Failed to submit feedback'}), 500
+
+
 
 if __name__ == '__main__':
     if not os.path.exists(os.path.dirname(USERS_DB)):
