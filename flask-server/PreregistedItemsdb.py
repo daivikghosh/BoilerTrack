@@ -57,12 +57,12 @@ def insert_preregistered_item(item_name, color, brand, description, photo, date,
                                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
 
         # Convert photo and QR code image to binary data
-        binary_photo = convert_to_binary(photo)
+        # binary_photo = convert_to_binary(photo)
         binary_qr_code = convert_to_binary(qr_code)
 
         # Create the tuple with the data
         data_tuple = (item_name, color, brand, description,
-                      binary_photo, date, binary_qr_code, user_email)
+                      photo, date, binary_qr_code, user_email)
 
         # Execute the insert query
         cursor.execute(sqlite_insert_query, data_tuple)

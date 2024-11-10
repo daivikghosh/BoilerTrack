@@ -1741,7 +1741,7 @@ def submit_release_form():
             qr_code = "uploads/care.png"  # Default QR code path
 
             # Call the `insertPreRegisteredItem` function to insert the item into the PREREGISTERED table
-            insert_preregistered_item(item_name, color, brand, description, "uploads/TestImage.png", current_date, qr_code, user_email_id)
+            insert_preregistered_item(item_name, color, brand, description, image_data, current_date, qr_code, user_email_id)
 
             return jsonify({'message': 'Release form data submitted and item added to preregistered successfully'}), 201
         else:
