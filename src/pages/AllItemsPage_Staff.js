@@ -237,6 +237,10 @@ function AllItemsPage() {
         View Processed Claims
       </Link>
 
+      <Link to="/AllFeedback" className="feedback-button-test">
+        View Feedback
+      </Link>
+
       <div className="main-content">
         <FilterPane onFilterChange={handleFilterChange} />
 

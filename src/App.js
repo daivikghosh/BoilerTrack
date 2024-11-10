@@ -37,6 +37,9 @@ import StaffAnalyticsPage from "./pages/StaffAnalyticsPage";
 import LostItemRequestsStaffView from "./components/LostItemRequestsStaffView/LostItemRequestsStaffView.js";
 import StaffLoginSignUpPage from "./pages/StaffLoginSignUpPage.js";
 import MapView from "./components/MapView/MapView.js";
+import FeedbackForm from "./components/FeedbackForm/FeedbackForm.js";
+import AllFeedback from "./components/FeedbackForm/AllFeedback.js";
+import UserFeedback from "./components/FeedbackForm/UserFeedback.js";
 
 const App = () => {
   return (
@@ -118,7 +121,9 @@ const App = () => {
         {/* Staff Authentication */}
         <Route path="/staff-auth" element={<StaffLoginSignUpPage />} /> 
         <Route path="/map-view" element={<MapView />} />
-
+        <Route path="/FeedbackForm" element={<FeedbackForm />} />
+        <Route path="/UserFeedback" element={<UserFeedback />} />
+        <Route path="/AllFeedback" element={<AllFeedback />} />
         {/* QR Code Instructions */}
         <Route path="/qr-code-instructions" element={<QRCodeInstructions />} />
       </Routes>

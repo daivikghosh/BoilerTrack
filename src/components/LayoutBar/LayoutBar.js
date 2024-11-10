@@ -8,6 +8,9 @@ function LayoutBar() {
             <Link to="/all-items-staff" className="logo">
                 BoilerTrack
             </Link>
+            <Link to="/UserProfile" className="logo">
+                Profile
+            </Link>
         </nav>
     );
 }

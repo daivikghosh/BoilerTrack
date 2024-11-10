@@ -52,6 +52,7 @@ PREREG_DB = os.path.join(db_dir, 'ItemListings.db')
 PROCESSED_CLAIMS_DB = os.path.join(db_dir, 'ProcessedClaims.db')
 DISPUTES_DB = os.path.join(os.path.dirname(
     base_dir), 'Databases', 'ItemListings.db')
+FEEDBACK_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'feedback.db')
 
 # trying error of no image avail
 DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
@@ -2038,6 +2039,79 @@ def staff_login():
             return jsonify({'error': 'Account not approved yet.'}), 403
     else:
         return jsonify({'error': 'Invalid credentials.'}), 401
+
+@app.route('/feedback', methods=['POST'])
+def submit_feedback():
+    data = request.get_json()
+    description = data.get('description', '')
+
+    if not description:
+        return jsonify({'error': 'Feedback description is required'}), 400
+
+    try:
+        conn = sqlite3.connect(FEEDBACK_DB)
+        cursor = conn.cursor()
+
+        # Insert feedback with the logged-in user's email
+        cursor.execute('''
+            INSERT INTO Feedback (Description, UserEmail) VALUES (?, ?)
+        ''', (description, GLOBAL_USER_EMAIL))
+
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Feedback submitted successfully'}), 201
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return jsonify({'error': 'Failed to submit feedback'}), 500
+
+
+@app.route('/feedback/user', methods=['GET'])
+def get_user_feedback():
+    try:
+        conn = sqlite3.connect(FEEDBACK_DB)
+        cursor = conn.cursor()
+
+        # Retrieve feedback for the logged-in user
+        cursor.execute('''
+            SELECT FeedbackID, Description, SubmittedAt FROM Feedback WHERE UserEmail = ?
+        ''', (GLOBAL_USER_EMAIL,))
+
+        feedback_list = cursor.fetchall()
+        conn.close()
+
+        return jsonify([
+            {"FeedbackID": row[0], "Description": row[1], "SubmittedAt": row[2]}
+            for row in feedback_list
+        ]), 200
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return jsonify({'error': 'Failed to fetch user feedback'}), 500
+
+@app.route('/feedback/all', methods=['GET'])
+def get_all_feedback():
+    try:
+        conn = sqlite3.connect(FEEDBACK_DB)
+        cursor = conn.cursor()
+
+        # Retrieve all feedback entries
+        cursor.execute('''
+            SELECT FeedbackID, Description, SubmittedAt, UserEmail FROM Feedback
+        ''')
+
+        feedback_list = cursor.fetchall()
+        conn.close()
+
+        return jsonify([
+            {"FeedbackID": row[0], "Description": row[1], "SubmittedAt": row[2], "UserEmail": row[3]}
+            for row in feedback_list
+        ]), 200
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return jsonify({'error': 'Failed to fetch all feedback'}), 500
+
 
 if __name__ == '__main__':
     if not os.path.exists(os.path.dirname(USERS_DB)):
