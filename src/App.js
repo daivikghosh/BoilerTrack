@@ -16,6 +16,7 @@ import ViewClaimRequests from "./components/ViewClaimRequests/ViewClaimRequests.
 import NotificationTab from "./components/NotificationTab/NotificationTab.js";
 import LostItemForm from "./components/LostItemForm/LostItemForm.js";
 import ViewPreRegItems from "./components/ViewPreRegItems/ViewPreRegItems.js";
+import QRCodeInstructions from "./components/QRCodeInstructions/QRCodeInstructions.js"; // Import the new component
 import AllLostItemRequests from "./components/AllLostItemRequests/AllLostItemRequests.js";
 import EditLostItemRequest from "./components/EditLostItemRequest/EditLostItemRequest.js";
 import PasswordChangeForm from "./components/PasswordChangeForm/PasswordChangeForm.js";
@@ -123,6 +124,8 @@ const App = () => {
         <Route path="/FeedbackForm" element={<FeedbackForm />} />
         <Route path="/UserFeedback" element={<UserFeedback />} />
         <Route path="/AllFeedback" element={<AllFeedback />} />
+        {/* QR Code Instructions */}
+        <Route path="/qr-code-instructions" element={<QRCodeInstructions />} />
       </Routes>
     </Router>
   );
