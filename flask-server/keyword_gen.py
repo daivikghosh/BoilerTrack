@@ -13,10 +13,6 @@ def detect_logos(path):
 
     response = client.logo_detection(image=image)
     logos = response.logo_annotations
-    print("Logos:")
-
-    # for logo in logos:
-    #     print(logo.description)
 
     if response.error.message:
         raise Exception(
@@ -39,10 +35,6 @@ def detect_labels(path):
 
     response = client.label_detection(image=image)
     labels = response.label_annotations
-    print("Labels:")
-
-    # for label in labels:
-    # print(label.description)
 
     if response.error.message:
         raise Exception(
