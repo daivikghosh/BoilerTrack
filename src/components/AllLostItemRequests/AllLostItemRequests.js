@@ -2,16 +2,17 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./AllLostItemRequests.css";
 import { Link } from "react-router-dom";
+import LostItemTemplate from "../LostItemTemplate/LostItemTemplate"; // Import the template component
 
 const AllLostItemRequests = () => {
   const [lostItems, setLostItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null); // Track the selected item for the template
 
   const handleDelete = async (itemId) => {
     try {
       await axios.delete(`/delete-lost-item/${itemId}`);
-      // Remove the item from the state after successful deletion
       setLostItems(lostItems.filter((item) => item.ItemID !== itemId));
       alert("Lost item request deleted successfully.");
     } catch (error) {
@@ -24,14 +25,11 @@ const AllLostItemRequests = () => {
     try {
       const newStatus = currentStatus === "complete" ? "pending" : "complete";
       await axios.put(`/toggle-status/${itemId}`, { status: newStatus });
-
-      // Update the local state to reflect the status change
       setLostItems((prevItems) =>
         prevItems.map((item) =>
           item.ItemID === itemId ? { ...item, status: newStatus } : item
         )
       );
-
       alert(`Status changed to "${newStatus}".`);
     } catch (error) {
       console.error("Error updating status:", error);
@@ -39,11 +37,10 @@ const AllLostItemRequests = () => {
     }
   };
 
-  // Fetch lost items entered by the user
   useEffect(() => {
     const fetchLostItems = async () => {
       try {
-        const response = await axios.get("/lost-item-requests"); // Call the Flask API
+        const response = await axios.get("/lost-item-requests");
         setLostItems(response.data);
         setLoading(false);
       } catch (error) {
@@ -67,7 +64,19 @@ const AllLostItemRequests = () => {
   return (
     <div className="lost-items-container">
       <h2>Your Lost Item Requests</h2>
-      {lostItems.length > 0 ? (
+
+      {/* Conditionally render the LostItemTemplate component if an item is selected */}
+      {selectedItem ? (
+        <div className="template-container">
+          <LostItemTemplate item={selectedItem} />
+          <button
+            onClick={() => setSelectedItem(null)}
+            className="close-template-button"
+          >
+            Close Template
+          </button>
+        </div>
+      ) : (
         <ul className="lost-items-list">
           {lostItems.map((item) => (
             <li key={item.ItemID} className="lost-item-card">
@@ -97,7 +106,6 @@ const AllLostItemRequests = () => {
                   {item.status === "complete" ? "Undo Complete" : "Complete"}
                 </button>
 
-                {/* Conditionally render the matched item button */}
                 {item.ItemMatchID > -1 && (
                   <Link to={`/item-view-student/${item.ItemMatchID}`}>
                     <button className="view-matched-item-button">
@@ -112,12 +120,18 @@ const AllLostItemRequests = () => {
                 >
                   Delete
                 </button>
+
+                {/* Button to generate the template for the selected item */}
+                <button
+                  className="generate-template-button"
+                  onClick={() => setSelectedItem(item)}
+                >
+                  Generate Template
+                </button>
               </div>
             </li>
           ))}
         </ul>
-      ) : (
-        <p>No lost item requests found.</p>
       )}
     </div>
   );
