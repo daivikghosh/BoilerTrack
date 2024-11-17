@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./AllLostItemRequests.css";
 import { Link } from "react-router-dom";
-import LostItemTemplate from "../LostItemTemplate/LostItemTemplate"; // Import the template component
+import LostItemTemplate from "../LostItemTemplate/LostItemTemplate";
 
 const AllLostItemRequests = () => {
   const [lostItems, setLostItems] = useState([]);
@@ -63,18 +63,16 @@ const AllLostItemRequests = () => {
 
   return (
     <div className="lost-items-container">
-      <h2>Your Lost Item Requests</h2>
+      {/* Conditionally render header */}
+      {!selectedItem && <h2>Your Lost Item Requests</h2>}
 
-      {/* Conditionally render the LostItemTemplate component if an item is selected */}
       {selectedItem ? (
         <div className="template-container">
-          <LostItemTemplate item={selectedItem} />
-          <button
-            onClick={() => setSelectedItem(null)}
-            className="close-template-button"
-          >
-            Close Template
-          </button>
+          <LostItemTemplate
+            item={selectedItem}
+            setSelectedItem={setSelectedItem}
+            goBack={() => setSelectedItem(null)} // Pass back functionality
+          />
         </div>
       ) : (
         <ul className="lost-items-list">
@@ -121,7 +119,6 @@ const AllLostItemRequests = () => {
                   Delete
                 </button>
 
-                {/* Button to generate the template for the selected item */}
                 <button
                   className="generate-template-button"
                   onClick={() => setSelectedItem(item)}

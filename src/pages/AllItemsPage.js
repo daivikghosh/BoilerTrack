@@ -208,27 +208,22 @@ function AllItemsPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="search-bar"
         />
-
-        <Link to="/all-lost-item-requests">
-          <button className="view-requests-button">
-            View Your Lost Item Requests
-          </button>
-        </Link>
-
-        <Link to={`/allclaim-requests-student/${userEmail}`}>
-          <button className="view-claims-button">
-            View Your Claim Requests
-          </button>
-        </Link>
-
-        <Link to="/FeedbackForm">
-          <button className="feedback-button">
-            Leave Feedback
-          </button>
-        </Link>
       </div>
 
-
+      <div className="button-container">
+        <Link to="/all-lost-item-requests" className="page-button">
+          View Your Lost Item Requests
+        </Link>
+        <Link
+          to={`/allclaim-requests-student/${userEmail}`}
+          className="page-button"
+        >
+          View Your Claim Requests
+        </Link>
+        <Link to="/FeedbackForm" className="page-button">
+          Leave Feedback
+        </Link>
+      </div>
 
       <div className="main-content">
         <FilterPane onFilterChange={handleFilterChange} />
@@ -252,26 +247,26 @@ function AllItemsPage() {
                 >
                   {pinnedItems.includes(item.ItemID) ? "Unpin" : "Pin"}
                 </button>
-                <Link to={`/item-view-student/${item.ItemID}`}>
-                  <button className="view-button">View</button>
-                </Link>
+
+                <div className="buttons-container">
+                  <Link to={`/item-view-student/${item.ItemID}`}>
+                    <button className="button view-button">View</button>
+                  </Link>
+                </div>
               </div>
             ))
           ) : (
             <p>No items found.</p>
           )}
         </div>
-
-
-        
       </div>
       <div className="lost-item-request-container">
-          <Link to="/report-lost-item">
-            <button className="lost-item-request-button">
-              Can't find your item? Put in a lost item request
-            </button>
-          </Link>
-        </div>
+        <Link to="/report-lost-item">
+          <button className="lost-item-request-button">
+            Can't find your item? Put in a lost item request
+          </button>
+        </Link>
+      </div>
     </div>
   );
 }
