@@ -9,7 +9,6 @@ const PreRegItemForm = () => {
     itemName: "",
     color: "",
     brand: "",
-    ownerEmail: "",
     description: "",
   });
   const [selectedFile, setSelectedFile] = useState(null);
@@ -53,7 +52,7 @@ const PreRegItemForm = () => {
     }
 
     try {
-      await axios.post("/preregister-item", data, {
+      await axios.post("/preregister-new-item", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -64,7 +63,6 @@ const PreRegItemForm = () => {
         itemName: "",
         color: "",
         brand: "",
-        ownerEmail: "",
         description: "",
       });
       setSelectedFile(null);
@@ -82,8 +80,8 @@ const PreRegItemForm = () => {
       <div className="instructions">
         <h2>Instructions for Pre-Registering an Item</h2>
         <p>
-          Please provide the details of the item you'd like to preregister. 
-          Ensure all fields are filled and upload a clear image of the item. 
+          Please provide the details of the item you'd like to preregister.
+          Ensure all fields are filled and upload a clear image of the item.
           After submission, your item will be added to the preregistered items list.
         </p>
       </div>
@@ -145,19 +143,6 @@ const PreRegItemForm = () => {
             placeholder="Enter brand"
           />
           {errors.brand && <p className="error-text">{errors.brand}</p>}
-        </div>
-
-        <div className="form-input">
-          <label>Owner Email</label>
-          <input
-            type="email"
-            name="ownerEmail"
-            value={formData.ownerEmail}
-            onChange={handleChange}
-            placeholder="Enter owner's email"
-            required
-          />
-          {errors.ownerEmail && <p className="error-text">{errors.ownerEmail}</p>}
         </div>
 
         <div className="form-input">
