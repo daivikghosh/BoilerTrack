@@ -2010,19 +2010,26 @@ def get_categories():
 
 @app.route('/api/staff-analytics', methods=['GET'])
 def get_staff_analytics():
+    """
+    Retrieve staff analytics data, including the count of claimed and unclaimed items,
+    the most frequent missing locations, and the most common categories.
+
+    Returns:
+        A JSON response containing:
+        - claimedCount: Number of items that have been claimed.
+        - unclaimedCount: Number of items that have not been claimed.
+        - missingLocations: A list of the top 5 most frequent locations where items were found.
+        - commonCategories: A list of the top 5 most common item categories.
+    """
     conn = create_connection_items(ITEMS_DB)
     cursor = conn.cursor()
     try:
         # Count claimed items
         # Assuming 1 = claimed
         cursor.execute("SELECT COUNT(*) FROM FOUNDITEMS WHERE ItemStatus = 3")
-        # Assuming 1 = claimed
-        cursor.execute("SELECT COUNT(*) FROM FOUNDITEMS WHERE ItemStatus = 3")
         claimed_count = cursor.fetchone()[0]
 
         # Count unclaimed items
-        # Assuming 0 = unclaimed
-        cursor.execute("SELECT COUNT(*) FROM FOUNDITEMS WHERE ItemStatus = 1")
         # Assuming 0 = unclaimed
         cursor.execute("SELECT COUNT(*) FROM FOUNDITEMS WHERE ItemStatus = 1")
         unclaimed_count = cursor.fetchone()[0]
@@ -2037,9 +2044,6 @@ def get_staff_analytics():
         """)
         missing_locations = [{"Location": row[0], "Count": row[1]}
                              for row in cursor.fetchall()]
-        missing_locations = [{"Location": row[0], "Count": row[1]}
-                             for row in cursor.fetchall()]
-
         # Most common categories
         cursor.execute("""
             SELECT CategoryName, ItemCount
@@ -2049,9 +2053,6 @@ def get_staff_analytics():
         """)
         common_categories = [{"CategoryName": row[0],
                               "ItemCount": row[1]} for row in cursor.fetchall()]
-        common_categories = [{"CategoryName": row[0],
-                              "ItemCount": row[1]} for row in cursor.fetchall()]
-
         analytics_data = {
             "claimedCount": claimed_count,
             "unclaimedCount": unclaimed_count,
@@ -2069,6 +2070,12 @@ def get_staff_analytics():
 
 
 def create_connection_staff():
+    """
+    Creates a connection to the staff database.
+
+    Returns:
+        sqlite3.Connection: A connection object to the SQLite staff database.
+    """
     base_dir = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(base_dir, '../databases/StaffAccounts.db')
     conn = sqlite3.connect(db_path)
@@ -2077,6 +2084,24 @@ def create_connection_staff():
 
 @ app.route('/api/staff/signup', methods=['POST'])
 def staff_signup():
+    """
+    Sign up a new staff member.
+
+    This endpoint allows a new staff member to register by providing their
+    email, password, name, and building department. Upon successful registration,
+    the staff account will be created and will await approval.
+
+    Request Body:
+        - email (str): The staff member's email address.
+        - password (str): The staff member's password.
+        - name (str): The staff member's name.
+        - buildingDept (str): The staff member's building department.
+
+    Returns:
+        - 201 OK: If the account is created successfully.
+        - 400 Bad Request: If required fields are missing or if the email already exists.
+        - 500 Internal Server Error: If a database error occurs.
+    """
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
@@ -2107,6 +2132,24 @@ def staff_signup():
 
 @ app.route('/api/staff/login', methods=['POST'])
 def staff_login():
+    """
+    Logs in a staff member.
+
+    This endpoint allows a staff member to log in by providing their
+    email, password, and building department. The login is successful only
+    if the account is approved.
+
+    Request Body:
+        - email (str): The staff member's email address.
+        - password (str): The staff member's password.
+        - buildingDept (str): The staff member's building department.
+
+    Returns:
+        - 200 OK: If the login is successful and the account is approved.
+        - 400 Bad Request: If required fields are missing.
+        - 401 Unauthorized: If the credentials are invalid.
+        - 403 Forbidden: If the account is not approved yet.
+    """
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
@@ -2137,6 +2180,20 @@ def staff_login():
 
 @app.route('/feedback', methods=['POST'])
 def submit_feedback():
+    """
+    Submits feedback from a logged-in user.
+
+    This endpoint allows a logged-in user to submit feedback by providing
+    a description. The feedback is associated with the user's email.
+
+    Request Body:
+        - description (str): The feedback description provided by the user.
+
+    Returns:
+        - 201 Created: If the feedback is submitted successfully.
+        - 400 Bad Request: If the feedback description is missing.
+        - 500 Internal Server Error: If there is an error submitting feedback.
+    """
     data = request.get_json()
     description = data.get('description', '')
 
@@ -2163,6 +2220,17 @@ def submit_feedback():
 
 @app.route('/feedback/user', methods=['GET'])
 def get_user_feedback():
+    """
+    Retrieves feedback for the logged-in user.
+
+    This endpoint allows a logged-in user to retrieve their feedback submissions.
+    Each feedback item contains an identifier, the description provided by the user,
+    and the timestamp at which the feedback was submitted.
+
+    Returns:
+        - 200 OK: A list of feedback items for the logged-in user.
+        - 500 Internal Server Error: If there is an error fetching the user feedback.
+    """
     try:
         conn = sqlite3.connect(FEEDBACK_DB)
         cursor = conn.cursor()
@@ -2188,6 +2256,17 @@ def get_user_feedback():
 
 @app.route('/feedback/all', methods=['GET'])
 def get_all_feedback():
+    """
+    Retrieves all feedback entries.
+
+    This endpoint allows authorized users to fetch all feedback entries in the system.
+    Each feedback item contains an identifier, the description provided by the user,
+    the timestamp at which the feedback was submitted, and the user's email.
+
+    Returns:
+        - 200 OK: A list of all feedback items.
+        - 500 Internal Server Error: If there is an error fetching all feedback.
+    """
     try:
         conn = sqlite3.connect(FEEDBACK_DB)
         cursor = conn.cursor()
