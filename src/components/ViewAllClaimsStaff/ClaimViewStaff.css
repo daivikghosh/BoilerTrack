@@ -62,13 +62,12 @@
   gap: 10px;
 }
 
-
 .rationale-textarea {
   width: 100%;
   height: 100px; /* Set a fixed height for the text area */
   margin-bottom: 3rem; /* Add space between the textarea and the buttons */
   resize: vertical; /* Allow the user to resize vertically, if needed */
-  display:flex;
+  display: flex;
 }
 
 .approve-button,
@@ -102,9 +101,9 @@
 }
 
 .request-more-info {
-  background-color:#E4D00A;
+  background-color: #e4d00a;
 }
 
 .request-more-info:hover {
-  background-color: #DAA520;
+  background-color: #daa520;
 }

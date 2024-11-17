@@ -30,7 +30,8 @@
   box-sizing: border-box;
 }
 
-.success-message, .error-message {
+.success-message,
+.error-message {
   margin-top: 5px;
   color: red;
 }

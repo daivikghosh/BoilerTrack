@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import axios from 'axios';
-import './ProcessedClaims.css';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import axios from "axios";
+import "./ProcessedClaims.css";
 
 const ProcessedClaims = () => {
   const [claims, setClaims] = useState([]);
@@ -11,12 +11,12 @@ const ProcessedClaims = () => {
   useEffect(() => {
     const fetchProcessedClaims = async () => {
       try {
-        const response = await axios.get('/get-processed-claims');
+        const response = await axios.get("/get-processed-claims");
         setClaims(response.data);
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching processed claims:', err);
-        setError('Failed to load processed claims.');
+        console.error("Error fetching processed claims:", err);
+        setError("Failed to load processed claims.");
         setLoading(false);
       }
     };
@@ -39,11 +39,21 @@ const ProcessedClaims = () => {
         <div className="claims-container">
           {claims.map((claim) => (
             <div key={claim.ClaimID} className="claim-card">
-              <p><strong>Claim ID:</strong> {claim.ClaimID}</p>
-              <p><strong>Date Claimed:</strong> {claim.DateClaimed}</p>
-              <p><strong>User Email:</strong> {claim.UserEmailID}</p>
-              <p><strong>Staff Name:</strong> {claim.StaffName}</p>
-              <p><strong>Student ID:</strong> {claim.StudentID}</p>
+              <p>
+                <strong>Claim ID:</strong> {claim.ClaimID}
+              </p>
+              <p>
+                <strong>Date Claimed:</strong> {claim.DateClaimed}
+              </p>
+              <p>
+                <strong>User Email:</strong> {claim.UserEmailID}
+              </p>
+              <p>
+                <strong>Staff Name:</strong> {claim.StaffName}
+              </p>
+              <p>
+                <strong>Student ID:</strong> {claim.StudentID}
+              </p>
               <Link to={`/edit-processed-claim/${claim.ClaimID}`}>
                 <button className="edit-button">Edit</button>
               </Link>

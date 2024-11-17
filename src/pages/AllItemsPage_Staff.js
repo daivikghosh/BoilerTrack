@@ -19,11 +19,9 @@ function AllItemsPage() {
   const [filteredItems, setFilteredItems] = useState([]);
   const [pinnedItems, setPinnedItems] = useState([]); // New state for pinned items
 
-
   // Specify a location string to filter by
   // Need to make this dynamic after capturing user info
   const staffLocation = "hicKs";
-
 
   const fakeItems = [
     {
@@ -138,7 +136,7 @@ function AllItemsPage() {
   // Apply filters and search
   useEffect(() => {
     let nonPinnedItems = items.filter(
-      (item) => !pinnedItems.includes(item.ItemID)
+      (item) => !pinnedItems.includes(item.ItemID),
     );
     let pinned = items.filter((item) => pinnedItems.includes(item.ItemID));
 
@@ -146,22 +144,31 @@ function AllItemsPage() {
     if (filter.categories.length > 0) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
         filter.categories.some((category) =>
-          item.ItemName.toLowerCase().includes(category.toLowerCase())
-        )
+          item.ItemName.toLowerCase().includes(category.toLowerCase()),
+        ),
       );
     }
 
     // Location + Status toggle
     if (filter.locationstatusToggle) {
       nonPinnedItems = nonPinnedItems.filter(
-        (item) => item.LocationTurnedIn.toLowerCase() === staffLocation.toLowerCase()
+        (item) =>
+          item.LocationTurnedIn.toLowerCase() === staffLocation.toLowerCase(),
+      );
+    }
+
+    // Location + Status toggle
+    if (filter.locationstatusToggle) {
+      nonPinnedItems = nonPinnedItems.filter(
+        (item) =>
+          item.LocationTurnedIn.toLowerCase() === staffLocation.toLowerCase(),
       );
     }
 
     // Apply location filter
     if (filter.locations && filter.locations.length > 0) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
-        filter.locations.includes(item.LocationFound)
+        filter.locations.includes(item.LocationFound),
       );
     }
 
@@ -180,7 +187,7 @@ function AllItemsPage() {
     // Apply search filter
     if (search) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
-        item.ItemName.toLowerCase().includes(search.toLowerCase())
+        item.ItemName.toLowerCase().includes(search.toLowerCase()),
       );
     }
 
@@ -188,8 +195,8 @@ function AllItemsPage() {
     if (filter.keywords && filter.keywords.length > 0) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
         filter.keywords.some((keyword) =>
-          item.Description.toLowerCase().includes(keyword.toLowerCase())
-        )
+          item.Description.toLowerCase().includes(keyword.toLowerCase()),
+        ),
       );
     }
 

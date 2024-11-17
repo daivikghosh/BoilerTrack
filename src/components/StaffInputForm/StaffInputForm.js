@@ -63,7 +63,7 @@ function StaffInputForm() {
         { ...formData, foundItemId: newItemId },
         {
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
 
       if (checkResponse.data.matchFound) {
