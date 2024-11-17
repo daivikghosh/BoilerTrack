@@ -211,12 +211,18 @@ def send_reminders():
     rows = cur.fetchall()
     emails = [row[1] for row in rows]
     names = [row[3].split()[0] for row in rows]
+    desks = [row[10].split()[0] if row != "NULL" else None for row in rows]
+
     if len(emails) == 0:
         app.logger.info("No staff with enabled reminders to send emails to")
     subj = "BoilerTrack reminder: Please transfer items to the central lost and found"
     mail_pairs: list[tuple[str, str]] = []
-    for _, (email, name) in enumerate(zip(emails, names)):
-        message = f"Hello there, {name}!<br> <br > It's 5pm: you know what that means!<br> Time to transfer items to the central lost and found.<br><br>Best,<br>The BoilerTrack Team<br><br><span style='font-size: 0.6em'>To disable email reminders, TODO < /span >"
+    for _, (email, name, desk) in enumerate(zip(emails, names, desks)):
+        message: str = ""
+        if desk is not None:
+            message = f"Hello there, {name}!<br> <br > It's 5pm: you know what that means!<br> Since you are assigned to the help desk at {desk}, were are reminding you that it is time to transfer items to the central lost and found.<br><br>Best,<br>The BoilerTrack Team<br><br><span style='font-size: 0.6em'>To disable email reminders, TODO < /span >"
+        else:
+            message = f"Hello there, {name}!<br> <br > It's 5pm: you know what that means!<br> Time to transfer items to the central lost and found.<br><br>Best,<br>The BoilerTrack Team<br><br><span style='font-size: 0.6em'>To disable email reminders, TODO < /span >"
         html_message = f"<html><body>{message}</body></html>"
         mail_pairs.append((email, html_message))
     send_mail(mail_pairs, subj)
