@@ -24,7 +24,7 @@ from PreregistedItemsdb import insert_preregistered_item
 from database_cleaner import delete_deleted_items
 from AddFoundItemPic import insertItem
 from AddClaimRequest import insertclaim
-from keyword_gen import detect_logos, detect_labels
+from keyword_gen import image_keywords
 
 
 app = Flask(__name__)
@@ -33,7 +33,7 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 logging.basicConfig(level=logging.DEBUG)
 
 UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -2007,7 +2007,6 @@ def get_categories():
 
 
 @ app.route('/api/staff-analytics', methods=['GET'])
-
 @app.route('/api/staff-analytics', methods=['GET'])
 def get_staff_analytics():
     """
@@ -2066,7 +2065,6 @@ def get_staff_analytics():
     finally:
         if conn:
             conn.close()
-
 
 
 def create_connection_staff():
