@@ -44,21 +44,16 @@ GLOBAL_USER_EMAIL = ""
 
 # Get the absolute path to the Databases directory
 base_dir = os.path.dirname(os.path.abspath(__file__))
-db_dir = os.path.join(os.path.dirname(base_dir),
-                      'databases')
+db_dir = os.path.join(os.path.dirname(base_dir), 'databases')
 ITEMS_DB = os.path.join(db_dir, 'ItemListings.db')
 USERS_DB = os.path.join(db_dir, 'Accounts.db')
 CLAIMS_DB = os.path.join(db_dir, 'ClaimRequest.db')
 PREREG_DB = os.path.join(db_dir, 'ItemListings.db')
 PROCESSED_CLAIMS_DB = os.path.join(db_dir, 'ProcessedClaims.db')
-DISPUTES_DB = os.path.join(os.path.dirname(
-    db_dir), 'ItemListings.db')
-FEEDBACK_DB = os.path.join(os.path.dirname(
-    db_dir), 'feedback.db')
-KEYWORD_CACHE = os.path.join(os.path.dirname(
-    db_dir), 'keyword-gen-cache.db')
-LOST_ITEMS_DB = os.path.join(os.path.dirname(
-    db_dir), 'LostItemRequest.db')
+DISPUTES_DB = os.path.join(db_dir, 'ItemListings.db')
+FEEDBACK_DB = os.path.join(db_dir, 'feedback.db')
+KEYWORD_CACHE = os.path.join(db_dir, 'keyword-gen-cache.db')
+LOST_ITEMS_DB = os.path.join(db_dir, 'LostItemRequest.db')
 
 # trying error of no image avail
 DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
@@ -1294,6 +1289,7 @@ def view_found_items():
 
 @app.route('/get-user-email', methods=['GET'])
 def get_user_email():
+    '''returns the user email'''
     return jsonify({"user_email": GLOBAL_USER_EMAIL}), 200
 
 
@@ -1330,8 +1326,7 @@ def get_all_claimrequests_student(email):
 @ app.route('/allclaim-requests-student/<string:emailId>', methods=['GET'])
 def view_all_requests_student(emailId):
     app.logger.info("Fetching all claims")
-    id = emailId
-    claims = get_all_claimrequests_student(id)
+    claims = get_all_claimrequests_student(emailId)
     claims_list = []
 
     for item in claims:
