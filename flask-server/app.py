@@ -237,7 +237,7 @@ scheduler.add_job(func=clear_deleted_entries, trigger=cron_trigger)
 # cron_trigger2 = CronTrigger(day_of_week="mon,wed,fri", hour=5, minute=0)
 # scheduler.add_job(func=send_reminders, trigger=cron_trigger2)
 scheduler.start()
-# currently timse depend on the tz of the server, so we may need to change it if the docker is utc like mine
+# currently times depend on the tz of the server, so we may need to change it if the docker is utc like mine
 
 
 def get_all_items():
