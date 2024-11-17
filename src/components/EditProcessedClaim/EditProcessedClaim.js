@@ -10,7 +10,7 @@ const EditProcessedClaim = () => {
     dateClaimed: "",
     userEmailID: "",
     staffName: "",
-    studentID: ""
+    studentID: "",
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -24,9 +24,9 @@ const EditProcessedClaim = () => {
           dateClaimed: response.data.DateClaimed || "", // Replace keys if they differ
           userEmailID: response.data.UserEmailID || "",
           staffName: response.data.StaffName || "",
-          studentID: response.data.StudentID || ""
+          studentID: response.data.StudentID || "",
         });
-        console.log(response)
+        console.log(response);
         setLoading(false);
       } catch (err) {
         setError("Failed to load claim data.");
@@ -101,7 +101,9 @@ const EditProcessedClaim = () => {
             required
           />
         </div>
-        <button type="submit" className="submit-button">Update Claim</button>
+        <button type="submit" className="submit-button">
+          Update Claim
+        </button>
       </form>
     </div>
   );

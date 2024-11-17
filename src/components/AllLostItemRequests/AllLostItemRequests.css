@@ -31,7 +31,9 @@ h2 {
   border-radius: 8px;
   padding: 15px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .lost-item-card:hover {
@@ -66,12 +68,14 @@ h2 {
   border-radius: 5px;
   cursor: pointer;
   text-transform: uppercase;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 /* Specific color for View Matched Item button */
 .lost-item-details .view-matched-item-button {
-  background-color: #4CAF50;
+  background-color: #4caf50;
 }
 
 /* Hover effects for buttons */
@@ -155,5 +159,3 @@ h2 {
 .complete-button:active {
   background-color: #c79504; /* Even darker for active state */
 }
-
-

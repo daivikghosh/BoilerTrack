@@ -24,12 +24,18 @@ const CreateAccountForm = ({ onLoginClick }) => {
     setError(""); // Clear errors
 
     try {
-      const response = await fetch('/signup', {
-        method: 'POST',
+      const response = await fetch("/signup", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password, name, isStudent: true, isStaff: false }),
+        body: JSON.stringify({
+          email,
+          password,
+          name,
+          isStudent: true,
+          isStaff: false,
+        }),
       });
 
       if (response.ok) {
@@ -40,11 +46,13 @@ const CreateAccountForm = ({ onLoginClick }) => {
         alert("Account created successfully!");
       } else {
         const errorData = await response.json();
-        setError(errorData.error + (errorData.details ? `: ${errorData.details}` : ''));
+        setError(
+          errorData.error + (errorData.details ? `: ${errorData.details}` : ""),
+        );
       }
     } catch (error) {
-      console.error('Error:', error);
-      setError('An error occurred while creating the account.');
+      console.error("Error:", error);
+      setError("An error occurred while creating the account.");
     }
   };
 

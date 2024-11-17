@@ -6,7 +6,11 @@ import "./ItemView.css";
 const PrintItem = () => {
   const { id } = useParams(); // Get the item ID from the URL
   const [item, setItem] = useState(null);
-  const [user, setUser] = useState({ name: "N/A", email: "N/A", pronouns: "N/A" });
+  const [user, setUser] = useState({
+    name: "N/A",
+    email: "N/A",
+    pronouns: "N/A",
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -23,7 +27,9 @@ const PrintItem = () => {
         // Attempt to fetch claim details
         console.log(`Fetching claim details for item ID: ${id}`);
         try {
-          const claimResponse = await axios.get(`/individual-request-staff/${id}`);
+          const claimResponse = await axios.get(
+            `/individual-request-staff/${id}`,
+          );
           const claimData = claimResponse.data;
           console.log("Claim data received:", claimData);
 
@@ -98,9 +104,16 @@ const PrintItem = () => {
           </p>
           <p className="item-description">{item?.Description}</p>
           <h3>User Information</h3>
-          <p><strong>Name:</strong> {user?.name}</p>
-          <p><strong>Email:</strong> {user?.email}</p> {/* Email is displayed from the claim */}
-          <p><strong>Pronouns:</strong> {user?.pronouns || "N/A"}</p>
+          <p>
+            <strong>Name:</strong> {user?.name}
+          </p>
+          <p>
+            <strong>Email:</strong> {user?.email}
+          </p>{" "}
+          {/* Email is displayed from the claim */}
+          <p>
+            <strong>Pronouns:</strong> {user?.pronouns || "N/A"}
+          </p>
         </div>
       </div>
     </div>

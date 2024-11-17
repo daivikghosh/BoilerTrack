@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 const ImageUploadForm = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -10,27 +10,27 @@ const ImageUploadForm = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!selectedFile) {
-      alert('Please select a file');
+      alert("Please select a file");
       return;
     }
 
     const formData = new FormData();
-    formData.append('image', selectedFile);
+    formData.append("image", selectedFile);
 
     try {
-      const response = await fetch('/upload', {
-        method: 'POST',
+      const response = await fetch("/upload", {
+        method: "POST",
         body: formData,
       });
 
       if (response.ok) {
-        alert('Image uploaded successfully');
+        alert("Image uploaded successfully");
       } else {
-        alert('Failed to upload image');
+        alert("Failed to upload image");
       }
     } catch (error) {
-      console.error('Error:', error);
-      alert('An error occurred while uploading the image');
+      console.error("Error:", error);
+      alert("An error occurred while uploading the image");
     }
   };
 
