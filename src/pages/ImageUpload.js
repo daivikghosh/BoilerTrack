@@ -1,5 +1,5 @@
-import React from 'react';
-import ImageUploadForm from '../components/ImageUploadForm/ImageUploadForm';
+import React from "react";
+import ImageUploadForm from "../components/ImageUploadForm/ImageUploadForm";
 
 const ImageUploadPage = () => {
   return (

@@ -31,7 +31,7 @@ import ModifyClaimForm from "./components/ClaimForm/ModifyClaimForm.js";
 import TokenResetForm from "./components/TokenResetForm/TokenResetForm.js";
 import PrintItem from "./components/ItemView/PrintItem.js";
 import BulkUpload from "./components/StaffInputForm/BulkUpload.js";
-import LayoutBar from "./components/LayoutBar/LayoutBar.js"
+import LayoutBar from "./components/LayoutBar/LayoutBar.js";
 import StudentAnalyticsPage from "./pages/StudentAnalyticsPage";
 import StaffAnalyticsPage from "./pages/StaffAnalyticsPage";
 import LostItemRequestsStaffView from "./components/LostItemRequestsStaffView/LostItemRequestsStaffView.js";
@@ -113,13 +113,11 @@ const App = () => {
         <Route path="/token-reset" element={<TokenResetForm />} />
         <Route path="/print-item/:id" element={<PrintItem />} />{" "}
         <Route path="/bulk" element={<BulkUpload />} />{" "}
-
         {/* Analytics page route */}
         <Route path="/student-analytics" element={<StudentAnalyticsPage />} />
         <Route path="/staff-analytics" element={<StaffAnalyticsPage />} />
-
         {/* Staff Authentication */}
-        <Route path="/staff-auth" element={<StaffLoginSignUpPage />} /> 
+        <Route path="/staff-auth" element={<StaffLoginSignUpPage />} />
         <Route path="/map-view" element={<MapView />} />
         <Route path="/FeedbackForm" element={<FeedbackForm />} />
         <Route path="/UserFeedback" element={<UserFeedback />} />

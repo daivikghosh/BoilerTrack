@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./ClaimForm.css";
 
@@ -79,12 +79,11 @@ const ClaimForm = () => {
       // Clear form fields
       setFile(null);
       setComments("");
-      navigate('/all-items');
+      navigate("/all-items");
     } catch (err) {
-
       console.log("Claim submitted");
       alert("Claim submitted successfully!");
-      navigate('/all-items');
+      navigate("/all-items");
 
       // SHLOK - need to recheck why it defaults to err
       // console.error("Error submitting claim:", err);
@@ -117,15 +116,23 @@ const ClaimForm = () => {
       )}
 
       <form onSubmit={handleSubmit}>
-      <div className="file-upload">
-                    <label htmlFor="image-upload" className="custom-file-upload">
-                        <img src={process.env.PUBLIC_URL + '/uploadsymbol.webp'} alt="Upload Icon" />
-                        <span>Choose File</span>
-                    </label>
-                    <input id="image-upload" type="file" onChange={handleFileChange} accept="image/*" />
-                    {file && <p>{file.name}</p>}
-                    {errors.image && <p className="error-text">{errors.image}</p>}
-                </div>
+        <div className="file-upload">
+          <label htmlFor="image-upload" className="custom-file-upload">
+            <img
+              src={process.env.PUBLIC_URL + "/uploadsymbol.webp"}
+              alt="Upload Icon"
+            />
+            <span>Choose File</span>
+          </label>
+          <input
+            id="image-upload"
+            type="file"
+            onChange={handleFileChange}
+            accept="image/*"
+          />
+          {file && <p>{file.name}</p>}
+          {errors.image && <p className="error-text">{errors.image}</p>}
+        </div>
 
         <div className="comment-section">
           <label htmlFor="comments">Explain</label>
@@ -148,25 +155,6 @@ const ClaimForm = () => {
 };
 
 export default ClaimForm;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import React, { useState, useEffect } from "react";
 // import { useParams } from "react-router-dom";

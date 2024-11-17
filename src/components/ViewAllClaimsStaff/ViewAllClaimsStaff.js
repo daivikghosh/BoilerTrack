@@ -57,7 +57,8 @@ const ListViewClaimRequests = () => {
               <button
                 className="action-button"
                 onClick={() => {
-                  navigate(`/individual-request-staff/${item.ItemID}`)} }
+                  navigate(`/individual-request-staff/${item.ItemID}`);
+                }}
               >
                 View Request
               </button>

@@ -14,7 +14,7 @@ const StudentAnalyticsPage = () => {
       const response = await axios.get("/api/categories");
       // Sort categories in descending order based on ItemCount
       const sortedCategories = response.data.sort(
-        (a, b) => b.ItemCount - a.ItemCount
+        (a, b) => b.ItemCount - a.ItemCount,
       );
       setCategories(sortedCategories);
       setLoading(false);

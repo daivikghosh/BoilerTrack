@@ -28,8 +28,8 @@ const AllLostItemRequests = () => {
       // Update the local state to reflect the status change
       setLostItems((prevItems) =>
         prevItems.map((item) =>
-          item.ItemID === itemId ? { ...item, status: newStatus } : item
-        )
+          item.ItemID === itemId ? { ...item, status: newStatus } : item,
+        ),
       );
 
       alert(`Status changed to "${newStatus}".`);

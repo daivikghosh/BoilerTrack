@@ -162,12 +162,84 @@ def clear_deleted_entries():
     app.logger.info("Clearing deleted items took %.2f seconds", (end - start))
 
 
+def send_mail(message_pairs: list[tuple[str, str]], subject: str):
+    """
+    Sends emails to users if they are in the database.
+
+    Args:
+        message_pairs (list[tuple[str, str]]): A list of tuples where each tuple contains a recipient email and the corresponding message to send.
+        subject (str): The subject of the email.
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
+    num_send = len(message_pairs)
+
+    with app.app_context():
+        app.logger.info("Sending %d emails to users at %s",
+                        num_send, time.strftime('%Y-%m-%d %H:%M:%S'))
+
+        i = 1
+
+        for recipient, message in message_pairs:
+
+            try:
+                msg = Message(subject=subject,
+                              sender=app.config['MAIL_USERNAME'],
+                              recipients=[recipient])
+                msg.html = message
+                mail.send(msg)
+                app.logger.info('Sent %d of %d emails', i, num_send)
+                i += 1
+            except Exception as e:
+                app.logger.error("Failed to send email to %s: %s",
+                                 recipient, str(e))
+            # sleep for potential rate limit reasons
+            time.sleep(10)
+
+
+def send_reminders():
+    """
+    Sends reminser email to staff that don't disable it to transfer items to the central lost and found
+    """
+    # get all users who have not disabled reminders
+    conn = create_connection_users()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT * FROM UserListing WHERE isStaff=1 AND wantsReminders=1 AND isDeleted=0")
+    rows = cur.fetchall()
+    emails = [row[1] for row in rows]
+    names = [row[3].split()[0] for row in rows]
+    desks = [row[10].split()[0] if row != "NULL" else None for row in rows]
+
+    if len(emails) == 0:
+        app.logger.info("No staff with enabled reminders to send emails to")
+    subj = "BoilerTrack reminder: Please transfer items to the central lost and found"
+    mail_pairs: list[tuple[str, str]] = []
+    for _, (email, name, desk) in enumerate(zip(emails, names, desks)):
+        message: str = ""
+        if desk is not None:
+            message = f"Hello there, {name}!<br> <br > It's 5pm: you know what that means!<br> Since you are assigned to the help desk at {desk}, were are reminding you that it is time to transfer items to the central lost and found.<br><br>Best,<br>The BoilerTrack Team<br><br><span style='font-size: 0.6em'>To disable email reminders, TODO < /span >"
+        else:
+            message = f"Hello there, {name}!<br> <br > It's 5pm: you know what that means!<br> Time to transfer items to the central lost and found.<br><br>Best,<br>The BoilerTrack Team<br><br><span style='font-size: 0.6em'>To disable email reminders, TODO < /span >"
+        html_message = f"<html><body>{message}</body></html>"
+        mail_pairs.append((email, html_message))
+    send_mail(mail_pairs, subj)
+
+
 # initialize scheduler for deleted items clearing task
 scheduler = BackgroundScheduler()
-cron_trigger = CronTrigger(hour=0, minute=0)
 # Runs every sunday at midnight
+cron_trigger = CronTrigger(day_of_week="sun", hour=0, minute=0)
 scheduler.add_job(func=clear_deleted_entries, trigger=cron_trigger)
+# TODO uncomment when in prod
+# cron_trigger2 = CronTrigger(day_of_week="mon,wed,fri", hour=5, minute=0)
+# scheduler.add_job(func=send_reminders, trigger=cron_trigger2)
 scheduler.start()
+# currently times depend on the tz of the server, so we may need to change it if the docker is utc like mine
 
 
 def get_all_items():
@@ -207,7 +279,7 @@ def home():
     return jsonify({"message": "Welcome to the Lost and Found API"}), 200
 
 
-@app.route('/preregister-item', methods=['POST'])
+@ app.route('/preregister-item', methods=['POST'])
 def preregister_item():
     try:
         # Get the form data from the request
@@ -384,7 +456,7 @@ def add_lost_item_request():
         return jsonify({'error': 'Failed to add lost item request to the database'}), 500
 
 
-@app.route('/delete-lost-item/<int:item_id>', methods=['DELETE'])
+@ app.route('/delete-lost-item/<int:item_id>', methods=['DELETE'])
 def delete_lost_item(item_id):
     try:
         # Connect to the LostItemRequest.db database
@@ -537,7 +609,7 @@ def update_lost_item(item_id):
         return jsonify({'error': f'Failed to update lost item request in the database: {str(e)}'}), 500
 
 
-@app.route('/toggle-status/<int:item_id>', methods=['PUT'])
+@ app.route('/toggle-status/<int:item_id>', methods=['PUT'])
 def toggle_status(item_id):
     data = request.get_json()
     new_status = data.get('status')
@@ -569,7 +641,7 @@ def toggle_status(item_id):
         conn.close()
 
 
-@app.route('/check-lost-item-request', methods=['POST'])
+@ app.route('/check-lost-item-request', methods=['POST'])
 def check_lost_item_request():
     data = request.get_json()
 
@@ -587,8 +659,8 @@ def check_lost_item_request():
 
     # Query to find potential matches in the LostItems table
     cursor.execute("""
-        SELECT ItemID, ItemName, Description, LocationLost 
-        FROM LostItems 
+        SELECT ItemID, ItemName, Description, LocationLost
+        FROM LostItems
         WHERE status = 'pending'
     """)
     potential_matches = cursor.fetchall()
@@ -626,7 +698,7 @@ def check_lost_item_request():
         return jsonify({'matchFound': False, 'message': 'No matching lost item request found.'}), 200
 
 
-@app.route('/update-item-match', methods=['PUT'])
+@ app.route('/update-item-match', methods=['PUT'])
 def update_item_match():
     data = request.get_json()
     matching_item_id = data.get('matchingItemId')
@@ -837,7 +909,9 @@ def password_reset():
             dbtime = float(row[2])
             if not row:
                 return jsonify({'error': 'User not found'}), 404
-            if 1 > (datetime.now().timestamp() - dbtime) / 3600:
+            print(type(datetime.now()), dbtime)
+            print((datetime.now().timestamp() - dbtime)/3600)
+            if 1 < (datetime.now().timestamp() - dbtime) / 3600:
                 return jsonify({'error': 'Token expired'}), 401
 
             if token != row[1]:
@@ -1287,7 +1361,7 @@ def view_found_items():
     return jsonify(result), 200
 
 
-@app.route('/get-user-email', methods=['GET'])
+@ app.route('/get-user-email', methods=['GET'])
 def get_user_email():
     '''returns the user email'''
     return jsonify({"user_email": GLOBAL_USER_EMAIL}), 200
@@ -1548,7 +1622,7 @@ def approve_claim(claim_id):
         conn.close()
 
 
-@app.route('/get-processed-claims', methods=['GET'])
+@ app.route('/get-processed-claims', methods=['GET'])
 def get_processed_claims():
     conn = create_connection_items(PROCESSED_CLAIMS_DB)
     cursor = conn.cursor()
@@ -1577,7 +1651,7 @@ def get_processed_claims():
         conn.close()
 
 
-@app.route('/get-processed-claim/<int:claim_id>', methods=['GET'])
+@ app.route('/get-processed-claim/<int:claim_id>', methods=['GET'])
 def get_processed_claim(claim_id):
     conn = create_connection_items(PROCESSED_CLAIMS_DB)
     cursor = conn.cursor()
@@ -1601,7 +1675,7 @@ def get_processed_claim(claim_id):
         conn.close()
 
 
-@app.route('/edit-processed-claim/<int:claim_id>', methods=['PUT'])
+@ app.route('/edit-processed-claim/<int:claim_id>', methods=['PUT'])
 def edit_processed_claim(claim_id):
     data = request.json
     date_claimed = data.get('dateClaimed')
@@ -1629,7 +1703,7 @@ def edit_processed_claim(claim_id):
         conn.close()
 
 
-@app.route('/get-release-form/<int:claim_id>', methods=['GET'])
+@ app.route('/get-release-form/<int:claim_id>', methods=['GET'])
 def get_release_form(claim_id):
     conn = create_connection_items(PROCESSED_CLAIMS_DB)
     cursor = conn.cursor()
@@ -1681,7 +1755,7 @@ def get_release_form(claim_id):
 # Route to reject a claim request
 
 
-@app.route('/submit-release-form', methods=['POST'])
+@ app.route('/submit-release-form', methods=['POST'])
 def submit_release_form():
 
     data = request.json
@@ -1722,8 +1796,8 @@ def submit_release_form():
         item_conn = create_connection_items(ITEMS_DB)
         item_cursor = item_conn.cursor()
         item_cursor.execute('''
-            SELECT ItemName, Color, Brand, Description, Photo 
-            FROM FOUNDITEMS 
+            SELECT ItemName, Color, Brand, Description, Photo
+            FROM FOUNDITEMS
             WHERE ItemID = ?
         ''', (claim_id,))
 
@@ -1753,7 +1827,7 @@ def submit_release_form():
             item_conn.close()
 
 
-@app.route('/individual-request-staff/<int:claim_id>/reject', methods=['POST'])
+@ app.route('/individual-request-staff/<int:claim_id>/reject', methods=['POST'])
 def reject_claim(claim_id):
     # Get the rationale from the request
     rationale = request.json.get('rationale', '')
@@ -1800,7 +1874,7 @@ def reject_claim(claim_id):
         conn.close()
 
 
-@app.route('/individual-request-staff/<int:claim_id>/request-more-info', methods=['POST'])
+@ app.route('/individual-request-staff/<int:claim_id>/request-more-info', methods=['POST'])
 def reject_claim_more_info(claim_id):
     rationale = 'Please provide more information.'
     conn = create_connection_items(CLAIMS_DB)
@@ -1846,7 +1920,7 @@ def reject_claim_more_info(claim_id):
         conn.close()
 
 
-@app.route('/dispute-claim/<int:item_id>', methods=['POST'])
+@ app.route('/dispute-claim/<int:item_id>', methods=['POST'])
 def dispute_claim(item_id):
     try:
         # Connect to the disputes database
@@ -1911,11 +1985,13 @@ def dispute_claim(item_id):
             conn.close()
 
 
-@app.route('/api/categories', methods=['GET'])
+@ app.route('/api/categories', methods=['GET'])
 def get_categories():
     conn = create_connection_items(ITEMS_DB)
     cursor = conn.cursor()
     try:
+        cursor.execute(
+            "SELECT CategoryName, ItemCount FROM CATEGORIES ORDER BY ItemCount DESC")
         cursor.execute(
             "SELECT CategoryName, ItemCount FROM CATEGORIES ORDER BY ItemCount DESC")
         categories = cursor.fetchall()
@@ -1930,6 +2006,8 @@ def get_categories():
             conn.close()
 
 
+@ app.route('/api/staff-analytics', methods=['GET'])
+
 @app.route('/api/staff-analytics', methods=['GET'])
 def get_staff_analytics():
     conn = create_connection_items(ITEMS_DB)
@@ -1938,31 +2016,39 @@ def get_staff_analytics():
         # Count claimed items
         # Assuming 1 = claimed
         cursor.execute("SELECT COUNT(*) FROM FOUNDITEMS WHERE ItemStatus = 3")
+        # Assuming 1 = claimed
+        cursor.execute("SELECT COUNT(*) FROM FOUNDITEMS WHERE ItemStatus = 3")
         claimed_count = cursor.fetchone()[0]
 
         # Count unclaimed items
+        # Assuming 0 = unclaimed
+        cursor.execute("SELECT COUNT(*) FROM FOUNDITEMS WHERE ItemStatus = 1")
         # Assuming 0 = unclaimed
         cursor.execute("SELECT COUNT(*) FROM FOUNDITEMS WHERE ItemStatus = 1")
         unclaimed_count = cursor.fetchone()[0]
 
         # Most frequent missing locations
         cursor.execute("""
-            SELECT LocationFound, COUNT(*) as Count 
-            FROM FOUNDITEMS 
-            GROUP BY LocationFound 
-            ORDER BY Count DESC 
+            SELECT LocationFound, COUNT(*) as Count
+            FROM FOUNDITEMS
+            GROUP BY LocationFound
+            ORDER BY Count DESC
             LIMIT 5
         """)
+        missing_locations = [{"Location": row[0], "Count": row[1]}
+                             for row in cursor.fetchall()]
         missing_locations = [{"Location": row[0], "Count": row[1]}
                              for row in cursor.fetchall()]
 
         # Most common categories
         cursor.execute("""
-            SELECT CategoryName, ItemCount 
-            FROM CATEGORIES 
-            ORDER BY ItemCount DESC 
+            SELECT CategoryName, ItemCount
+            FROM CATEGORIES
+            ORDER BY ItemCount DESC
             LIMIT 5
         """)
+        common_categories = [{"CategoryName": row[0],
+                              "ItemCount": row[1]} for row in cursor.fetchall()]
         common_categories = [{"CategoryName": row[0],
                               "ItemCount": row[1]} for row in cursor.fetchall()]
 
@@ -1981,6 +2067,7 @@ def get_staff_analytics():
             conn.close()
 
 
+
 def create_connection_staff():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(base_dir, '../databases/StaffAccounts.db')
@@ -1988,7 +2075,7 @@ def create_connection_staff():
     return conn
 
 
-@app.route('/api/staff/signup', methods=['POST'])
+@ app.route('/api/staff/signup', methods=['POST'])
 def staff_signup():
     data = request.get_json()
     email = data.get('email')
@@ -2018,7 +2105,7 @@ def staff_signup():
     return jsonify({'message': 'Account created successfully. Awaiting approval.'}), 201
 
 
-@app.route('/api/staff/login', methods=['POST'])
+@ app.route('/api/staff/login', methods=['POST'])
 def staff_login():
     data = request.get_json()
     email = data.get('email')
