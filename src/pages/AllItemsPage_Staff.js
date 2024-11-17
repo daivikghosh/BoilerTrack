@@ -12,11 +12,16 @@ function AllItemsPage() {
     sortAlphabetically: false,
     locations: [],
     dates: [], // Added dates to filter state
+    locationstatusToggle: false,
   });
   const [search, setSearch] = useState("");
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [pinnedItems, setPinnedItems] = useState([]); // New state for pinned items
+
+  // Specify a location string to filter by
+  // Need to make this dynamic after capturing user info
+  const staffLocation = "hicKs";
 
   const fakeItems = [
     {
@@ -144,6 +149,22 @@ function AllItemsPage() {
       );
     }
 
+    // Location + Status toggle
+    if (filter.locationstatusToggle) {
+      nonPinnedItems = nonPinnedItems.filter(
+        (item) =>
+          item.LocationTurnedIn.toLowerCase() === staffLocation.toLowerCase(),
+      );
+    }
+
+    // Location + Status toggle
+    if (filter.locationstatusToggle) {
+      nonPinnedItems = nonPinnedItems.filter(
+        (item) =>
+          item.LocationTurnedIn.toLowerCase() === staffLocation.toLowerCase(),
+      );
+    }
+
     // Apply location filter
     if (filter.locations && filter.locations.length > 0) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
@@ -188,6 +209,18 @@ function AllItemsPage() {
     setFilteredItems([...pinned, ...nonPinnedItems]);
   }, [filter, search, items, pinnedItems]);
 
+  // Function to translate item status
+  const getItemStatus = (status) => {
+    switch (status) {
+      case 1:
+        return "Un-Claimed";
+      case 3:
+        return "Claimed";
+      default:
+        return "~unknown~";
+    }
+  };
+
   return (
     <div className="all-items-page">
       <div className="search-bar-container">
@@ -211,6 +244,10 @@ function AllItemsPage() {
         View Processed Claims
       </Link>
 
+      <Link to="/AllFeedback" className="feedback-button-test">
+        View Feedback
+      </Link>
+
       <div className="main-content">
         <FilterPane onFilterChange={handleFilterChange} />
 
@@ -225,6 +262,8 @@ function AllItemsPage() {
                 />
                 <h3>{item.ItemName}</h3>
                 <p>{item.Description}</p>
+                <h3> Item Status: </h3>
+                <p>{getItemStatus(item.ItemStatus)}</p>
                 <button
                   className={`pin-button ${
                     pinnedItems.includes(item.ItemID) ? "pinned" : ""

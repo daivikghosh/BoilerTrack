@@ -70,6 +70,12 @@ const UserProfileForm = ({
         >
           My Registered Items
         </button>
+        <button
+          onClick={() => navigate("/UserFeedback")} // Use navigate to go to registered items page
+          className="action-button"
+        >
+          My Feedback
+        </button>
       </div>
     </div>
   );

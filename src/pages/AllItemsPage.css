@@ -211,21 +211,37 @@
   background-color: #505050; /* Darker blue on hover */
 }
 
-.view-claims-button {
-  background-color: #808080; /* Bright dark blue */
-  color: #fff;
-  border: none;
-  padding: 10px 15px;
-  margin-left: 20px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
-}
+  .view-claims-button {
+    background-color: #808080; /* Bright dark blue */
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    margin-left: 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .view-claims-button:hover {
+    background-color: #505050; /* Darker blue on hover */
+  }
 
-.view-claims-button:hover {
-  background-color: #505050; /* Darker blue on hover */
-}
+  .feedback-button {
+    background-color: #808080; /* Bright dark blue */
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    margin-left: 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .feedback-button {
+    background-color: #505050; /* Darker blue on hover */
+  }
 
 .lost-item-request-container {
   margin-top: auto; /* Pushes the button to the bottom */

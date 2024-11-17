@@ -52,6 +52,7 @@ PREREG_DB = os.path.join(db_dir, 'ItemListings.db')
 PROCESSED_CLAIMS_DB = os.path.join(db_dir, 'ProcessedClaims.db')
 DISPUTES_DB = os.path.join(os.path.dirname(
     base_dir), 'Databases', 'ItemListings.db')
+FEEDBACK_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'feedback.db')
 
 # trying error of no image avail
 DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
@@ -309,6 +310,24 @@ def preregister_item():
     except Exception as e:
         app.logger.error(f"Error adding pre-registered item: {e}")
         return jsonify({"error": "Failed to add pre-registered item"}), 500
+
+@app.route("/found-items", methods=["GET"])
+def fetch_all_items():
+    items = get_all_items()
+    # Convert the list of tuples into a list of dictionaries for JSON response
+    items_dict = [
+        {
+            "ItemID": item[0],
+            "ItemName": item[1],
+            "Color": item[2],
+            "Brand": item[3],
+            "LocationFound": item[4],
+            "LocationTurnedIn": item[5],
+            "Description": item[6]
+        }
+        for item in items
+    ]
+    return jsonify(items_dict)
 
 
 @ app.route('/pre-registered-items', methods=['GET'])
@@ -1024,12 +1043,17 @@ def delete_acct():
         conn.close()
 
 
+
+
+
 # Function to read and encode an image file to base64
 def get_image_base64(image_path):
     with open(image_path, 'rb') as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
 
 # Endpoint to get all items
+
+
 
 
 @ app.route('/items', methods=['GET'])
@@ -1796,8 +1820,7 @@ def submit_release_form():
             qr_code = "uploads/care.png"  # Default QR code path
 
             # Call the `insertPreRegisteredItem` function to insert the item into the PREREGISTERED table
-            insert_preregistered_item(item_name, color, brand, description,
-                                      "uploads/TestImage.png", current_date, qr_code, user_email_id)
+            insert_preregistered_item(item_name, color, brand, description, image_data, current_date, qr_code, user_email_id)
 
             return jsonify({'message': 'Release form data submitted and item added to preregistered successfully'}), 201
         else:
@@ -2104,6 +2127,78 @@ def staff_login():
             return jsonify({'error': 'Account not approved yet.'}), 403
     else:
         return jsonify({'error': 'Invalid credentials.'}), 401
+
+@app.route('/feedback', methods=['POST'])
+def submit_feedback():
+    data = request.get_json()
+    description = data.get('description', '')
+
+    if not description:
+        return jsonify({'error': 'Feedback description is required'}), 400
+
+    try:
+        conn = sqlite3.connect(FEEDBACK_DB)
+        cursor = conn.cursor()
+
+        # Insert feedback with the logged-in user's email
+        cursor.execute('''
+            INSERT INTO Feedback (Description, UserEmail) VALUES (?, ?)
+        ''', (description, GLOBAL_USER_EMAIL))
+
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Feedback submitted successfully'}), 201
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return jsonify({'error': 'Failed to submit feedback'}), 500
+
+
+@app.route('/feedback/user', methods=['GET'])
+def get_user_feedback():
+    try:
+        conn = sqlite3.connect(FEEDBACK_DB)
+        cursor = conn.cursor()
+
+        # Retrieve feedback for the logged-in user
+        cursor.execute('''
+            SELECT FeedbackID, Description, SubmittedAt FROM Feedback WHERE UserEmail = ?
+        ''', (GLOBAL_USER_EMAIL,))
+
+        feedback_list = cursor.fetchall()
+        conn.close()
+
+        return jsonify([
+            {"FeedbackID": row[0], "Description": row[1], "SubmittedAt": row[2]}
+            for row in feedback_list
+        ]), 200
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return jsonify({'error': 'Failed to fetch user feedback'}), 500
+
+@app.route('/feedback/all', methods=['GET'])
+def get_all_feedback():
+    try:
+        conn = sqlite3.connect(FEEDBACK_DB)
+        cursor = conn.cursor()
+
+        # Retrieve all feedback entries
+        cursor.execute('''
+            SELECT FeedbackID, Description, SubmittedAt, UserEmail FROM Feedback
+        ''')
+
+        feedback_list = cursor.fetchall()
+        conn.close()
+
+        return jsonify([
+            {"FeedbackID": row[0], "Description": row[1], "SubmittedAt": row[2], "UserEmail": row[3]}
+            for row in feedback_list
+        ]), 200
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return jsonify({'error': 'Failed to fetch all feedback'}), 500
 
 
 if __name__ == '__main__':

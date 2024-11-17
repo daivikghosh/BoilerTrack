@@ -104,6 +104,7 @@ function StaffInputForm() {
             />
             <span>Choose File</span>
           </label>
+          <button className="generate-button">Generate Keywords</button>
           <input
             id="image-upload"
             type="file"

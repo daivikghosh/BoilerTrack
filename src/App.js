@@ -16,6 +16,7 @@ import ViewClaimRequests from "./components/ViewClaimRequests/ViewClaimRequests.
 import NotificationTab from "./components/NotificationTab/NotificationTab.js";
 import LostItemForm from "./components/LostItemForm/LostItemForm.js";
 import ViewPreRegItems from "./components/ViewPreRegItems/ViewPreRegItems.js";
+import QRCodeInstructions from "./components/QRCodeInstructions/QRCodeInstructions.js"; // Import the new component
 import AllLostItemRequests from "./components/AllLostItemRequests/AllLostItemRequests.js";
 import EditLostItemRequest from "./components/EditLostItemRequest/EditLostItemRequest.js";
 import PasswordChangeForm from "./components/PasswordChangeForm/PasswordChangeForm.js";
@@ -35,6 +36,10 @@ import StudentAnalyticsPage from "./pages/StudentAnalyticsPage";
 import StaffAnalyticsPage from "./pages/StaffAnalyticsPage";
 import LostItemRequestsStaffView from "./components/LostItemRequestsStaffView/LostItemRequestsStaffView.js";
 import StaffLoginSignUpPage from "./pages/StaffLoginSignUpPage.js";
+import MapView from "./components/MapView/MapView.js";
+import FeedbackForm from "./components/FeedbackForm/FeedbackForm.js";
+import AllFeedback from "./components/FeedbackForm/AllFeedback.js";
+import UserFeedback from "./components/FeedbackForm/UserFeedback.js";
 
 const App = () => {
   return (
@@ -113,6 +118,12 @@ const App = () => {
         <Route path="/staff-analytics" element={<StaffAnalyticsPage />} />
         {/* Staff Authentication */}
         <Route path="/staff-auth" element={<StaffLoginSignUpPage />} />
+        <Route path="/map-view" element={<MapView />} />
+        <Route path="/FeedbackForm" element={<FeedbackForm />} />
+        <Route path="/UserFeedback" element={<UserFeedback />} />
+        <Route path="/AllFeedback" element={<AllFeedback />} />
+        {/* QR Code Instructions */}
+        <Route path="/qr-code-instructions" element={<QRCodeInstructions />} />
       </Routes>
     </Router>
   );

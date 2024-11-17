@@ -9,6 +9,9 @@ function FilterPane({ onFilterChange }) {
   const [keyword, setKeyword] = useState("");
   const [keywords, setKeywords] = useState([]);
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
+
+  const [locationstatusToggle, setLocationToggle] = useState(false);
+
   const [sortOlderThanWeek, setSortOlderThanWeek] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
@@ -140,6 +143,19 @@ function FilterPane({ onFilterChange }) {
     });
   };
 
+  const handleLocationToggleChange = () => {
+    setLocationToggle(!locationstatusToggle);
+    onFilterChange({
+      includePast,
+      categories,
+      keywords,
+      sortAlphabetically,
+      locations,
+      dates: selectedDates,
+      locationstatusToggle: !locationstatusToggle, // Pass the toggle state
+    });
+  };
+
   const handleDateClick = (date) => {
     const dateString = date.toISOString().split("T")[0]; // Get date string in 'YYYY-MM-DD' format
     let updatedDates;
@@ -190,6 +206,20 @@ function FilterPane({ onFilterChange }) {
         </label>
         <span>Sort items alphabetically</span>
       </div>
+
+      {/* New Location + Status Toggle */}
+      <div className="filter-option">
+        <label className="switch">
+          <input
+            type="checkbox"
+            checked={locationstatusToggle}
+            onChange={handleLocationToggleChange}
+          />
+          <span className="slider"></span>
+        </label>
+        <span>Item Status at your Location</span>
+      </div>
+
       {/* Sort by Older than a Week*/}
       <div className="filter-option">
         <label className="switch">
