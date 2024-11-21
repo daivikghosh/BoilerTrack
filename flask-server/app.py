@@ -1633,7 +1633,11 @@ def send_request():
 @ app.route('/claim-requests', methods=['GET'])
 def view_claim_requests():
     app.logger.info("Fetching all claim requests")
-    claim_requests = get_all_claim_requests()
+    email = session['email']
+    if email is None:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    claim_requests = get_all_claim_requests(email)
     app.logger.info(f"Found {len(claim_requests)} claim requests")
 
     # Extract item IDs from claim requests
