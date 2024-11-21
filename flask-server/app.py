@@ -10,13 +10,14 @@ import time
 from datetime import datetime
 from timeit import default_timer as timer
 from uuid import uuid4
+from functools import wraps
 
 import requests
 from AddClaimRequest import insertclaim
 from AddFoundItemPic import insertItem
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from cachelib.File import FileSystemCache
+from cachelib import FileSystemCache
 from database_cleaner import delete_deleted_items
 from flask import Flask, jsonify, request, session
 from flask_cors import CORS
@@ -46,7 +47,7 @@ mail = Mail(app)
 SESSION_TYPE = 'cachelib'
 SESSION_SERIALIZATION_FORMAT = 'json'
 SESSION_COOKIE_NAME = 'boilertrack'
-SESSION_CACHELIB = FileSystemCache(threshold=500, cache_dir="/sessions")
+SESSION_CACHELIB = FileSystemCache(threshold=500, cache_dir="sessions")
 app.config.from_object(__name__)
 Session(app)
 
@@ -301,6 +302,25 @@ scheduler.start()
 # Do not put app routes above this line
 # _______________________________________________________________________________
 
+def login_required(f):
+    """
+    A decorator to check if the user is authenticated.
+
+    This function is used to protect routes that require a user to be logged in.
+    It checks if the 'email' key exists in the session, which indicates that the user
+    is authenticated. If the user is not authenticated, it returns a JSON response
+    with an error message and a 401 Unauthorized status code.
+
+    :param f: The function to be decorated (a route handler).
+    :return: The decorated function that includes the authentication check.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'email' not in session:
+            return jsonify({'error': 'Authentication required'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
 
 @ app.route('/')
 def home():
@@ -317,6 +337,23 @@ def home():
 
 @ app.route('/preregister-item', methods=['POST'])
 def preregister_item():
+    """
+    Pre-registers an item by processing form data and saving it to the database.
+
+    This function handles the pre-registration of an item by extracting data from a form
+    submitted via a POST request. It includes details such as the item's name, color, brand,
+    description, photo, date, and the user's email. The function also generates a default
+    QR code path and saves any uploaded photos securely.
+
+    Returns:
+        A JSON response indicating the success or failure of the operation.
+        - On success: {"message": "Pre-registered item added successfully"}, status code 201
+        - On failure: {"error": "Failed to add pre-registered item"}, status code 500
+
+    Raises:
+        Exception: If any error occurs during the process, it logs the error and returns
+                   a JSON response with the error message and a 500 status code.
+    """
     try:
         # Get the form data from the request
         item_name = request.form.get('ItemName')
@@ -336,7 +373,7 @@ def preregister_item():
             photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             photo.save(photo_path)
         else:
-            pass
+            photo_path = None
 
         # Insert the item into the database
         insert_preregistered_item(
@@ -351,6 +388,30 @@ def preregister_item():
 
 @app.route('/preregister-new-item', methods=['POST'])
 def preregister_new_item():
+    """
+    Pre-registers a new item based on form data provided in an HTTP request.
+
+    The function expects the following form data:
+    - itemName (str): The name of the item.
+    - color (str): The color of the item.
+    - brand (str, optional): The brand of the item.
+    - description (str): A description of the item.
+    - image (file): An image file of the item.
+
+    Additionally, it validates that the item name, color, and description are provided.
+    If any of these fields are missing, it returns a 400 error.
+
+    The function also handles the upload of an image file, ensuring that a valid file is provided.
+    If no valid file is uploaded, it returns a 400 error.
+
+    The item is then inserted into the database with the current date as the default date and
+    an optional QR code path which is set to None by default.
+
+    Returns:
+    - jsonify: A JSON response indicating the success or failure of the operation.
+        - On success, it returns a 201 status code with a success message.
+        - On failure due to validation or other errors, it returns a 400 or 500 status code with an error message.
+    """
     try:
         # Extract form data
         item_name = request.form.get('itemName')
@@ -364,7 +425,6 @@ def preregister_new_item():
             return jsonify({"error": "Missing required fields"}), 400
 
         # Set default QR code path
-
         qr_code_path = None
 
         # Process uploaded photo
@@ -935,6 +995,9 @@ def signup():
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (email, password, name, int(is_student), int(is_staff), int(is_deleted)))
         conn.commit()
+
+        session['email'] = email
+
     except sqlite3.IntegrityError as e:
         return jsonify({'error': 'Email already exists', 'details': str(e)}), 400
     except sqlite3.Error as e:
