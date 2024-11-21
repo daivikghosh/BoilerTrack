@@ -1,7 +1,8 @@
 import os
 import sqlite3
+import re
 from hashlib import sha512
-
+from typing import List, Dict
 
 from google.cloud import vision
 
@@ -114,6 +115,68 @@ def image_keywords(image_path: str = None, want_keywords: bool = True, want_logo
         except Exception as e:
             print(e)
             return ("", "", 2)
+
+
+def parse_keywords(raw: str) -> List[Dict[str, float]]:
+    # Split the raw string by ', ' to separate each keyword entry
+    entries = raw.split(', ')
+    keywords = []
+
+    for entry in entries:
+        # Split each entry by newline characters to separate lines
+        lines = entry.strip().split('\n')
+        description = None
+        score = None
+
+        for line in lines:
+            # Extract the description and score using regular expressions
+            if line.startswith('description:'):
+                description = re.search(r'"(.*?)"', line).group(1)
+            elif line.startswith('score:'):
+                score = float(line.split(': ')[1])
+
+        if description is not None and score is not None:
+            keywords.append({'description': description, 'score': score})
+
+    return keywords
+
+
+def get_sorted_descriptions(keywords: List[Dict[str, float]]) -> List[str]:
+    # Sort the keywords by score in descending order and extract descriptions
+    sorted_keywords = sorted(keywords, key=lambda x: x['score'], reverse=True)
+    descriptions = [keyword['description'] for keyword in sorted_keywords]
+    return descriptions
+
+
+def parse_logos(raw: str) -> List[Dict[str, float]]:
+    # Split the raw string by '} }' to separate each logo entry
+    entries = raw.split('} }')
+    logos = []
+
+    for entry in entries:
+        # Split each entry by newline characters to separate lines
+        lines = entry.strip().split('\n')
+        description = None
+        score = None
+
+        for line in lines:
+            # Extract the description and score using regular expressions
+            if line.startswith('description:'):
+                description = re.search(r'"(.*?)"', line).group(1)
+            elif line.startswith('score:'):
+                score = float(line.split(': ')[1])
+
+        if description is not None and score is not None:
+            logos.append({'description': description, 'score': score})
+
+    return logos
+
+
+def get_sorted_logos(logos: List[Dict[str, float]]) -> List[str]:
+    # Sort the logos by score in descending order and extract descriptions
+    sorted_logos = sorted(logos, key=lambda x: x['score'], reverse=True)
+    descriptions = [logo['description'] for logo in sorted_logos]
+    return descriptions
 
 
 if __name__ == '__main__':
