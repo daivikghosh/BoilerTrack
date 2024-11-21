@@ -4,7 +4,6 @@ Main file for the boilertrack backend
 import base64
 import difflib
 import logging
-import requests
 import os
 import sqlite3
 import time
@@ -12,31 +11,36 @@ from datetime import datetime
 from timeit import default_timer as timer
 from uuid import uuid4
 
+import requests
 from AddClaimRequest import insertclaim
 from AddFoundItemPic import insertItem
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from cachelib.File import FileSystemCache
 from database_cleaner import delete_deleted_items
 from flask import Flask, jsonify, request, session
-from flask_session import Session
-from cachelib.File import FileSystemCache
 from flask_cors import CORS
 from flask_mail import Mail, Message
+from flask_session import Session
 from keyword_gen import (get_sorted_descriptions_or_logos, image_keywords,
                          parse_keywords, parse_logos)
 from PreregistedItemsdb import insert_preregistered_item
 from werkzeug.utils import secure_filename
-
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 logging.basicConfig(level=logging.DEBUG)
 
-UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+# setting up some mail stuff
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USERNAME'] = 'shloksbairagi07@gmail.com'
+app.config['MAIL_PASSWORD'] = 'hgfi gwtz xtix ndak'
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+mail = Mail(app)
 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # session init
 SESSION_TYPE = 'cachelib'
@@ -45,6 +49,12 @@ SESSION_COOKIE_NAME = 'boilertrack'
 SESSION_CACHELIB = FileSystemCache(threshold=500, cache_dir="/sessions")
 app.config.from_object(__name__)
 Session(app)
+
+
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 
 # Get the absolute path to the Databases directory
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -61,15 +71,6 @@ LOST_ITEMS_DB = os.path.join(db_dir, 'LostItemRequest.db')
 
 # trying error of no image avail
 DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
-
-# setting up some mail stuff
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USERNAME'] = 'shloksbairagi07@gmail.com'
-app.config['MAIL_PASSWORD'] = 'hgfi gwtz xtix ndak'
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
-mail = Mail(app)
 
 
 def create_connection_users():
@@ -255,6 +256,17 @@ def get_item_by_id(item_id):
 
 
 def gen_qr_code(itemID, userEmail):
+    """
+    Generates a QR code containing the item ID and user email, and saves it as a PNG file.
+
+    Parameters:
+    itemID (str or int): The unique identifier for the item.
+    userEmail (str): The email address of the user.
+
+    Returns:
+    None: The function saves the QR code as a PNG file and logs a confirmation message.
+          If an error occurs during the request, it logs an error message with the HTTP status code.
+    """
     # API URL
     url = "https://api.qrserver.com/v1/create-qr-code/"
     params = {
@@ -269,9 +281,9 @@ def gen_qr_code(itemID, userEmail):
     if response.status_code == 200:
         with open(f"uploads/qr_code_{itemID}.png", "wb") as file:
             file.write(response.content)
-        print(f"QR Code saved as qr_code_{itemID}.png")
+        app.logger.info(f"QR Code saved as qr_code_{itemID}.png")
     else:
-        print("Error:", response.status_code)
+        app.logger.error(f"Error: {response.status_code}")
 
 
 # initialize scheduler for deleted items clearing task
