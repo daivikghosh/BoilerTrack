@@ -17,13 +17,16 @@ from AddFoundItemPic import insertItem
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from database_cleaner import delete_deleted_items
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, session
+from flask_session import Session
+from cachelib.File import FileSystemCache
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from keyword_gen import (get_sorted_descriptions_or_logos, image_keywords,
                          parse_keywords, parse_logos)
 from PreregistedItemsdb import insert_preregistered_item
 from werkzeug.utils import secure_filename
+
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -35,10 +38,13 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-
-# Store the accoung info in a global var
-GLOBAL_USER_EMAIL = ""
-
+# session init
+SESSION_TYPE = 'cachelib'
+SESSION_SERIALIZATION_FORMAT = 'json'
+SESSION_COOKIE_NAME = 'boilertrack'
+SESSION_CACHELIB = FileSystemCache(threshold=500, cache_dir="/sessions")
+app.config.from_object(__name__)
+Session(app)
 
 # Get the absolute path to the Databases directory
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -228,18 +234,6 @@ def send_reminders():
     send_mail(mail_pairs, subj)
 
 
-# initialize scheduler for deleted items clearing task
-scheduler = BackgroundScheduler()
-# Runs every sunday at midnight
-cron_trigger = CronTrigger(day_of_week="sun", hour=0, minute=0)
-scheduler.add_job(func=clear_deleted_entries, trigger=cron_trigger)
-# TODO uncomment when in prod
-# cron_trigger2 = CronTrigger(day_of_week="mon,wed,fri", hour=5, minute=0)
-# scheduler.add_job(func=send_reminders, trigger=cron_trigger2)
-scheduler.start()
-# currently times depend on the tz of the server, so we may need to change it if the docker is utc like mine
-
-
 def get_all_items():
     """Fetch all items from the database."""
     conn = create_connection_items(ITEMS_DB)
@@ -259,6 +253,7 @@ def get_item_by_id(item_id):
     conn.close()
     return item
 
+
 def gen_qr_code(itemID, userEmail):
     # API URL
     url = "https://api.qrserver.com/v1/create-qr-code/"
@@ -277,6 +272,18 @@ def gen_qr_code(itemID, userEmail):
         print(f"QR Code saved as qr_code_{itemID}.png")
     else:
         print("Error:", response.status_code)
+
+
+# initialize scheduler for deleted items clearing task
+scheduler = BackgroundScheduler()
+# Runs every sunday at midnight
+cron_trigger = CronTrigger(day_of_week="sun", hour=0, minute=0)
+scheduler.add_job(func=clear_deleted_entries, trigger=cron_trigger)
+# TODO uncomment when in prod
+# cron_trigger2 = CronTrigger(day_of_week="mon,wed,fri", hour=5, minute=0)
+# scheduler.add_job(func=send_reminders, trigger=cron_trigger2)
+scheduler.start()
+# currently times depend on the tz of the server, so we may need to change it if the docker is utc like mine
 
 
 # Do not put app routes above this line
@@ -306,8 +313,6 @@ def preregister_item():
         description = request.form.get('Description')
         date = request.form.get('Date')
         user_email = request.form.get('UserEmail')
-       
-      
 
         # Set default QR code path
         qr_code_path = 'uploads/care.png'
@@ -332,7 +337,6 @@ def preregister_item():
         return jsonify({"error": "Failed to add pre-registered item"}), 500
 
 
-# Pre-register new item
 @app.route('/preregister-new-item', methods=['POST'])
 def preregister_new_item():
     try:
@@ -348,12 +352,12 @@ def preregister_new_item():
             return jsonify({"error": "Missing required fields"}), 400
 
         # Set default QR code path
-        
+
         qr_code_path = None
 
         # Process uploaded photo
         photo = request.files.get('image')
-    
+
         if photo and photo.filename:
             filename = secure_filename(photo.filename)
             photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -382,55 +386,6 @@ def preregister_new_item():
         app.logger.error(f"Error adding pre-registered item: {e}")
         return jsonify({"error": "Failed to add pre-registered item"}), 500
 
-
-# Pre-register new item
-@app.route('/preregister-new-item', methods=['POST'])
-def preregister_new_item():
-    try:
-        # Extract form data
-        item_name = request.form.get('itemName')
-        color = request.form.get('color')
-        brand = request.form.get('brand')
-        description = request.form.get('description')
-        date = datetime.today().strftime('%Y-%m-%d')  # Default date is today
-
-        # Validate required fields
-        if not all([item_name, color, description]):
-            return jsonify({"error": "Missing required fields"}), 400
-
-        # Set default QR code path
-        qr_code_path = 'uploads/care.png'
-
-        # Process uploaded photo
-        photo = request.files.get('image')
-    
-        if photo and photo.filename:
-            filename = secure_filename(photo.filename)
-            photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            photo.save(photo_path)
-            with open(photo_path, 'rb') as file:
-                photo_path = file.read()
-        else:
-            return jsonify({"error": "Photo upload required"}), 400
-
-        # Insert the item into the database
-        # Adjust or implement `insert_preregistered_item` according to your database schema
-        insert_preregistered_item(
-            item_name,
-            color,
-            brand,
-            description,
-            photo_path,
-            date,
-            qr_code_path,
-            GLOBAL_USER_EMAIL  # Use global user email as fallback
-        )
-
-        return jsonify({"message": "Pre-registered item added successfully"}), 201
-
-    except Exception as e:
-        app.logger.error(f"Error adding pre-registered item: {e}")
-        return jsonify({"error": "Failed to add pre-registered item"}), 500
 
 @ app.route("/found-items", methods=["GET"])
 def fetch_all_items():
