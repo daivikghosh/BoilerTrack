@@ -384,7 +384,7 @@ def preregister_new_item():
         app.logger.error(f"Error adding pre-registered item: {e}")
         return jsonify({"error": "Failed to add pre-registered item"}), 500
 
-
+'''
 # Pre-register new item
 @app.route('/preregister-new-item', methods=['POST'])
 def preregister_new_item():
@@ -433,6 +433,7 @@ def preregister_new_item():
     except Exception as e:
         app.logger.error(f"Error adding pre-registered item: {e}")
         return jsonify({"error": "Failed to add pre-registered item"}), 500
+'''
 
 @ app.route("/found-items", methods=["GET"])
 def fetch_all_items():
