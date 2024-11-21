@@ -17,11 +17,10 @@ const ViewPreRegItems = () => {
         setPreRegItems(preRegItems);
         setLoading(false);
       } catch (err) {
-        console.error(
-          "Error fetching pre-registered items:",
-          err
+        console.error("Error fetching pre-registered items:", err);
+        setError(
+          "Failed to load pre-registered items. Please try again later.",
         );
-        setError("Failed to load pre-registered items. Please try again later.");
         setLoading(false);
       }
     };

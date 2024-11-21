@@ -1,31 +1,29 @@
 """
 Main file for the boilertrack backend
 """
+import base64
+import difflib
 import logging
 import requests
 import os
 import sqlite3
-import base64
 import time
-import difflib
 from datetime import datetime
 from timeit import default_timer as timer
 from uuid import uuid4
 
-
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from flask_mail import Mail, Message
-from werkzeug.utils import secure_filename
-
+from AddClaimRequest import insertclaim
+from AddFoundItemPic import insertItem
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from PreregistedItemsdb import insert_preregistered_item
-
 from database_cleaner import delete_deleted_items
-from AddFoundItemPic import insertItem
-from AddClaimRequest import insertclaim
-
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from flask_mail import Mail, Message
+from keyword_gen import (get_sorted_descriptions_or_logos, image_keywords,
+                         parse_keywords, parse_logos)
+from PreregistedItemsdb import insert_preregistered_item
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -33,7 +31,7 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 logging.basicConfig(level=logging.DEBUG)
 
 UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -44,16 +42,16 @@ GLOBAL_USER_EMAIL = ""
 
 # Get the absolute path to the Databases directory
 base_dir = os.path.dirname(os.path.abspath(__file__))
-db_dir = os.path.join(os.path.dirname(base_dir),
-                      'databases')
+db_dir = os.path.join(os.path.dirname(base_dir), 'databases')
 ITEMS_DB = os.path.join(db_dir, 'ItemListings.db')
 USERS_DB = os.path.join(db_dir, 'Accounts.db')
 CLAIMS_DB = os.path.join(db_dir, 'ClaimRequest.db')
 PREREG_DB = os.path.join(db_dir, 'ItemListings.db')
 PROCESSED_CLAIMS_DB = os.path.join(db_dir, 'ProcessedClaims.db')
-DISPUTES_DB = os.path.join(os.path.dirname(
-    base_dir), 'Databases', 'ItemListings.db')
-FEEDBACK_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'feedback.db')
+DISPUTES_DB = os.path.join(db_dir, 'ItemListings.db')
+FEEDBACK_DB = os.path.join(db_dir, 'feedback.db')
+KEYWORD_CACHE = os.path.join(db_dir, 'keyword-gen-cache.db')
+LOST_ITEMS_DB = os.path.join(db_dir, 'LostItemRequest.db')
 
 # trying error of no image avail
 DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
@@ -383,8 +381,58 @@ def preregister_new_item():
     except Exception as e:
         app.logger.error(f"Error adding pre-registered item: {e}")
         return jsonify({"error": "Failed to add pre-registered item"}), 500
+
+
+# Pre-register new item
+@app.route('/preregister-new-item', methods=['POST'])
+def preregister_new_item():
+    try:
+        # Extract form data
+        item_name = request.form.get('itemName')
+        color = request.form.get('color')
+        brand = request.form.get('brand')
+        description = request.form.get('description')
+        date = datetime.today().strftime('%Y-%m-%d')  # Default date is today
+
+        # Validate required fields
+        if not all([item_name, color, description]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        # Set default QR code path
+        qr_code_path = 'uploads/care.png'
+
+        # Process uploaded photo
+        photo = request.files.get('image')
     
-@app.route("/found-items", methods=["GET"])
+        if photo and photo.filename:
+            filename = secure_filename(photo.filename)
+            photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            photo.save(photo_path)
+            with open(photo_path, 'rb') as file:
+                photo_path = file.read()
+        else:
+            return jsonify({"error": "Photo upload required"}), 400
+
+        # Insert the item into the database
+        # Adjust or implement `insert_preregistered_item` according to your database schema
+        insert_preregistered_item(
+            item_name,
+            color,
+            brand,
+            description,
+            photo_path,
+            date,
+            qr_code_path,
+            GLOBAL_USER_EMAIL  # Use global user email as fallback
+        )
+
+        return jsonify({"message": "Pre-registered item added successfully"}), 201
+
+    except Exception as e:
+        app.logger.error(f"Error adding pre-registered item: {e}")
+        return jsonify({"error": "Failed to add pre-registered item"}), 500
+
+@ app.route("/found-items", methods=["GET"])
 def fetch_all_items():
     items = get_all_items()
     # Convert the list of tuples into a list of dictionaries for JSON response
@@ -661,9 +709,8 @@ def update_lost_item(item_id):
 
     try:
         # Connect to the LostItemRequest.db database
-        lost_item_db = os.path.join(os.path.dirname(
-            base_dir), 'databases', 'LostItemRequest.db')
-        conn = sqlite3.connect(lost_item_db)
+
+        conn = sqlite3.connect(LOST_ITEMS_DB)
         cursor = conn.cursor()
 
         # Update the item in the LostItems table based on the itemId
@@ -690,9 +737,8 @@ def toggle_status(item_id):
         return jsonify({'error': 'New status not provided'}), 400
 
     # Connect to LostItemRequest.db
-    lost_item_db = os.path.join(os.path.dirname(
-        base_dir), 'databases', 'LostItemRequest.db')
-    conn = sqlite3.connect(lost_item_db)
+
+    conn = sqlite3.connect(LOST_ITEMS_DB)
     cursor = conn.cursor()
 
     try:
@@ -726,9 +772,8 @@ def check_lost_item_request():
     found_item_id = data.get('foundItemId')
 
     # Connect to LostItemRequest.db
-    lost_item_db = os.path.join(os.path.dirname(
-        base_dir), 'databases', 'LostItemRequest.db')
-    conn = sqlite3.connect(lost_item_db)
+
+    conn = sqlite3.connect(LOST_ITEMS_DB)
     cursor = conn.cursor()
 
     # Query to find potential matches in the LostItems table
@@ -779,9 +824,7 @@ def update_item_match():
     found_item_id = data.get('foundItemId')
 
     # Connect to LostItemRequest.db
-    lost_item_db = os.path.join(os.path.dirname(
-        base_dir), 'databases', 'LostItemRequest.db')
-    conn = sqlite3.connect(lost_item_db)
+    conn = sqlite3.connect(LOST_ITEMS_DB)
     cursor = conn.cursor()
 
     # Update the ItemMatchID for the matched item
@@ -843,6 +886,64 @@ def add_item():
 
     app.logger.warning("Invalid file type")
     return jsonify({'error': 'Invalid file type'}), 400
+
+
+@ app.route('/keyword-gen', methods=['POST'])
+def get_keywords():
+
+    # username = request.form.get('email')
+    # password = request.form.get('password')
+
+    # print("username:", username)
+    # print("password:", password)
+
+    # conn = create_connection_users()
+    # if not conn:
+    #     return jsonify({'error': 'Failed to connect to database'}), 500
+    # cur = conn.cursor()
+
+    # cur.execute('''
+    #     SELECT * FROM UserListing WHERE Email = ? AND Password = ? AND isDeleted = 0
+    # ''', (username, password))
+
+    # row = cur.fetchone()
+    # conn.close()
+    # if row is None:
+    #     return jsonify({'error': 'Invalid username or password'}), 401
+
+    if 'image' not in request.files:
+        app.logger.warning("keyword-gen: no image in request")
+        return jsonify({'error': 'No image file provided'}), 400
+    file = request.files['image']
+    if file.filename == '':
+        app.logger.warning("keyword-gen: empty file name provided")
+        return jsonify({'error': 'No selected file'}), 400
+    if not allowed_file(file.filename):
+        return jsonify({'error': 'Unsupported file type.'}), 400
+
+    try:
+        # Example: save the file temporarily, or process it further
+        file.save(os.path.join(UPLOAD_FOLDER, file.filename))
+        keywords_raw, logos_raw, status = image_keywords(
+            os.path.join(UPLOAD_FOLDER, file.filename))
+
+        keywords = parse_keywords(keywords_raw)
+        keywords_sorted_by_desc = get_sorted_descriptions_or_logos(keywords)
+        string_keywords = ', '.join(keywords_sorted_by_desc)
+
+        logos = parse_logos(logos_raw)
+        logos_sorted_by_desc = get_sorted_descriptions_or_logos(logos)
+        string_logos = ', '.join(logos_sorted_by_desc)
+
+        os.remove(os.path.join(UPLOAD_FOLDER, file.filename))
+        return jsonify({'keywords': string_keywords, 'logos': string_logos}), 200
+
+    except IOError:
+        app.logger.error("keyword-gen: File saving failed due to IOError")
+        return jsonify({'error': 'File saving failed'}), 500
+    except Exception as e:
+        app.logger.error(f"keyword-gen: Unexpected error occurred: {str(e)}")
+        return jsonify({'error': 'Unexpected error occurred'}), 500
 
 
 @ app.route('/signup', methods=['POST'])
@@ -1116,21 +1217,46 @@ def delete_acct():
         conn.close()
 
 
-
-
-
-# Function to read and encode an image file to base64
 def get_image_base64(image_path):
+    """
+    Reads an image file from the specified path and encodes it to a base64 string.
+
+    Parameters:
+    image_path (str): The file path to the image that needs to be encoded.
+
+    Returns:
+    str: The base64 encoded string representation of the image.
+    """
     with open(image_path, 'rb') as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
 
 # Endpoint to get all items
 
 
-
-
-@ app.route('/items', methods=['GET'])
+@app.route('/items', methods=['GET'])
 def view_all_items():
+    """
+    Fetches all items from the database and returns them as a JSON response.
+
+    This endpoint retrieves all items stored in the database. For each item, it checks if the image is stored in bytes format or if it is None.
+    If the image is in bytes, it encodes the image to a base64 string. If the image is None, it uses a default placeholder image. Otherwise, it assumes the image is already in the correct format.
+
+    Returns:
+        A JSON response containing a list of items, where each item is represented as a dictionary with the following keys:
+        - ItemID: The unique identifier of the item.
+        - ItemName: The name of the item.
+        - Color: The color of the item.
+        - Brand: The brand of the item.
+        - LocationFound: The location where the item was found.
+        - LocationTurnedIn: The location where the item was turned in.
+        - Description: A description of the item.
+        - ImageURL: The base64-encoded image data or a default image URL.
+        - ItemStatus: The status of the item (e.g., found, returned).
+        - Date: The date when the item was added to the database.
+
+    Status Codes:
+        200: OK - The request was successful and items are returned.
+    """
     app.logger.info("Fetching all items")
     items = get_all_items()
     items_list = []
@@ -1444,6 +1570,7 @@ def view_found_items():
 
 @ app.route('/get-user-email', methods=['GET'])
 def get_user_email():
+    '''returns the user email'''
     return jsonify({"user_email": GLOBAL_USER_EMAIL}), 200
 
 
@@ -1480,8 +1607,7 @@ def get_all_claimrequests_student(email):
 @ app.route('/allclaim-requests-student/<string:emailId>', methods=['GET'])
 def view_all_requests_student(emailId):
     app.logger.info("Fetching all claims")
-    id = emailId
-    claims = get_all_claimrequests_student(id)
+    claims = get_all_claimrequests_student(emailId)
     claims_list = []
 
     for item in claims:
@@ -1893,7 +2019,8 @@ def submit_release_form():
             qr_code = "uploads/care.png"  # Default QR code path
 
             # Call the `insertPreRegisteredItem` function to insert the item into the PREREGISTERED table
-            insert_preregistered_item(item_name, color, brand, description, image_data, current_date, qr_code, user_email_id)
+            insert_preregistered_item(
+                item_name, color, brand, description, image_data, current_date, qr_code, user_email_id)
 
             return jsonify({'message': 'Release form data submitted and item added to preregistered successfully'}), 201
         else:
@@ -2072,6 +2199,8 @@ def get_categories():
     try:
         cursor.execute(
             "SELECT CategoryName, ItemCount FROM CATEGORIES ORDER BY ItemCount DESC")
+        cursor.execute(
+            "SELECT CategoryName, ItemCount FROM CATEGORIES ORDER BY ItemCount DESC")
         categories = cursor.fetchall()
         categories_list = [
             {"CategoryName": row[0], "ItemCount": row[1]} for row in categories
@@ -2084,8 +2213,19 @@ def get_categories():
             conn.close()
 
 
-@ app.route('/api/staff-analytics', methods=['GET'])
+@app.route('/api/staff-analytics', methods=['GET'])
 def get_staff_analytics():
+    """
+    Retrieve staff analytics data, including the count of claimed and unclaimed items,
+    the most frequent missing locations, and the most common categories.
+
+    Returns:
+        A JSON response containing:
+        - claimedCount: Number of items that have been claimed.
+        - unclaimedCount: Number of items that have not been claimed.
+        - missingLocations: A list of the top 5 most frequent locations where items were found.
+        - commonCategories: A list of the top 5 most common item categories.
+    """
     conn = create_connection_items(ITEMS_DB)
     cursor = conn.cursor()
     try:
@@ -2109,7 +2249,6 @@ def get_staff_analytics():
         """)
         missing_locations = [{"Location": row[0], "Count": row[1]}
                              for row in cursor.fetchall()]
-
         # Most common categories
         cursor.execute("""
             SELECT CategoryName, ItemCount
@@ -2119,7 +2258,6 @@ def get_staff_analytics():
         """)
         common_categories = [{"CategoryName": row[0],
                               "ItemCount": row[1]} for row in cursor.fetchall()]
-
         analytics_data = {
             "claimedCount": claimed_count,
             "unclaimedCount": unclaimed_count,
@@ -2136,6 +2274,12 @@ def get_staff_analytics():
 
 
 def create_connection_staff():
+    """
+    Creates a connection to the staff database.
+
+    Returns:
+        sqlite3.Connection: A connection object to the SQLite staff database.
+    """
     base_dir = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(base_dir, '../databases/StaffAccounts.db')
     conn = sqlite3.connect(db_path)
@@ -2144,6 +2288,24 @@ def create_connection_staff():
 
 @ app.route('/api/staff/signup', methods=['POST'])
 def staff_signup():
+    """
+    Sign up a new staff member.
+
+    This endpoint allows a new staff member to register by providing their
+    email, password, name, and building department. Upon successful registration,
+    the staff account will be created and will await approval.
+
+    Request Body:
+        - email (str): The staff member's email address.
+        - password (str): The staff member's password.
+        - name (str): The staff member's name.
+        - buildingDept (str): The staff member's building department.
+
+    Returns:
+        - 201 OK: If the account is created successfully.
+        - 400 Bad Request: If required fields are missing or if the email already exists.
+        - 500 Internal Server Error: If a database error occurs.
+    """
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
@@ -2174,6 +2336,24 @@ def staff_signup():
 
 @ app.route('/api/staff/login', methods=['POST'])
 def staff_login():
+    """
+    Logs in a staff member.
+
+    This endpoint allows a staff member to log in by providing their
+    email, password, and building department. The login is successful only
+    if the account is approved.
+
+    Request Body:
+        - email (str): The staff member's email address.
+        - password (str): The staff member's password.
+        - buildingDept (str): The staff member's building department.
+
+    Returns:
+        - 200 OK: If the login is successful and the account is approved.
+        - 400 Bad Request: If required fields are missing.
+        - 401 Unauthorized: If the credentials are invalid.
+        - 403 Forbidden: If the account is not approved yet.
+    """
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
@@ -2201,8 +2381,23 @@ def staff_login():
     else:
         return jsonify({'error': 'Invalid credentials.'}), 401
 
+
 @app.route('/feedback', methods=['POST'])
 def submit_feedback():
+    """
+    Submits feedback from a logged-in user.
+
+    This endpoint allows a logged-in user to submit feedback by providing
+    a description. The feedback is associated with the user's email.
+
+    Request Body:
+        - description (str): The feedback description provided by the user.
+
+    Returns:
+        - 201 Created: If the feedback is submitted successfully.
+        - 400 Bad Request: If the feedback description is missing.
+        - 500 Internal Server Error: If there is an error submitting feedback.
+    """
     data = request.get_json()
     description = data.get('description', '')
 
@@ -2229,6 +2424,17 @@ def submit_feedback():
 
 @app.route('/feedback/user', methods=['GET'])
 def get_user_feedback():
+    """
+    Retrieves feedback for the logged-in user.
+
+    This endpoint allows a logged-in user to retrieve their feedback submissions.
+    Each feedback item contains an identifier, the description provided by the user,
+    and the timestamp at which the feedback was submitted.
+
+    Returns:
+        - 200 OK: A list of feedback items for the logged-in user.
+        - 500 Internal Server Error: If there is an error fetching the user feedback.
+    """
     try:
         conn = sqlite3.connect(FEEDBACK_DB)
         cursor = conn.cursor()
@@ -2242,7 +2448,8 @@ def get_user_feedback():
         conn.close()
 
         return jsonify([
-            {"FeedbackID": row[0], "Description": row[1], "SubmittedAt": row[2]}
+            {"FeedbackID": row[0], "Description": row[1],
+                "SubmittedAt": row[2]}
             for row in feedback_list
         ]), 200
 
@@ -2250,8 +2457,20 @@ def get_user_feedback():
         print(f"Database error: {e}")
         return jsonify({'error': 'Failed to fetch user feedback'}), 500
 
+
 @app.route('/feedback/all', methods=['GET'])
 def get_all_feedback():
+    """
+    Retrieves all feedback entries.
+
+    This endpoint allows authorized users to fetch all feedback entries in the system.
+    Each feedback item contains an identifier, the description provided by the user,
+    the timestamp at which the feedback was submitted, and the user's email.
+
+    Returns:
+        - 200 OK: A list of all feedback items.
+        - 500 Internal Server Error: If there is an error fetching all feedback.
+    """
     try:
         conn = sqlite3.connect(FEEDBACK_DB)
         cursor = conn.cursor()
@@ -2265,7 +2484,8 @@ def get_all_feedback():
         conn.close()
 
         return jsonify([
-            {"FeedbackID": row[0], "Description": row[1], "SubmittedAt": row[2], "UserEmail": row[3]}
+            {"FeedbackID": row[0], "Description": row[1],
+                "SubmittedAt": row[2], "UserEmail": row[3]}
             for row in feedback_list
         ]), 200
 
