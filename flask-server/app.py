@@ -24,7 +24,7 @@ from PreregistedItemsdb import insert_preregistered_item
 from database_cleaner import delete_deleted_items
 from AddFoundItemPic import insertItem
 from AddClaimRequest import insertclaim
-from keyword_gen import image_keywords
+from keyword_gen import image_keywords, parse_keywords, get_sorted_descriptions, get_sorted_logos, parse_logos
 
 
 app = Flask(__name__)
@@ -769,6 +769,65 @@ def add_item():
     return jsonify({'error': 'Invalid file type'}), 400
 
 
+@ app.route('/keyword-gen', methods=['POST'])
+def get_keywords():
+
+    # username = request.form.get('email')
+    # password = request.form.get('password')
+
+    # print("username:", username)
+    # print("password:", password)
+
+    # conn = create_connection_users()
+    # if not conn:
+    #     return jsonify({'error': 'Failed to connect to database'}), 500
+    # cur = conn.cursor()
+
+    # cur.execute('''
+    #     SELECT * FROM UserListing WHERE Email = ? AND Password = ? AND isDeleted = 0
+    # ''', (username, password))
+
+    # row = cur.fetchone()
+    # conn.close()
+    # if row is None:
+    #     return jsonify({'error': 'Invalid username or password'}), 401
+
+    if 'image' not in request.files:
+        app.logger.warning("keyword-gen: no image in request")
+        return jsonify({'error': 'No image file provided'}), 400
+    file = request.files['image']
+    if file.filename == '':
+        app.logger.warning("keyword-gen: empty file name provided")
+        return jsonify({'error': 'No selected file'}), 400
+    if not allowed_file(file.filename):
+        return jsonify({'error': 'Unsupported file type.'}), 400
+
+    try:
+        # Example: save the file temporarily, or process it further
+        file.save(os.path.join(UPLOAD_FOLDER, file.filename))
+        keywords_raw, logos_raw, status = image_keywords(
+            os.path.join(UPLOAD_FOLDER, file.filename))
+
+        keywords = parse_keywords(keywords_raw)
+        keywords_sorted_by_desc = get_sorted_descriptions(keywords)
+        string_keywords = ', '.join(keywords_sorted_by_desc)
+        print(string_keywords)
+
+        logos = parse_logos(logos_raw)
+        logos_sorted_by_desc = get_sorted_logos(logos)
+        string_logos = ', '.join(logos_sorted_by_desc)
+        print(string_logos)
+
+        return jsonify({'keywords': keywords_sorted_by_desc, 'logos': logos}), 200
+
+    except IOError:
+        app.logger.error("keyword-gen: File saving failed due to IOError")
+        return jsonify({'error': 'File saving failed'}), 500
+    except Exception as e:
+        app.logger.error(f"keyword-gen: Unexpected error occurred: {str(e)}")
+        return jsonify({'error': 'Unexpected error occurred'}), 500
+
+
 @ app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
@@ -1040,16 +1099,46 @@ def delete_acct():
         conn.close()
 
 
-# Function to read and encode an image file to base64
 def get_image_base64(image_path):
+    """
+    Reads an image file from the specified path and encodes it to a base64 string.
+
+    Parameters:
+    image_path (str): The file path to the image that needs to be encoded.
+
+    Returns:
+    str: The base64 encoded string representation of the image.
+    """
     with open(image_path, 'rb') as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
 
 # Endpoint to get all items
 
 
-@ app.route('/items', methods=['GET'])
+@app.route('/items', methods=['GET'])
 def view_all_items():
+    """
+    Fetches all items from the database and returns them as a JSON response.
+
+    This endpoint retrieves all items stored in the database. For each item, it checks if the image is stored in bytes format or if it is None.
+    If the image is in bytes, it encodes the image to a base64 string. If the image is None, it uses a default placeholder image. Otherwise, it assumes the image is already in the correct format.
+
+    Returns:
+        A JSON response containing a list of items, where each item is represented as a dictionary with the following keys:
+        - ItemID: The unique identifier of the item.
+        - ItemName: The name of the item.
+        - Color: The color of the item.
+        - Brand: The brand of the item.
+        - LocationFound: The location where the item was found.
+        - LocationTurnedIn: The location where the item was turned in.
+        - Description: A description of the item.
+        - ImageURL: The base64-encoded image data or a default image URL.
+        - ItemStatus: The status of the item (e.g., found, returned).
+        - Date: The date when the item was added to the database.
+
+    Status Codes:
+        200: OK - The request was successful and items are returned.
+    """
     app.logger.info("Fetching all items")
     items = get_all_items()
     items_list = []
@@ -2006,7 +2095,6 @@ def get_categories():
             conn.close()
 
 
-@ app.route('/api/staff-analytics', methods=['GET'])
 @app.route('/api/staff-analytics', methods=['GET'])
 def get_staff_analytics():
     """
