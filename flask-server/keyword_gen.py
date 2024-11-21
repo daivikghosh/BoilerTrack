@@ -46,6 +46,7 @@ def detect_labels(path: str):
 
     image = vision.Image(content=content)
 
+    # if pylint complains, ignore the error
     response = client.label_detection(image=image)
     labels = response.label_annotations
 
@@ -66,7 +67,7 @@ def image_keywords(image_path: str = None, want_keywords: bool = True, want_logo
     """This function takes an image path, validates it, and returns a list of keywords
      returns a tuple with a list of keywords, a logo, and 0 if successful, 1 if cached, and 2 if there was an error
       """
-    print("path: " + image_path)
+    # print("path: " + image_path)
     # validate the file exists
     if os.path.exists(image_path):
         pass
