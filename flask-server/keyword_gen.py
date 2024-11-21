@@ -1,11 +1,10 @@
 import os
-import sqlite3
 import re
+import sqlite3
 from hashlib import sha512
-from typing import List, Dict
+from typing import Dict, List
 
 from google.cloud import vision
-
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(os.path.dirname(base_dir), 'databases')

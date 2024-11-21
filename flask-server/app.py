@@ -1,31 +1,28 @@
 """
 Main file for the boilertrack backend
 """
+import base64
+import difflib
 import logging
 import os
 import sqlite3
-import base64
 import time
-import difflib
 from datetime import datetime
 from timeit import default_timer as timer
 from uuid import uuid4
 
-
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from flask_mail import Mail, Message
-from werkzeug.utils import secure_filename
-
+from AddClaimRequest import insertclaim
+from AddFoundItemPic import insertItem
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from PreregistedItemsdb import insert_preregistered_item
-
 from database_cleaner import delete_deleted_items
-from AddFoundItemPic import insertItem
-from AddClaimRequest import insertclaim
-from keyword_gen import image_keywords, parse_keywords, get_sorted_descriptions_or_logos, parse_logos
-
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from flask_mail import Mail, Message
+from keyword_gen import (get_sorted_descriptions_or_logos, image_keywords,
+                         parse_keywords, parse_logos)
+from PreregistedItemsdb import insert_preregistered_item
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})

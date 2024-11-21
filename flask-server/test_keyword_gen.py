@@ -1,12 +1,11 @@
 import os
 import sqlite3
-import pytest
-from unittest.mock import patch
-from PIL import Image
 from hashlib import sha512
+from unittest.mock import patch
 
-
-from keyword_gen import image_keywords, KEYWORD_CACHE
+import pytest
+from keyword_gen import KEYWORD_CACHE, image_keywords
+from PIL import Image
 
 # Create a test image for the purpose of testing
 

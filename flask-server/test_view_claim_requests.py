@@ -1,6 +1,8 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 from app import app  # Ensure 'app' refers to the correct Flask app instance
+
 
 @pytest.fixture
 def client():
