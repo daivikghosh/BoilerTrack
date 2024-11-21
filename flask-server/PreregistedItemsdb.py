@@ -1,5 +1,7 @@
 import os
 import sqlite3
+import os
+import requests
 
 # Get the absolute path to the Databases directory
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -18,6 +20,29 @@ def convert_to_binary(filename):
     with open(filename, 'rb') as file:
         data = file.read()
     return data
+
+
+def gen_qr_code(itemID, userEmail):
+    # API URL
+    url = "https://api.qrserver.com/v1/create-qr-code/"
+    params = {
+        "size": "200x200",
+        "data": f"itemID={itemID}&userEmail={userEmail}"
+    }
+
+    # Send GET request
+    response = requests.get(url, params=params)
+
+    # Save the QR code image
+    if response.status_code == 200:
+        with open(f"uploads/qr_code_{itemID}.png", "wb") as file:
+            file.write(response.content)
+        print(f"QR Code saved as qr_code_{itemID}.png")
+        return f"uploads/qr_code_{itemID}.png"
+    else:
+        print("Error:", response.status_code)
+        return None
+
 
 
 def insert_preregistered_item(item_name, color, brand, description, photo, date, qr_code, user_email):
@@ -58,7 +83,12 @@ def insert_preregistered_item(item_name, color, brand, description, photo, date,
 
         # Convert photo and QR code image to binary data
         # binary_photo = convert_to_binary(photo)
-        binary_qr_code = convert_to_binary(qr_code)
+        # get the pre_reg_item_id for the last row
+        last_item_id = cursor.execute("SELECT pre_reg_item_id FROM PREREGISTERED ORDER BY pre_reg_item_id DESC LIMIT 1").fetchone()
+        if last_item_id is None:
+            last_item_id = 0
+        qr_code_path = gen_qr_code(last_item_id[0] + 1, user_email)
+        binary_qr_code = convert_to_binary(qr_code_path)
 
         # Create the tuple with the data
         data_tuple = (item_name, color, brand, description,
