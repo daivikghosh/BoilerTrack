@@ -16,8 +16,11 @@ function StaffInputForm() {
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [errors, setErrors] = useState({});
+  const [email] = useState(""); // Store username in state
+  const [password] = useState(""); // Store password in state
 
   const handleFileChange = (event) => setSelectedFile(event.target.files[0]);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: "" });
@@ -89,6 +92,36 @@ function StaffInputForm() {
     }
   };
 
+  const handleKeywordGeneration = async () => {
+    if (!selectedFile) {
+      alert("Please upload an image first.");
+      return;
+    }
+
+    const data = new FormData();
+    data.append("image", selectedFile);
+    data.append("email", email);
+    data.append("password", password);
+
+    try {
+      const response = await axios.post("/keyword-gen", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const { keywords, logos } = response.data;
+      console.log(logos);
+
+      // Update form with generated description and keywords
+      setFormData({
+        ...formData,
+        description: keywords || formData.description,
+        brand: logos || formData.brand,
+      });
+    } catch (error) {
+      console.error("Error generating keywords:", error);
+    }
+  };
+
   return (
     <div className="form-container">
       <h1>Upload</h1>
@@ -104,7 +137,9 @@ function StaffInputForm() {
             />
             <span>Choose File</span>
           </label>
-          <button className="generate-button">Generate Keywords</button>
+          <button className="generate-button" onClick={handleKeywordGeneration}>
+            Generate Keywords
+          </button>
           <input
             id="image-upload"
             type="file"

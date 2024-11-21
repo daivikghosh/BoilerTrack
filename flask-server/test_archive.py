@@ -1,7 +1,8 @@
 import sqlite3
+
 import pytest
-from flask import json
 from app import app, insertItem
+from flask import json
 
 
 def get_item_by_name(item_name):

@@ -1,5 +1,5 @@
-import sqlite3
 import os
+import sqlite3
 
 
 def write_to_file(data, filename):
