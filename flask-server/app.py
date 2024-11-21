@@ -256,7 +256,7 @@ def get_item_by_id(item_id):
     return item
 
 
-def gen_qr_code(itemID, userEmail):
+def gen_qr_code(item_id, user_email):
     """
     Generates a QR code containing the item ID and user email, and saves it as a PNG file.
 
@@ -272,17 +272,17 @@ def gen_qr_code(itemID, userEmail):
     url = "https://api.qrserver.com/v1/create-qr-code/"
     params = {
         "size": "200x200",
-        "data": f"itemID={itemID}&userEmail={userEmail}"
+        "data": f"itemID={item_id}&userEmail={user_email}"
     }
 
     # Send GET request
-    response = requests.get(url, params=params)
+    response = requests.get(url, params=params, timeout=5)
 
     # Save the QR code image
     if response.status_code == 200:
-        with open(f"uploads/qr_code_{itemID}.png", "wb") as file:
+        with open(f"uploads/qr_code_{item_id}.png", "wb") as file:
             file.write(response.content)
-        app.logger.info(f"QR Code saved as qr_code_{itemID}.png")
+        app.logger.info(f"QR Code saved as qr_code_{item_id}.png")
     else:
         app.logger.error(f"Error: {response.status_code}")
 
@@ -461,21 +461,38 @@ def preregister_new_item():
 
 @ app.route("/found-items", methods=["GET"])
 def fetch_all_items():
-    items = get_all_items()
-    # Convert the list of tuples into a list of dictionaries for JSON response
-    items_dict = [
-        {
-            "ItemID": item[0],
-            "ItemName": item[1],
-            "Color": item[2],
-            "Brand": item[3],
-            "LocationFound": item[4],
-            "LocationTurnedIn": item[5],
-            "Description": item[6]
-        }
-        for item in items
-    ]
-    return jsonify(items_dict)
+    """
+    Fetches all found items from the database and returns them as a JSON response.
+
+    This function retrieves all items from the database using the `get_all_items` function.
+    It then converts the list of tuples into a list of dictionaries for easy JSON serialization
+    and returns it as a JSON response with a 200 status code.
+
+    Returns:
+        jsonify: A JSON response containing a list of dictionaries, each representing an item.
+            If an error occurs during fetching, it returns a JSON response with an error message
+            and a 500 status code.
+    """
+    try:
+        items = get_all_items()
+        # Convert the list of tuples into a list of dictionaries for JSON response
+        items_dict = [
+            {
+                "ItemID": item[0],
+                "ItemName": item[1],
+                "Color": item[2],
+                "Brand": item[3],
+                "LocationFound": item[4],
+                "LocationTurnedIn": item[5],
+                "Description": item[6]
+            }
+            for item in items
+        ]
+        return jsonify(items_dict), 200
+
+    except Exception as e:
+        app.logger.error(f"Error fetching all items: {e}")
+        return jsonify({"error": "Failed to fetch found items"}), 500
 
 
 @ app.route('/pre-registered-items', methods=['GET'])
@@ -604,6 +621,17 @@ def add_lost_item_request():
 
 @ app.route('/delete-lost-item/<int:item_id>', methods=['DELETE'])
 def delete_lost_item(item_id):
+    """
+    Deletes a lost item request from the database based on the provided item ID.
+
+    Parameters:
+    item_id (str): The unique identifier of the lost item request to be deleted.
+    Returns:
+    tuple: A tuple containing the response body as a JSON object and the HTTP status code.
+           - If successful, returns a success message and 200 status code.
+           - If the lost item request is not found, returns an error message and 404 status code.
+           - If there's a database error, returns an error message and 500 status code.
+    """
     try:
         # Connect to the LostItemRequest.db database
         lost_item_db = os.path.join(os.path.dirname(
@@ -626,7 +654,18 @@ def delete_lost_item(item_id):
 
 @ app.route('/lost-item-requests', methods=['GET'])
 def get_lost_item_requests():
+    """
+    Retrieve lost item requests for the current user.
 
+    This function checks if the current user's email is set. If not, it returns an error response.
+    It then connects to the LostItemRequest.db database and queries either all lost items (if the user is staff)
+    or only the lost items associated with the current user.
+
+    Returns:
+        JSON response:
+            - On success: A list of lost item requests for the user/staff member.
+            - On failure: An error message indicating that the user email was not set.
+    """
     # data = request.get_json()
 
     # email: str = data['userEmail']
@@ -648,7 +687,7 @@ def get_lost_item_requests():
     cursor.execute(
         "SELECT isStaff FROM UserListing WHERE email=?", (user_email,))
     is_staff = cursor.fetchone()[0]
-    print(is_staff)
+    # print(is_staff)
     if is_staff:
         # get all lost items
         conn = sqlite3.connect(lost_item_db)
@@ -697,6 +736,19 @@ def get_lost_item_requests():
 
 @ app.route('/lost-item/<int:item_id>', methods=['GET'])
 def get_lost_item(item_id):
+    """
+    Retrieves the details of a lost item by its ID.
+
+    Args:
+        item_id (int): The unique identifier for the lost item.
+
+    Returns:
+        str: JSON response containing the details of the lost item or an error message if the item is not found.
+             Status code: 200 on success, 404 if the item is not found, and 500 if a database error occurs.
+
+    Raises:
+        sqlite3.Error: If there is an issue with the SQLite database connection or query execution.
+    """
     try:
         # Connect to the LostItemRequest.db database
         lost_item_db = os.path.join(os.path.dirname(
@@ -728,6 +780,15 @@ def get_lost_item(item_id):
 
 @ app.route('/lost-item/<int:item_id>', methods=['PUT'])
 def update_lost_item(item_id):
+    """
+    Update an existing lost item request in the database.
+
+    Args:
+        item_id (int): The ID of the lost item to be updated.
+
+    Returns:
+        Flask Response: A JSON response indicating whether the update was successful or not.
+    """
     data = request.get_json()  # Get the JSON data from the request
 
     # Validate the input data
@@ -757,6 +818,15 @@ def update_lost_item(item_id):
 
 @ app.route('/toggle-status/<int:item_id>', methods=['PUT'])
 def toggle_status(item_id):
+    """
+    Updates the status of a lost item request.
+
+    Args:
+        item_id (int): The ID of the lost item request to update.
+
+    Returns:
+        A JSON response indicating success or failure, with appropriate HTTP status codes.
+    """
     data = request.get_json()
     new_status = data.get('status')
 
@@ -789,6 +859,32 @@ def toggle_status(item_id):
 
 @ app.route('/check-lost-item-request', methods=['POST'])
 def check_lost_item_request():
+    """
+    Endpoint to check if there is a pending lost item request that matches the provided item details.
+
+    This function handles POST requests containing JSON data with fields such as 'itemName', 'description', 'foundAt', and 'foundItemId'.
+    It searches the LostItems table for potential matches based on ItemName, LocationFound (equivalent to `LocationLost`), and a description similarity threshold.
+    If a match is found, it updates the status of the lost item request to "in review" and sets the ItemMatchID.
+
+    Args:
+        itemName (str): The name of the lost item provided by the user.
+        description (str): A brief description of the lost item provided by the user.
+        foundAt (str): The location where the lost item was found, equivalent to `LocationFound`.
+        foundItemId (int): The unique identifier for the found item.
+
+    Returns:
+        JSON response: 
+            - If a match is found, returns a success message with the matching_item_id.
+            - If no match is found, returns a failure message.
+
+    Example usage:
+        {
+            "itemName": "Laptop",
+            "description": "Apple MacBook Pro",
+            "foundAt": "Library",
+            "foundItemId": 12345
+        }
+    """
     data = request.get_json()
 
     # Extract item details from the request
@@ -846,6 +942,16 @@ def check_lost_item_request():
 
 @ app.route('/update-item-match', methods=['PUT'])
 def update_item_match():
+    """
+    Update the ItemMatchID for a matched item in the LostItems table.
+
+    Args:
+        matchingItemId (int): The ID of the matching item to be set.
+        foundItemId (int): The ID of the found item that matches the lost item.
+
+    Returns:
+        dict: A JSON response with a success message and status code 200 if the update is successful.
+    """
     data = request.get_json()
     matching_item_id = data.get('matchingItemId')
     found_item_id = data.get('foundItemId')
@@ -1474,7 +1580,7 @@ def send_request():
 
             # Sending an email
             emailstr1 = f"Hello there<br><br>A new claim request has been submitted and is awaiting review...<br><br>Item Id: {itemid}<br><br>Reason Given: {comments}"
-            emailstr2 = f"<br><br>Please open the portal to check status of the claim<br><br>Thank You!<br>~BoilerTrack Devs"
+            emailstr2 = "<br><br>Please open the portal to check status of the claim<br><br>Thank You!<br>~BoilerTrack Devs"
 
             msg = Message("BoilerTrack: New Claim Request for Review",
                           sender="shloksbairagi07@gmail.com",
@@ -1635,9 +1741,9 @@ def get_all_claimrequests_student(email):
 
 
 @ app.route('/allclaim-requests-student/<string:emailId>', methods=['GET'])
-def view_all_requests_student(emailId):
+def view_all_requests_student(email_id):
     app.logger.info("Fetching all claims")
-    claims = get_all_claimrequests_student(emailId)
+    claims = get_all_claimrequests_student(email_id)
     claims_list = []
 
     for item in claims:
@@ -1652,9 +1758,9 @@ def view_all_requests_student(emailId):
         item_deets = get_item_by_id(item[0])
 
         status = "NA"
-        if (item[4] == 2):
+        if item[4] == 2:
             status = "Acepted"
-        elif (item[4] == 3):
+        elif item[4] == 3:
             status = "Rejected"
         else:
             status = "Pending"
@@ -1712,7 +1818,7 @@ def modify_claim(claim_id):
 
         # Sending an email
         emailstr1 = f"Hello there<br><br>A modified claim request has been submitted and is awaiting review...<br><br>Item Id: {claim_id}<br><br>Reason Given: {comments}"
-        emailstr2 = f"<br><br>Please open the portal to check status of the claim<br><br>Thank You!<br>~BoilerTrack Devs"
+        emailstr2 = "<br><br>Please open the portal to check status of the claim<br><br>Thank You!<br>~BoilerTrack Devs"
 
         msg = Message("BoilerTrack: Modified Claim Request for Review",
                       sender="shloksbairagi07@gmail.com",
@@ -1833,7 +1939,7 @@ def approve_claim(claim_id):
 
         emailstr1 = f"Hello there<br><br>Your claim request has been approved<br><br>Item Id: {itemid}<br><br>"
         emailstr2 = f"Come pick up the {name} at {location} and bring your student ID"
-        emailstr3 = f"<br><br>Thank You!<br>~BoilerTrack Devs"
+        emailstr3 = "<br><br>Thank You!<br>~BoilerTrack Devs"
 
         msg = Message("BoilerTrack: Claim Request Accepted",
                       sender="shloksbairagi07@gmail.com",
@@ -2085,7 +2191,7 @@ def reject_claim(claim_id):
 
         emailstr1 = f"Hello there<br><br>Your claim request has been rejected<br><br>Item Id: {itemid}<br><br>"
         emailstr2 = f"Here is why your request for the {name} was rejected: <br><br> {rationale}"
-        emailstr3 = f"<br><br>Thank You!<br>~BoilerTrack Devs"
+        emailstr3 = "<br><br>Thank You!<br>~BoilerTrack Devs"
 
         msg = Message("BoilerTrack: Claim Request Rejected",
                       sender="shloksbairagi07@gmail.com",
@@ -2310,7 +2416,6 @@ def create_connection_staff():
     Returns:
         sqlite3.Connection: A connection object to the SQLite staff database.
     """
-    base_dir = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(base_dir, '../databases/StaffAccounts.db')
     conn = sqlite3.connect(db_path)
     return conn
@@ -2403,7 +2508,7 @@ def staff_login():
     conn.close()
 
     if user:
-        staff_id, is_approved = user
+        _staff_id, is_approved = user
         if is_approved:
             return jsonify({'message': 'Login successful', 'isApproved': is_approved}), 200
         else:
