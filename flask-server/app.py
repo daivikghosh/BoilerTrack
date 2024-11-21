@@ -286,6 +286,8 @@ def preregister_item():
         description = request.form.get('Description')
         date = request.form.get('Date')
         user_email = request.form.get('UserEmail')
+       
+      
 
         # Set default QR code path
         qr_code_path = 'uploads/care.png'
@@ -310,7 +312,106 @@ def preregister_item():
         return jsonify({"error": "Failed to add pre-registered item"}), 500
 
 
-@app.route("/found-items", methods=["GET"])
+# Pre-register new item
+@app.route('/preregister-new-item', methods=['POST'])
+def preregister_new_item():
+    try:
+        # Extract form data
+        item_name = request.form.get('itemName')
+        color = request.form.get('color')
+        brand = request.form.get('brand')
+        description = request.form.get('description')
+        date = datetime.today().strftime('%Y-%m-%d')  # Default date is today
+
+        # Validate required fields
+        if not all([item_name, color, description]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        # Set default QR code path
+        qr_code_path = 'uploads/care.png'
+
+        # Process uploaded photo
+        photo = request.files.get('image')
+    
+        if photo and photo.filename:
+            filename = secure_filename(photo.filename)
+            photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            photo.save(photo_path)
+            with open(photo_path, 'rb') as file:
+                photo_path = file.read()
+        else:
+            return jsonify({"error": "Photo upload required"}), 400
+
+        # Insert the item into the database
+        # Adjust or implement `insert_preregistered_item` according to your database schema
+        insert_preregistered_item(
+            item_name,
+            color,
+            brand,
+            description,
+            photo_path,
+            date,
+            qr_code_path,
+            GLOBAL_USER_EMAIL  # Use global user email as fallback
+        )
+
+        return jsonify({"message": "Pre-registered item added successfully"}), 201
+
+    except Exception as e:
+        app.logger.error(f"Error adding pre-registered item: {e}")
+        return jsonify({"error": "Failed to add pre-registered item"}), 500
+
+
+# Pre-register new item
+@app.route('/preregister-new-item', methods=['POST'])
+def preregister_new_item():
+    try:
+        # Extract form data
+        item_name = request.form.get('itemName')
+        color = request.form.get('color')
+        brand = request.form.get('brand')
+        description = request.form.get('description')
+        date = datetime.today().strftime('%Y-%m-%d')  # Default date is today
+
+        # Validate required fields
+        if not all([item_name, color, description]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        # Set default QR code path
+        qr_code_path = 'uploads/care.png'
+
+        # Process uploaded photo
+        photo = request.files.get('image')
+    
+        if photo and photo.filename:
+            filename = secure_filename(photo.filename)
+            photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            photo.save(photo_path)
+            with open(photo_path, 'rb') as file:
+                photo_path = file.read()
+        else:
+            return jsonify({"error": "Photo upload required"}), 400
+
+        # Insert the item into the database
+        # Adjust or implement `insert_preregistered_item` according to your database schema
+        insert_preregistered_item(
+            item_name,
+            color,
+            brand,
+            description,
+            photo_path,
+            date,
+            qr_code_path,
+            GLOBAL_USER_EMAIL  # Use global user email as fallback
+        )
+
+        return jsonify({"message": "Pre-registered item added successfully"}), 201
+
+    except Exception as e:
+        app.logger.error(f"Error adding pre-registered item: {e}")
+        return jsonify({"error": "Failed to add pre-registered item"}), 500
+
+@ app.route("/found-items", methods=["GET"])
 def fetch_all_items():
     items = get_all_items()
     # Convert the list of tuples into a list of dictionaries for JSON response
