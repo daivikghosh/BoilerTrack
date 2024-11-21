@@ -114,12 +114,12 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def get_all_claim_requests():
+def get_all_claim_requests(email):
     """Fetch all claim requests from the ClaimRequest database."""
     conn = create_connection_items(CLAIMS_DB)
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT * FROM CLAIMREQUETS WHERE UserEmail = ?", (GLOBAL_USER_EMAIL,))
+        "SELECT * FROM CLAIMREQUETS WHERE UserEmail = ?", (email,))
     claim_requests = cursor.fetchall()
     conn.close()
     return claim_requests
@@ -136,12 +136,12 @@ def get_found_items_by_ids(item_ids):
     return found_items
 
 
-def get_all_pre_registered_items():
+def get_all_pre_registered_items(email):
     """Fetch all pre-registered items from the database."""
     conn = create_connection_items(PREREG_DB)
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT * FROM PREREGISTERED WHERE UserEmail = ?", (GLOBAL_USER_EMAIL,))
+        "SELECT * FROM PREREGISTERED WHERE UserEmail = ?", (email,))
     pre_registered_items = cursor.fetchall()
     conn.close()
     return pre_registered_items
@@ -420,6 +420,11 @@ def preregister_new_item():
         description = request.form.get('description')
         date = datetime.today().strftime('%Y-%m-%d')  # Default date is today
 
+        email = session['email']
+
+        if email is None:
+            return jsonify({"error": "User not logged in"}), 401
+
         # Validate required fields
         if not all([item_name, color, description]):
             return jsonify({"error": "Missing required fields"}), 400
@@ -449,7 +454,7 @@ def preregister_new_item():
             photo_path,
             date,
             qr_code_path,
-            GLOBAL_USER_EMAIL  # Use global user email as fallback
+            email
         )
 
         return jsonify({"message": "Pre-registered item added successfully"}), 201
@@ -506,14 +511,16 @@ def get_pre_registered_items():
 
     :return: A JSON response containing details of the pre-registered items.
     """
+
+    email = session['email']
+    if email is None:
+        return jsonify({"error": "user not logged in"}), 401
     app.logger.info(
-        "Fetching pre-registered items for email: %(gu_email)s", {"gu_email": GLOBAL_USER_EMAIL})
+        "Fetching pre-registered items for email: %(email)s", {"email": email})
 
     # Ensure the email is provided
-    if not GLOBAL_USER_EMAIL:
-        return jsonify({'error': 'No user email provided'}), 400
 
-    pre_registered_items = get_all_pre_registered_items()
+    pre_registered_items = get_all_pre_registered_items(email)
     app.logger.info("Found %s pre-registered items", len(pre_registered_items))
 
     # Prepare the result to be returned as JSON
@@ -584,7 +591,7 @@ def add_lost_item_request():
     description = data.get('description')
     date_lost = data.get('dateLost')
     location_lost = data.get('locationLost')
-    user_email = GLOBAL_USER_EMAIL
+    user_email = session['email']
 
     # Check for missing data
     if not item_name or not description or not date_lost or not location_lost or not user_email:
@@ -671,11 +678,11 @@ def get_lost_item_requests():
     # email: str = data['userEmail']
     # print(data)
 
-    user_email = GLOBAL_USER_EMAIL  # Assuming this stores the current user's email
+    user_email = session['email']
 
     # Check if the user email is set
     if not user_email:  # or not email:
-        return jsonify({'error': 'User email not set'}), 400
+        return jsonify({'error': 'Not logged in'}), 401
 
     # Connect to the LostItemRequest.db database
     lost_item_db = os.path.join(os.path.dirname(
@@ -1116,13 +1123,9 @@ def signup():
 
 @ app.route('/login', methods=['POST'])
 def login():
-    global GLOBAL_USER_EMAIL
-
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
-
-    GLOBAL_USER_EMAIL = email
 
     if not email or not password:
         return jsonify({'error': 'Missing required fields'}), 400
@@ -1137,7 +1140,16 @@ def login():
     conn.close()
 
     if user:
-        return jsonify({'message': 'Login successful', 'user': {'email': user[1], 'name': user[3], 'isStudent': bool(user[4]), 'isStaff': bool(user[5])}}), 200
+        session['email'] = email
+        return jsonify({
+            'message': 'Login successful',
+            'user': {
+                'email': user[1],
+                'name': user[3],
+                'isStudent': bool(user[4]),
+                'isStaff': bool(user[5])
+            }
+        }), 200
     else:
         return jsonify({'error': 'Invalid email or password'}), 401
 
@@ -1550,7 +1562,7 @@ def send_request():
     app.logger.debug(f"Request form data: {request.form}")
     app.logger.debug(f"Request files: {request.files}")
 
-    print(GLOBAL_USER_EMAIL)
+    email = session['email']
 
     if 'file' not in request.files:
         app.logger.warning("No image file in request")
@@ -1576,7 +1588,7 @@ def send_request():
         status = 1
 
         try:
-            insertclaim(itemid, comments, file_path, GLOBAL_USER_EMAIL, status)
+            insertclaim(itemid, comments, file_path, email, status)
 
             # Sending an email
             emailstr1 = f"Hello there<br><br>A new claim request has been submitted and is awaiting review...<br><br>Item Id: {itemid}<br><br>Reason Given: {comments}"
@@ -1584,7 +1596,7 @@ def send_request():
 
             msg = Message("BoilerTrack: New Claim Request for Review",
                           sender="shloksbairagi07@gmail.com",
-                          recipients=[GLOBAL_USER_EMAIL, staffemail])
+                          recipients=[email, staffemail])
 
             msg.html = """
             <html>
@@ -1707,7 +1719,7 @@ def view_found_items():
 @ app.route('/get-user-email', methods=['GET'])
 def get_user_email():
     '''returns the user email'''
-    return jsonify({"user_email": GLOBAL_USER_EMAIL}), 200
+    return jsonify({"user_email": session['email']}), 200
 
 
 def get_all_claimrequests_staff():
@@ -1811,6 +1823,11 @@ def modify_claim(claim_id):
         return jsonify({'error': 'This item has already been claimed'}), 500
 
     try:
+
+        email = session['email']
+        if email is None:
+            return jsonify({'error': 'Not logged in'}), 401
+
         update_claim(claim_id, comments, blob_data)
 
         itemz = get_item_by_id(claim_id)
@@ -1822,7 +1839,7 @@ def modify_claim(claim_id):
 
         msg = Message("BoilerTrack: Modified Claim Request for Review",
                       sender="shloksbairagi07@gmail.com",
-                      recipients=[GLOBAL_USER_EMAIL, staffemail])
+                      recipients=[email, staffemail])
 
         msg.html = """
             <html>
@@ -2282,8 +2299,13 @@ def dispute_claim(item_id):
         if not claimed_by:
             return jsonify({"error": "No claim found for this item ID"}), 404
 
+        email = session['email']
+
+        if email is None:
+            return jsonify({'error': 'User not logged in'}), 401
+
         # The user submitting the dispute
-        dispute_by = GLOBAL_USER_EMAIL
+        dispute_by = email
 
         # Get the form data
         reason = request.form.get('reason')
@@ -2539,6 +2561,10 @@ def submit_feedback():
     if not description:
         return jsonify({'error': 'Feedback description is required'}), 400
 
+    email = session['email']
+    if email is None:
+        return jsonify({'error': 'User must be logged in to submit feedback.'}), 401
+
     try:
         conn = sqlite3.connect(FEEDBACK_DB)
         cursor = conn.cursor()
@@ -2546,7 +2572,7 @@ def submit_feedback():
         # Insert feedback with the logged-in user's email
         cursor.execute('''
             INSERT INTO Feedback (Description, UserEmail) VALUES (?, ?)
-        ''', (description, GLOBAL_USER_EMAIL))
+        ''', (description, email))
 
         conn.commit()
         conn.close()
@@ -2570,6 +2596,10 @@ def get_user_feedback():
         - 200 OK: A list of feedback items for the logged-in user.
         - 500 Internal Server Error: If there is an error fetching the user feedback.
     """
+    email = session['email']
+    if email is None:
+        return jsonify({'error': 'User must be logged in to fetch feedback.'}), 401
+
     try:
         conn = sqlite3.connect(FEEDBACK_DB)
         cursor = conn.cursor()
@@ -2577,7 +2607,7 @@ def get_user_feedback():
         # Retrieve feedback for the logged-in user
         cursor.execute('''
             SELECT FeedbackID, Description, SubmittedAt FROM Feedback WHERE UserEmail = ?
-        ''', (GLOBAL_USER_EMAIL,))
+        ''', (email,))
 
         feedback_list = cursor.fetchall()
         conn.close()
