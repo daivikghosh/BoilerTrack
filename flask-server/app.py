@@ -816,7 +816,8 @@ def get_keywords():
         logos_sorted_by_desc = get_sorted_descriptions_or_logos(logos)
         string_logos = ', '.join(logos_sorted_by_desc)
 
-        return jsonify({'keywords': keywords_sorted_by_desc, 'logos': logos}), 200
+        os.remove(os.path.join(UPLOAD_FOLDER, file.filename))
+        return jsonify({'keywords': string_keywords, 'logos': string_logos}), 200
 
     except IOError:
         app.logger.error("keyword-gen: File saving failed due to IOError")
