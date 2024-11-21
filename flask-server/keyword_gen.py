@@ -65,9 +65,23 @@ def detect_labels(path: str):
 
 
 def image_keywords(image_path: str = None, want_keywords: bool = True, want_logo: bool = True):
-    """This function takes an image path, validates it, and returns a list of keywords
-     returns a tuple with a list of keywords, a logo, and 0 if successful, 1 if cached, and 2 if there was an error
-      """
+    """
+    This function takes an image path, validates it, and returns a tuple containing:
+    - A list of keywords (if requested)
+    - A list of logos (if requested)
+    - An integer indicating the status of the operation:
+        - 0 if the keywords and logos were generated successfully and not cached
+        - 1 if the keywords and logos were retrieved from the cache
+        - 2 if there was an error during the process
+
+    Parameters:
+    - image_path (str): The path to the image file. If None, the function will raise an error.
+    - want_keywords (bool): If True, the function will attempt to detect and return keywords from the image.
+    - want_logo (bool): If True, the function will attempt to detect and return logos from the image.
+
+    Returns:
+    - tuple: A tuple containing the list of keywords, list of logos, and the status code.
+    """
     # print("path: " + image_path)
     # validate the file exists
     if os.path.exists(image_path):
@@ -118,6 +132,23 @@ def image_keywords(image_path: str = None, want_keywords: bool = True, want_logo
 
 
 def parse_keywords(raw: str) -> List[Dict[str, float]]:
+    """
+    Parse a raw string containing keyword entries into a list of dictionaries.
+
+    Each entry in the raw string is expected to be a keyword with a description and a score, 
+    formatted as follows:
+    - description: "some description"
+    - score: some_score
+
+    The entries are separated by ', ' and the description and score are separated by newline characters.
+
+    Args:
+        raw (str): A string containing the raw keyword entries.
+
+    Returns:
+        List[Dict[str, float]]: A list of dictionaries, where each dictionary contains a 'description'
+                                and a 'score' key with corresponding values.
+    """
     # Split the raw string by ', ' to separate each keyword entry
     entries = raw.split(', ')
     keywords = []
@@ -141,14 +172,21 @@ def parse_keywords(raw: str) -> List[Dict[str, float]]:
     return keywords
 
 
-def get_sorted_descriptions(keywords: List[Dict[str, float]]) -> List[str]:
-    # Sort the keywords by score in descending order and extract descriptions
-    sorted_keywords = sorted(keywords, key=lambda x: x['score'], reverse=True)
-    descriptions = [keyword['description'] for keyword in sorted_keywords]
-    return descriptions
-
-
 def parse_logos(raw: str) -> List[Dict[str, float]]:
+    """
+    Parses a raw string containing logo descriptions and their scores, and returns a list of dictionaries.
+
+    Each entry in the raw string is expected to be separated by '} }'. Within each entry, the description and score
+    are extracted using regular expressions. The function assumes that each entry has a 'description:' and a 'score:'
+    line.
+
+    Parameters:
+    raw (str): A raw string containing logo descriptions and their scores.
+
+    Returns:
+    List[Dict[str, float]]: A list of dictionaries where each dictionary contains a 'description' key with a string value
+                            and a 'score' key with a float value.
+    """
     # Split the raw string by '} }' to separate each logo entry
     entries = raw.split('} }')
     logos = []
@@ -172,10 +210,20 @@ def parse_logos(raw: str) -> List[Dict[str, float]]:
     return logos
 
 
-def get_sorted_logos(logos: List[Dict[str, float]]) -> List[str]:
-    # Sort the logos by score in descending order and extract descriptions
-    sorted_logos = sorted(logos, key=lambda x: x['score'], reverse=True)
-    descriptions = [logo['description'] for logo in sorted_logos]
+def get_sorted_descriptions_or_logos(items: List[Dict[str, float]]) -> List[str]:
+    """
+    Sorts a list of items by their 'score' in descending order and returns a list of their 'description'.
+
+    Parameters:
+    items (List[Dict[str, float]]): A list of dictionaries, where each dictionary contains at least a 'score' key
+                                    and a 'description' key with corresponding float and string values, respectively.
+
+    Returns:
+    List[str]: A list of descriptions sorted by the corresponding scores in descending order.
+    """
+    # Sort the items by score in descending order and extract descriptions
+    sorted_items = sorted(items, key=lambda x: x['score'], reverse=True)
+    descriptions = [item['description'] for item in sorted_items]
     return descriptions
 
 

@@ -24,7 +24,7 @@ from PreregistedItemsdb import insert_preregistered_item
 from database_cleaner import delete_deleted_items
 from AddFoundItemPic import insertItem
 from AddClaimRequest import insertclaim
-from keyword_gen import image_keywords, parse_keywords, get_sorted_descriptions, get_sorted_logos, parse_logos
+from keyword_gen import image_keywords, parse_keywords, get_sorted_descriptions_or_logos, parse_logos
 
 
 app = Flask(__name__)
@@ -809,14 +809,12 @@ def get_keywords():
             os.path.join(UPLOAD_FOLDER, file.filename))
 
         keywords = parse_keywords(keywords_raw)
-        keywords_sorted_by_desc = get_sorted_descriptions(keywords)
+        keywords_sorted_by_desc = get_sorted_descriptions_or_logos(keywords)
         string_keywords = ', '.join(keywords_sorted_by_desc)
-        print(string_keywords)
 
         logos = parse_logos(logos_raw)
-        logos_sorted_by_desc = get_sorted_logos(logos)
+        logos_sorted_by_desc = get_sorted_descriptions_or_logos(logos)
         string_logos = ', '.join(logos_sorted_by_desc)
-        print(string_logos)
 
         return jsonify({'keywords': keywords_sorted_by_desc, 'logos': logos}), 200
 
