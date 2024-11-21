@@ -40,6 +40,7 @@ import MapView from "./components/MapView/MapView.js";
 import FeedbackForm from "./components/FeedbackForm/FeedbackForm.js";
 import AllFeedback from "./components/FeedbackForm/AllFeedback.js";
 import UserFeedback from "./components/FeedbackForm/UserFeedback.js";
+import UnclaimedItemTemplate from "./components/UnclaimedItemTemplate/UnclaimedItemTemplate.js";
 import PreRegItemForm from "./components/PreRegItemForm/PreRegItemForm.js";
 import ListViewItemHistory from "./components/ViewAllHistoryStaff/ViewAllHistoryStaff.js";
 import TimelineView from "./components/ViewAllHistoryStaff/HistoryViewStaff.js";
@@ -133,6 +134,10 @@ const App = () => {
         <Route path="/AllFeedback" element={<AllFeedback />} />
         {/* QR Code Instructions */}
         <Route path="/qr-code-instructions" element={<QRCodeInstructions />} />
+        <Route
+          path="/unclaimed-item-template"
+          element={<UnclaimedItemTemplate />}
+        />
         {/* Pre-registered item form */}
         <Route path="/add-registered-item" element={<PreRegItemForm />} />
       </Routes>

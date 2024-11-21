@@ -137,6 +137,7 @@ function AllItemsPage() {
   useEffect(() => {
     let nonPinnedItems = items.filter(
       (item) => !pinnedItems.includes(item.ItemID),
+      (item) => !pinnedItems.includes(item.ItemID),
     );
     let pinned = items.filter((item) => pinnedItems.includes(item.ItemID));
 
@@ -179,7 +180,6 @@ function AllItemsPage() {
 
       nonPinnedItems = nonPinnedItems.filter((item) => {
         const itemDate = new Date(item.DateFound);
-        console.log("itemDate", itemDate, "oneWeekAgo", oneWeekAgo);
         return itemDate < oneWeekAgo;
       });
     }
@@ -232,21 +232,28 @@ function AllItemsPage() {
           className="search-bar"
         />
       </div>
-      <Link to="/StaffInputForm" className="add-item-button">
-        Add New Item
-      </Link>
 
-      <Link to="/all-request-staff" className="claim-request-view-button">
-        All Claim Requests
-      </Link>
+      <div className="button-container">
+        <Link to="/StaffInputForm" className="page-button">
+          Add New Item
+        </Link>
 
-      <Link to="/processed-claims" className="processed-claims-button">
-        View Processed Claims
-      </Link>
+        <Link to="/all-request-staff" className="page-button">
+          All Claim Requests
+        </Link>
 
-      <Link to="/AllFeedback" className="feedback-button-test">
-        View Feedback
-      </Link>
+        <Link to="/processed-claims" className="page-button">
+          View Processed Claims
+        </Link>
+
+        <Link to="/AllFeedback" className="page-button">
+          View Feedback
+        </Link>
+
+        <Link to="/unclaimed-item-template" className="page-button">
+          Share to Instagram
+        </Link>
+      </div>
 
       <div className="main-content">
         <FilterPane onFilterChange={handleFilterChange} />
@@ -255,15 +262,13 @@ function AllItemsPage() {
           {filteredItems.length > 0 ? (
             filteredItems.map((item) => (
               <div key={item.ItemID} className="item-card">
-                <img
-                  src={`data:image/jpeg;base64,${item.ImageURL}`}
-                  alt={item.ItemName}
-                  className="item-image"
-                />
-                <h3>{item.ItemName}</h3>
-                <p>{item.Description}</p>
-                <h3> Item Status: </h3>
-                <p>{getItemStatus(item.ItemStatus)}</p>
+                <div
+                  className={`item-status-badge ${
+                    item.ItemStatus === 1 ? "unclaimed" : "claimed"
+                  }`}
+                >
+                  {item.ItemStatus === 1 ? "Unclaimed" : "Claimed"}
+                </div>
                 <button
                   className={`pin-button ${
                     pinnedItems.includes(item.ItemID) ? "pinned" : ""
@@ -272,12 +277,25 @@ function AllItemsPage() {
                 >
                   {pinnedItems.includes(item.ItemID) ? "Unpin" : "Pin"}
                 </button>
-                <Link to={`/item/${item.ItemID}`}>
-                  <button className="view-button">View</button>
-                </Link>
-                <Link to={`/modify-item/${item.ItemID}`}>
-                  <button className="modify-button">Modify</button>
-                </Link>
+                <img
+                  src={`data:image/jpeg;base64,${item.ImageURL}`}
+                  alt={item.ItemName}
+                  className="item-image"
+                />
+                <h3>{item.ItemName}</h3>
+                <p>{item.Description}</p>
+                <div className="keywords-container">
+                  <span className="keyword">Tag1</span>
+                  <span className="keyword">Tag2</span>
+                </div>
+                <div className="buttons-container">
+                  <Link to={`/item/${item.ItemID}`}>
+                    <button className="button view-button">View</button>
+                  </Link>
+                  <Link to={`/modify-item/${item.ItemID}`}>
+                    <button className="button modify-button">Modify</button>
+                  </Link>
+                </div>
               </div>
             ))
           ) : (

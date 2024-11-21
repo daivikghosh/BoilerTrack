@@ -1,62 +1,89 @@
+@import "../../styles/colors.css";
+
 .form-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: #f5f5f5;
-    padding: 2rem;
-  }
-  
-  .form-container h1 {
-    font-size: 24px;
-    margin-bottom: 1.5rem;
-    font-weight: 600;
-    text-align: center;
-  }
-  
-  .form-input {
-    width: 100%;
-    max-width: 500px;
-    margin-bottom: 1.5rem;
-  }
-  
-  .form-input label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-  }
-  
-  .form-input textarea {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-    background-color: #f9f9f9;
-    font-size: 1rem;
-    box-sizing: border-box;
-    resize: vertical;
-  }
-  
-  .error-text {
-    color: red;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-  }
-  
-  .submit-button {
-    width: 100%;
-    max-width: 500px;
-    padding: 0.8rem;
-    background-color: #555555;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 1.125rem;
-    cursor: pointer;
-  }
-  
-  .submit-button:hover {
-    background-color: #333;
-  }
-  
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--secondary-light-gray);
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 900px; /* Increased max-width for a wider form */
+  background-color: var(--accent-white);
+  padding: 3rem; /* Added more padding for spacing */
+  border-radius: 12px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+h1 {
+  font-size: 32px; /* Larger font size for better readability */
+  margin-bottom: 2rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--primary-black);
+}
+
+.form-input {
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.form-input label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 1.2rem; /* Increased label size */
+  color: var(--primary-black);
+}
+
+.form-input textarea {
+  width: 100%;
+  height: 150px; /* Increased height for better usability */
+  padding: 1rem; /* Added padding for comfort */
+  border-radius: 8px;
+  border: 1px solid var(--secondary-gray);
+  background-color: var(--secondary-light-gray);
+  font-size: 1.1rem;
+  box-sizing: border-box;
+  resize: vertical;
+  color: var(--primary-black);
+}
+
+.form-input textarea::placeholder {
+  color: var(--secondary-dark-gray);
+}
+
+.error-text {
+  color: var(--error-red);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.submit-button {
+  width: 100%;
+  max-width: 600px; /* Increased button width */
+  padding: 1rem;
+  background-color: var(--accent-blue);
+  color: var(--accent-white);
+  border: none;
+  border-radius: 10px;
+  font-size: 1.25rem;
+  font-weight: 600; /* Added bold text */
+  cursor: pointer;
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.submit-button:hover {
+  background-color: var(--primary-black);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}

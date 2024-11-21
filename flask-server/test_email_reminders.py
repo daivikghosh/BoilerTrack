@@ -1,7 +1,6 @@
 import unittest
-from unittest.mock import Mock, patch
-
-from app import create_connection_users, send_mail, send_reminders
+from unittest.mock import patch, Mock
+from app import send_reminders, create_connection_users, send_mail
 
 
 class TestSendReminders(unittest.TestCase):
