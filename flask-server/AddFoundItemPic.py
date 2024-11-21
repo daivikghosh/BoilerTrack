@@ -1,7 +1,7 @@
 # File: flask-server/AddFoundItemPic.py
 
-import sqlite3
 import os
+import sqlite3
 
 # Get the absolute path to the Databases directory
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

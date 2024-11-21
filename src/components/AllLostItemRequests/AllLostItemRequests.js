@@ -27,8 +27,8 @@ const AllLostItemRequests = () => {
       await axios.put(`/toggle-status/${itemId}`, { status: newStatus });
       setLostItems((prevItems) =>
         prevItems.map((item) =>
-          item.ItemID === itemId ? { ...item, status: newStatus } : item
-        )
+          item.ItemID === itemId ? { ...item, status: newStatus } : item,
+        ),
       );
       alert(`Status changed to "${newStatus}".`);
     } catch (error) {

@@ -17,7 +17,9 @@ const ItemView = () => {
   const fetchUserProfile = async () => {
     const userEmail = localStorage.getItem("userEmail");
     if (userEmail) {
-      const response = await axios.get(`http://localhost:5000/profile?email=${userEmail}`);
+      const response = await axios.get(
+        `http://localhost:5000/profile?email=${userEmail}`,
+      );
       setUser(response.data);
     }
   };
@@ -35,13 +37,12 @@ const ItemView = () => {
   };
 
   //const fetchUserProfile = async () => {
-    //const userEmail = localStorage.getItem("userEmail");
-    //if (userEmail) {
-      //const response = await axios.get(`http://localhost:5000/profile?email=${userEmail}`);
-      //setUser(response.data);
-    //}
+  //const userEmail = localStorage.getItem("userEmail");
+  //if (userEmail) {
+  //const response = await axios.get(`http://localhost:5000/profile?email=${userEmail}`);
+  //setUser(response.data);
+  //}
   //};
-
 
   useEffect(() => {
     fetchUserProfile();

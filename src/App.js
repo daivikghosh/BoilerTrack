@@ -31,7 +31,7 @@ import ModifyClaimForm from "./components/ClaimForm/ModifyClaimForm.js";
 import TokenResetForm from "./components/TokenResetForm/TokenResetForm.js";
 import PrintItem from "./components/ItemView/PrintItem.js";
 import BulkUpload from "./components/StaffInputForm/BulkUpload.js";
-import LayoutBar from "./components/LayoutBar/LayoutBar.js"
+import LayoutBar from "./components/LayoutBar/LayoutBar.js";
 import StudentAnalyticsPage from "./pages/StudentAnalyticsPage";
 import StaffAnalyticsPage from "./pages/StaffAnalyticsPage";
 import LostItemRequestsStaffView from "./components/LostItemRequestsStaffView/LostItemRequestsStaffView.js";
@@ -40,6 +40,10 @@ import MapView from "./components/MapView/MapView.js";
 import FeedbackForm from "./components/FeedbackForm/FeedbackForm.js";
 import AllFeedback from "./components/FeedbackForm/AllFeedback.js";
 import UserFeedback from "./components/FeedbackForm/UserFeedback.js";
+import PreRegItemForm from "./components/PreRegItemForm/PreRegItemForm.js";
+import ListViewItemHistory from "./components/ViewAllHistoryStaff/ViewAllHistoryStaff.js";
+import TimelineView from "./components/ViewAllHistoryStaff/HistoryViewStaff.js";
+
 
 const App = () => {
   return (
@@ -78,6 +82,11 @@ const App = () => {
         <Route path="/notifications" element={<NotificationTab />} />
         <Route path="/report-lost-item" element={<LostItemForm />} />
         <Route path="/Preregistered-items" element={<ViewPreRegItems />} />
+        <Route path="/allitemhistory-staff" element={<ListViewItemHistory />} />
+        <Route
+          path="/individual-itemhistory-staff/:itemId"
+          element={<TimelineView />}
+        />
         <Route
           path="/all-lost-item-requests"
           element={<AllLostItemRequests />}
@@ -113,19 +122,19 @@ const App = () => {
         <Route path="/token-reset" element={<TokenResetForm />} />
         <Route path="/print-item/:id" element={<PrintItem />} />{" "}
         <Route path="/bulk" element={<BulkUpload />} />{" "}
-
         {/* Analytics page route */}
         <Route path="/student-analytics" element={<StudentAnalyticsPage />} />
         <Route path="/staff-analytics" element={<StaffAnalyticsPage />} />
-
         {/* Staff Authentication */}
-        <Route path="/staff-auth" element={<StaffLoginSignUpPage />} /> 
+        <Route path="/staff-auth" element={<StaffLoginSignUpPage />} />
         <Route path="/map-view" element={<MapView />} />
         <Route path="/FeedbackForm" element={<FeedbackForm />} />
         <Route path="/UserFeedback" element={<UserFeedback />} />
         <Route path="/AllFeedback" element={<AllFeedback />} />
         {/* QR Code Instructions */}
         <Route path="/qr-code-instructions" element={<QRCodeInstructions />} />
+        {/* Pre-registered item form */}
+        <Route path="/add-registered-item" element={<PreRegItemForm />} />
       </Routes>
     </Router>
   );

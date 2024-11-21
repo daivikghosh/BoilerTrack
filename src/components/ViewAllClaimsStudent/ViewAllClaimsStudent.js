@@ -14,7 +14,9 @@ const ListViewClaimRequestsStudent = () => {
     const fetchClaimRequests = async () => {
       try {
         // Fetch claim requests from the backend API
-        const claimResponse = await axios.get(`/allclaim-requests-student/${emailId}`);
+        const claimResponse = await axios.get(
+          `/allclaim-requests-student/${emailId}`,
+        );
         const claimRequests = claimResponse.data;
 
         setClaimRequests(claimRequests);

@@ -54,7 +54,7 @@ const ModifyClaimForm = () => {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
       alert("Claim modified successfully!");
       navigate("/all-items");

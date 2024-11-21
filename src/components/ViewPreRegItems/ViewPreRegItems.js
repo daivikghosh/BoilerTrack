@@ -26,6 +26,27 @@ const ViewPreRegItems = () => {
     fetchPreRegItems();
   }, []);
 
+  const deleteItem = async (itemId) => {
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
+
+    try {
+      await axios.post(
+        "/delete-pre-reg-item",
+        { itemId },
+        { headers: { "Content-Type": "application/json" } }
+      );
+      alert("Item deleted successfully!");
+      // if error
+
+
+      // Update the UI by filtering out the deleted item
+      setPreRegItems(preRegItems.filter((item) => item.pre_reg_item_id !== itemId));
+    } catch (err) {
+      console.error("Error deleting item:", err);
+      alert("Failed to delete item. Please try again later.");
+    }
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -36,13 +57,17 @@ const ViewPreRegItems = () => {
 
   return (
     <div>
-      {/* Button to go to instructions page */}
+      {/* Header buttons */}
       <div className="header">
+        <Link to="/add-registered-item" className="add-item-button">
+          Add Registered Item
+        </Link>
         <Link to="/qr-code-instructions" className="instructions-button">
           How to Print QR Code
         </Link>
       </div>
 
+      {/* Pre-registered items list */}
       <div className="pre-reg-items-container">
         {preRegItems.length > 0 ? (
           preRegItems.map((item) => (
@@ -81,8 +106,16 @@ const ViewPreRegItems = () => {
                 >
                   Download QR Code
                 </a>
-              </div>
+              
+              <button
+                className="delete-button"
+                onClick={() => deleteItem(item.pre_reg_item_id)}
+              >
+                Delete Item
+              </button>
             </div>
+            </div>
+
           ))
         ) : (
           <p>No pre-registered items found.</p>

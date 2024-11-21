@@ -4,7 +4,8 @@ It tests the successful password reset, user not found, incorrect password,
 and missing email scenarios.
 """
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 import pytest
 from app import app
 

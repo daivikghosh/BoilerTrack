@@ -32,7 +32,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
         // Handle successful password reset request
         if (data.success) {
           setError(
-            "success! if your account exists, we have sent you an email with a token to reset your password"
+            "success! if your account exists, we have sent you an email with a token to reset your password",
           );
         } else {
           setError("An error occurred while processing your request.");

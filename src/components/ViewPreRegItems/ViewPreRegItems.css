@@ -21,6 +21,27 @@
     text-align: center;
   }
   
+  .qr-code-details {
+    text-align: center;
+  }
+  
+  .download-button {
+    display: inline-block;
+    margin-top: 8px; /* Add some space between the QR code and the button */
+    padding: 8px 12px;
+    background-color: #000000;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .download-button:hover {
+    background-color: #00000F;
+  }
+  
+
   .item-image {
     width: 150px;
     height: 150px;
@@ -30,12 +51,15 @@
   }
   
   .qr-code-details {
-    margin-top: 20px;
+    text-align: center; /* Center content within this div */
+    margin-top: 16px; /* Add space if needed */
   }
   
   .qr-code-image {
-    width: 100px;
-    height: 100px;
+    display: inline-block; /* Ensures it centers properly */
+    width: 150px; /* Adjust width as needed */
+    height: auto;
+    margin: 10px 0; /* Optional margin for spacing */
   }
   
   h3 {
@@ -57,3 +81,42 @@
     font-size: 18px;
   }
   
+.header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px; /* Space between buttons */
+  padding: 10px;
+}
+
+.add-item-button,
+.instructions-button {
+  background-color: #001340;
+  color: white;
+  padding: 8px 12px;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.add-item-button:hover,
+.instructions-button:hover {
+  background-color: #000000;
+}
+
+.delete-button {
+  display: inline-block;
+    margin-top: 8px; /* Add some space between the QR code and the button */
+    padding: 8px 12px;
+    background-color: #ff4d4f;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 55%;
+}
+
+.delete-button:hover {
+  background-color: #d9363e;
+}
+

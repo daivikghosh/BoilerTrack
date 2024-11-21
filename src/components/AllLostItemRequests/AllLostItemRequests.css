@@ -76,7 +76,7 @@ h2 {
 
 /* Specific color for View Matched Item button */
 .lost-item-details .view-matched-item-button {
-  background-color: var(--success-green);
+  background-color: #4caf50;
 }
 
 /* Hover effects for buttons */
