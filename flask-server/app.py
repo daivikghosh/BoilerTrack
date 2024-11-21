@@ -2,6 +2,7 @@
 Main file for the boilertrack backend
 """
 import logging
+import requests
 import os
 import sqlite3
 import base64
@@ -260,6 +261,25 @@ def get_item_by_id(item_id):
     conn.close()
     return item
 
+def gen_qr_code(itemID, userEmail):
+    # API URL
+    url = "https://api.qrserver.com/v1/create-qr-code/"
+    params = {
+        "size": "200x200",
+        "data": f"itemID={itemID}&userEmail={userEmail}"
+    }
+
+    # Send GET request
+    response = requests.get(url, params=params)
+
+    # Save the QR code image
+    if response.status_code == 200:
+        with open(f"uploads/qr_code_{itemID}.png", "wb") as file:
+            file.write(response.content)
+        print(f"QR Code saved as qr_code_{itemID}.png")
+    else:
+        print("Error:", response.status_code)
+
 
 # Do not put app routes above this line
 # _______________________________________________________________________________
@@ -330,7 +350,8 @@ def preregister_new_item():
             return jsonify({"error": "Missing required fields"}), 400
 
         # Set default QR code path
-        qr_code_path = 'uploads/care.png'
+        
+        qr_code_path = None
 
         # Process uploaded photo
         photo = request.files.get('image')
