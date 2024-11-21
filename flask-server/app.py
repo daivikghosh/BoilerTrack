@@ -402,7 +402,31 @@ def fetch_all_items():
     ]
     return jsonify(items_dict)
 
+@app.route('/delete-pre-reg-item', methods=['POST'])
+def delete_pre_reg_item():
+    try:
+        # Parse the JSON body
+        data = request.get_json()
+        app.logger.info(f"Received data: {data}")
 
+        # Validate itemId
+        item_id = data.get('itemId')
+        if not item_id:
+            return jsonify({"error": "Item ID is required"}), 400
+
+        # Perform database operation
+        conn = sqlite3.connect(PREREG_DB)
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM PREREGISTERED WHERE pre_reg_item_id = ?', (item_id,))
+        conn.commit()
+        conn.close()
+
+        return jsonify({"message": "Item deleted successfully"}), 200
+    except Exception as e:
+        app.logger.error(f"Error deleting item: {e}")
+        return jsonify({"error": str(e)}), 500
+
+    
 @ app.route('/pre-registered-items', methods=['GET'])
 def get_pre_registered_items():
     """
