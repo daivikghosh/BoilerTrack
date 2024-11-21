@@ -41,6 +41,9 @@ import FeedbackForm from "./components/FeedbackForm/FeedbackForm.js";
 import AllFeedback from "./components/FeedbackForm/AllFeedback.js";
 import UserFeedback from "./components/FeedbackForm/UserFeedback.js";
 import PreRegItemForm from "./components/PreRegItemForm/PreRegItemForm.js";
+import ListViewItemHistory from "./components/ViewAllHistoryStaff/ViewAllHistoryStaff.js";
+import TimelineView from "./components/ViewAllHistoryStaff/HistoryViewStaff.js";
+
 
 const App = () => {
   return (
@@ -79,6 +82,11 @@ const App = () => {
         <Route path="/notifications" element={<NotificationTab />} />
         <Route path="/report-lost-item" element={<LostItemForm />} />
         <Route path="/Preregistered-items" element={<ViewPreRegItems />} />
+        <Route path="/allitemhistory-staff" element={<ListViewItemHistory />} />
+        <Route
+          path="/individual-itemhistory-staff/:itemId"
+          element={<TimelineView />}
+        />
         <Route
           path="/all-lost-item-requests"
           element={<AllLostItemRequests />}
