@@ -248,6 +248,10 @@ function AllItemsPage() {
         <Link to="/AllFeedback" className="page-button">
           View Feedback
         </Link>
+
+        <Link to="/unclaimed-item-template" className="page-button">
+          Share to Instagram
+        </Link>
       </div>
 
       <div className="main-content">

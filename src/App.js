@@ -44,6 +44,7 @@ import PreRegItemForm from "./components/PreRegItemForm/PreRegItemForm.js";
 import ListViewItemHistory from "./components/ViewAllHistoryStaff/ViewAllHistoryStaff.js";
 import TimelineView from "./components/ViewAllHistoryStaff/HistoryViewStaff.js";
 
+import UnclaimedItemTemplate from "./components/UnclaimedItemTemplate/UnclaimedItemTemplate.js";
 
 const App = () => {
   return (
@@ -135,6 +136,10 @@ const App = () => {
         <Route path="/qr-code-instructions" element={<QRCodeInstructions />} />
         {/* Pre-registered item form */}
         <Route path="/add-registered-item" element={<PreRegItemForm />} />
+        <Route
+          path="/unclaimed-item-template"
+          element={<UnclaimedItemTemplate />}
+        />
       </Routes>
     </Router>
   );
