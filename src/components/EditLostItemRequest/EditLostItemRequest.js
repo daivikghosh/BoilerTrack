@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import "./EditLostItemRequest.css"
+import "./EditLostItemRequest.css";
 
 function EditLostItemRequest() {
   const { itemId } = useParams(); // Get the item ID from the route params
@@ -10,7 +10,7 @@ function EditLostItemRequest() {
     itemName: "",
     description: "",
     dateLost: "",
-    locationLost: ""
+    locationLost: "",
   });
   const navigate = useNavigate();
 
@@ -24,13 +24,13 @@ function EditLostItemRequest() {
           itemName: response.data.ItemName,
           description: response.data.Description,
           dateLost: response.data.DateLost,
-          locationLost: response.data.LocationLost
+          locationLost: response.data.LocationLost,
         });
       } catch (error) {
         console.error("Error fetching item data", error);
       }
     };
-  
+
     fetchItem();
   }, [itemId]);
 
@@ -38,7 +38,7 @@ function EditLostItemRequest() {
     const { name, value } = e.target;
     setUpdatedItem((prevState) => ({
       ...prevState,
-      [name]: value
+      [name]: value,
     }));
   };
 

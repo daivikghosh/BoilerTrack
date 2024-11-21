@@ -74,6 +74,9 @@ h2 {
   transition:
     background-color 0.3s ease,
     box-shadow 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 /* Specific color for View Matched Item button */

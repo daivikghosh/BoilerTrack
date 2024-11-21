@@ -25,7 +25,7 @@ function FeedbackForm() {
         { description },
         {
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
 
       alert("Feedback submitted successfully!");

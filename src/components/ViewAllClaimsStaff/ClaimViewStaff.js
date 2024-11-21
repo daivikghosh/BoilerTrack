@@ -15,7 +15,7 @@ const IndividualClaimView = () => {
     const fetchClaimDetails = async () => {
       try {
         const response = await axios.get(
-          `/individual-request-staff/${claimId}`
+          `/individual-request-staff/${claimId}`,
         );
         setClaim(response.data);
         setLoading(false);
@@ -69,7 +69,7 @@ const IndividualClaimView = () => {
     try {
       // Make an API call to approve the claim request
       await axios.post(
-        `/individual-request-staff/${claimId}/request-more-info`
+        `/individual-request-staff/${claimId}/request-more-info`,
       );
       alert("Claim rejected with info request successfully!");
       navigate("/all-request-staff"); // Navigate back to the claim list

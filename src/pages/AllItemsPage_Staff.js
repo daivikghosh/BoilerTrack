@@ -137,6 +137,7 @@ function AllItemsPage() {
   useEffect(() => {
     let nonPinnedItems = items.filter(
       (item) => !pinnedItems.includes(item.ItemID),
+      (item) => !pinnedItems.includes(item.ItemID),
     );
     let pinned = items.filter((item) => pinnedItems.includes(item.ItemID));
 
@@ -146,6 +147,14 @@ function AllItemsPage() {
         filter.categories.some((category) =>
           item.ItemName.toLowerCase().includes(category.toLowerCase()),
         ),
+      );
+    }
+
+    // Location + Status toggle
+    if (filter.locationstatusToggle) {
+      nonPinnedItems = nonPinnedItems.filter(
+        (item) =>
+          item.LocationTurnedIn.toLowerCase() === staffLocation.toLowerCase(),
       );
     }
 

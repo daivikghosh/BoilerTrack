@@ -18,7 +18,9 @@ const ViewPreRegItems = () => {
         setLoading(false);
       } catch (err) {
         console.error("Error fetching pre-registered items:", err);
-        setError("Failed to load pre-registered items. Please try again later.");
+        setError(
+          "Failed to load pre-registered items. Please try again later.",
+        );
         setLoading(false);
       }
     };
@@ -36,13 +38,17 @@ const ViewPreRegItems = () => {
 
   return (
     <div>
-      {/* Button to go to instructions page */}
+      {/* Header buttons */}
       <div className="header">
+        <Link to="/add-registered-item" className="add-item-button">
+          Add Registered Item
+        </Link>
         <Link to="/qr-code-instructions" className="instructions-button">
           How to Print QR Code
         </Link>
       </div>
 
+      {/* Pre-registered items list */}
       <div className="pre-reg-items-container">
         {preRegItems.length > 0 ? (
           preRegItems.map((item) => (

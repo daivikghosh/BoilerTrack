@@ -1,30 +1,29 @@
 """
 Main file for the boilertrack backend
 """
+import base64
+import difflib
 import logging
+import requests
 import os
 import sqlite3
-import base64
 import time
-import difflib
 from datetime import datetime
 from timeit import default_timer as timer
 from uuid import uuid4
 
-
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from flask_mail import Mail, Message
-from werkzeug.utils import secure_filename
-
+from AddClaimRequest import insertclaim
+from AddFoundItemPic import insertItem
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from PreregistedItemsdb import insert_preregistered_item
-
 from database_cleaner import delete_deleted_items
-from AddFoundItemPic import insertItem
-from AddClaimRequest import insertclaim
-
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from flask_mail import Mail, Message
+from keyword_gen import (get_sorted_descriptions_or_logos, image_keywords,
+                         parse_keywords, parse_logos)
+from PreregistedItemsdb import insert_preregistered_item
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -32,7 +31,7 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 logging.basicConfig(level=logging.DEBUG)
 
 UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -43,16 +42,16 @@ GLOBAL_USER_EMAIL = ""
 
 # Get the absolute path to the Databases directory
 base_dir = os.path.dirname(os.path.abspath(__file__))
-db_dir = os.path.join(os.path.dirname(base_dir),
-                      'databases')
+db_dir = os.path.join(os.path.dirname(base_dir), 'databases')
 ITEMS_DB = os.path.join(db_dir, 'ItemListings.db')
 USERS_DB = os.path.join(db_dir, 'Accounts.db')
 CLAIMS_DB = os.path.join(db_dir, 'ClaimRequest.db')
 PREREG_DB = os.path.join(db_dir, 'ItemListings.db')
 PROCESSED_CLAIMS_DB = os.path.join(db_dir, 'ProcessedClaims.db')
-DISPUTES_DB = os.path.join(os.path.dirname(
-    base_dir), 'Databases', 'ItemListings.db')
-FEEDBACK_DB = os.path.join(os.path.dirname(base_dir), 'Databases', 'feedback.db')
+DISPUTES_DB = os.path.join(db_dir, 'ItemListings.db')
+FEEDBACK_DB = os.path.join(db_dir, 'feedback.db')
+KEYWORD_CACHE = os.path.join(db_dir, 'keyword-gen-cache.db')
+LOST_ITEMS_DB = os.path.join(db_dir, 'LostItemRequest.db')
 
 # trying error of no image avail
 DEFAULT_IMAGE_PATH = 'uploads/TestImage.png'
@@ -161,12 +160,84 @@ def clear_deleted_entries():
     app.logger.info("Clearing deleted items took %.2f seconds", (end - start))
 
 
+def send_mail(message_pairs: list[tuple[str, str]], subject: str):
+    """
+    Sends emails to users if they are in the database.
+
+    Args:
+        message_pairs (list[tuple[str, str]]): A list of tuples where each tuple contains a recipient email and the corresponding message to send.
+        subject (str): The subject of the email.
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
+    num_send = len(message_pairs)
+
+    with app.app_context():
+        app.logger.info("Sending %d emails to users at %s",
+                        num_send, time.strftime('%Y-%m-%d %H:%M:%S'))
+
+        i = 1
+
+        for recipient, message in message_pairs:
+
+            try:
+                msg = Message(subject=subject,
+                              sender=app.config['MAIL_USERNAME'],
+                              recipients=[recipient])
+                msg.html = message
+                mail.send(msg)
+                app.logger.info('Sent %d of %d emails', i, num_send)
+                i += 1
+            except Exception as e:
+                app.logger.error("Failed to send email to %s: %s",
+                                 recipient, str(e))
+            # sleep for potential rate limit reasons
+            time.sleep(10)
+
+
+def send_reminders():
+    """
+    Sends reminser email to staff that don't disable it to transfer items to the central lost and found
+    """
+    # get all users who have not disabled reminders
+    conn = create_connection_users()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT * FROM UserListing WHERE isStaff=1 AND wantsReminders=1 AND isDeleted=0")
+    rows = cur.fetchall()
+    emails = [row[1] for row in rows]
+    names = [row[3].split()[0] for row in rows]
+    desks = [row[10].split()[0] if row != "NULL" else None for row in rows]
+
+    if len(emails) == 0:
+        app.logger.info("No staff with enabled reminders to send emails to")
+    subj = "BoilerTrack reminder: Please transfer items to the central lost and found"
+    mail_pairs: list[tuple[str, str]] = []
+    for _, (email, name, desk) in enumerate(zip(emails, names, desks)):
+        message: str = ""
+        if desk is not None:
+            message = f"Hello there, {name}!<br> <br > It's 5pm: you know what that means!<br> Since you are assigned to the help desk at {desk}, were are reminding you that it is time to transfer items to the central lost and found.<br><br>Best,<br>The BoilerTrack Team<br><br><span style='font-size: 0.6em'>To disable email reminders, TODO < /span >"
+        else:
+            message = f"Hello there, {name}!<br> <br > It's 5pm: you know what that means!<br> Time to transfer items to the central lost and found.<br><br>Best,<br>The BoilerTrack Team<br><br><span style='font-size: 0.6em'>To disable email reminders, TODO < /span >"
+        html_message = f"<html><body>{message}</body></html>"
+        mail_pairs.append((email, html_message))
+    send_mail(mail_pairs, subj)
+
+
 # initialize scheduler for deleted items clearing task
 scheduler = BackgroundScheduler()
-cron_trigger = CronTrigger(hour=0, minute=0)
 # Runs every sunday at midnight
+cron_trigger = CronTrigger(day_of_week="sun", hour=0, minute=0)
 scheduler.add_job(func=clear_deleted_entries, trigger=cron_trigger)
+# TODO uncomment when in prod
+# cron_trigger2 = CronTrigger(day_of_week="mon,wed,fri", hour=5, minute=0)
+# scheduler.add_job(func=send_reminders, trigger=cron_trigger2)
 scheduler.start()
+# currently times depend on the tz of the server, so we may need to change it if the docker is utc like mine
 
 
 def get_all_items():
@@ -188,6 +259,25 @@ def get_item_by_id(item_id):
     conn.close()
     return item
 
+def gen_qr_code(itemID, userEmail):
+    # API URL
+    url = "https://api.qrserver.com/v1/create-qr-code/"
+    params = {
+        "size": "200x200",
+        "data": f"itemID={itemID}&userEmail={userEmail}"
+    }
+
+    # Send GET request
+    response = requests.get(url, params=params)
+
+    # Save the QR code image
+    if response.status_code == 200:
+        with open(f"uploads/qr_code_{itemID}.png", "wb") as file:
+            file.write(response.content)
+        print(f"QR Code saved as qr_code_{itemID}.png")
+    else:
+        print("Error:", response.status_code)
+
 
 # Do not put app routes above this line
 # _______________________________________________________________________________
@@ -206,7 +296,7 @@ def home():
     return jsonify({"message": "Welcome to the Lost and Found API"}), 200
 
 
-@app.route('/preregister-item', methods=['POST'])
+@ app.route('/preregister-item', methods=['POST'])
 def preregister_item():
     try:
         # Get the form data from the request
@@ -216,6 +306,8 @@ def preregister_item():
         description = request.form.get('Description')
         date = request.form.get('Date')
         user_email = request.form.get('UserEmail')
+       
+      
 
         # Set default QR code path
         qr_code_path = 'uploads/care.png'
@@ -239,7 +331,108 @@ def preregister_item():
         app.logger.error(f"Error adding pre-registered item: {e}")
         return jsonify({"error": "Failed to add pre-registered item"}), 500
 
-@app.route("/found-items", methods=["GET"])
+
+# Pre-register new item
+@app.route('/preregister-new-item', methods=['POST'])
+def preregister_new_item():
+    try:
+        # Extract form data
+        item_name = request.form.get('itemName')
+        color = request.form.get('color')
+        brand = request.form.get('brand')
+        description = request.form.get('description')
+        date = datetime.today().strftime('%Y-%m-%d')  # Default date is today
+
+        # Validate required fields
+        if not all([item_name, color, description]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        # Set default QR code path
+        
+        qr_code_path = None
+
+        # Process uploaded photo
+        photo = request.files.get('image')
+    
+        if photo and photo.filename:
+            filename = secure_filename(photo.filename)
+            photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            photo.save(photo_path)
+            with open(photo_path, 'rb') as file:
+                photo_path = file.read()
+        else:
+            return jsonify({"error": "Photo upload required"}), 400
+
+        # Insert the item into the database
+        # Adjust or implement `insert_preregistered_item` according to your database schema
+        insert_preregistered_item(
+            item_name,
+            color,
+            brand,
+            description,
+            photo_path,
+            date,
+            qr_code_path,
+            GLOBAL_USER_EMAIL  # Use global user email as fallback
+        )
+
+        return jsonify({"message": "Pre-registered item added successfully"}), 201
+
+    except Exception as e:
+        app.logger.error(f"Error adding pre-registered item: {e}")
+        return jsonify({"error": "Failed to add pre-registered item"}), 500
+
+
+# Pre-register new item
+@app.route('/preregister-new-item', methods=['POST'])
+def preregister_new_item():
+    try:
+        # Extract form data
+        item_name = request.form.get('itemName')
+        color = request.form.get('color')
+        brand = request.form.get('brand')
+        description = request.form.get('description')
+        date = datetime.today().strftime('%Y-%m-%d')  # Default date is today
+
+        # Validate required fields
+        if not all([item_name, color, description]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        # Set default QR code path
+        qr_code_path = 'uploads/care.png'
+
+        # Process uploaded photo
+        photo = request.files.get('image')
+    
+        if photo and photo.filename:
+            filename = secure_filename(photo.filename)
+            photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            photo.save(photo_path)
+            with open(photo_path, 'rb') as file:
+                photo_path = file.read()
+        else:
+            return jsonify({"error": "Photo upload required"}), 400
+
+        # Insert the item into the database
+        # Adjust or implement `insert_preregistered_item` according to your database schema
+        insert_preregistered_item(
+            item_name,
+            color,
+            brand,
+            description,
+            photo_path,
+            date,
+            qr_code_path,
+            GLOBAL_USER_EMAIL  # Use global user email as fallback
+        )
+
+        return jsonify({"message": "Pre-registered item added successfully"}), 201
+
+    except Exception as e:
+        app.logger.error(f"Error adding pre-registered item: {e}")
+        return jsonify({"error": "Failed to add pre-registered item"}), 500
+
+@ app.route("/found-items", methods=["GET"])
 def fetch_all_items():
     items = get_all_items()
     # Convert the list of tuples into a list of dictionaries for JSON response
@@ -382,7 +575,7 @@ def add_lost_item_request():
         return jsonify({'error': 'Failed to add lost item request to the database'}), 500
 
 
-@app.route('/delete-lost-item/<int:item_id>', methods=['DELETE'])
+@ app.route('/delete-lost-item/<int:item_id>', methods=['DELETE'])
 def delete_lost_item(item_id):
     try:
         # Connect to the LostItemRequest.db database
@@ -516,9 +709,8 @@ def update_lost_item(item_id):
 
     try:
         # Connect to the LostItemRequest.db database
-        lost_item_db = os.path.join(os.path.dirname(
-            base_dir), 'databases', 'LostItemRequest.db')
-        conn = sqlite3.connect(lost_item_db)
+
+        conn = sqlite3.connect(LOST_ITEMS_DB)
         cursor = conn.cursor()
 
         # Update the item in the LostItems table based on the itemId
@@ -535,7 +727,8 @@ def update_lost_item(item_id):
     except sqlite3.Error as e:
         return jsonify({'error': f'Failed to update lost item request in the database: {str(e)}'}), 500
 
-@app.route('/toggle-status/<int:item_id>', methods=['PUT'])
+
+@ app.route('/toggle-status/<int:item_id>', methods=['PUT'])
 def toggle_status(item_id):
     data = request.get_json()
     new_status = data.get('status')
@@ -544,8 +737,8 @@ def toggle_status(item_id):
         return jsonify({'error': 'New status not provided'}), 400
 
     # Connect to LostItemRequest.db
-    lost_item_db = os.path.join(os.path.dirname(base_dir), 'databases', 'LostItemRequest.db')
-    conn = sqlite3.connect(lost_item_db)
+
+    conn = sqlite3.connect(LOST_ITEMS_DB)
     cursor = conn.cursor()
 
     try:
@@ -567,8 +760,7 @@ def toggle_status(item_id):
         conn.close()
 
 
-
-@app.route('/check-lost-item-request', methods=['POST'])
+@ app.route('/check-lost-item-request', methods=['POST'])
 def check_lost_item_request():
     data = request.get_json()
 
@@ -580,15 +772,14 @@ def check_lost_item_request():
     found_item_id = data.get('foundItemId')
 
     # Connect to LostItemRequest.db
-    lost_item_db = os.path.join(os.path.dirname(
-        base_dir), 'databases', 'LostItemRequest.db')
-    conn = sqlite3.connect(lost_item_db)
+
+    conn = sqlite3.connect(LOST_ITEMS_DB)
     cursor = conn.cursor()
 
     # Query to find potential matches in the LostItems table
     cursor.execute("""
-        SELECT ItemID, ItemName, Description, LocationLost 
-        FROM LostItems 
+        SELECT ItemID, ItemName, Description, LocationLost
+        FROM LostItems
         WHERE status = 'pending'
     """)
     potential_matches = cursor.fetchall()
@@ -626,16 +817,14 @@ def check_lost_item_request():
         return jsonify({'matchFound': False, 'message': 'No matching lost item request found.'}), 200
 
 
-@app.route('/update-item-match', methods=['PUT'])
+@ app.route('/update-item-match', methods=['PUT'])
 def update_item_match():
     data = request.get_json()
     matching_item_id = data.get('matchingItemId')
     found_item_id = data.get('foundItemId')
 
     # Connect to LostItemRequest.db
-    lost_item_db = os.path.join(os.path.dirname(
-        base_dir), 'databases', 'LostItemRequest.db')
-    conn = sqlite3.connect(lost_item_db)
+    conn = sqlite3.connect(LOST_ITEMS_DB)
     cursor = conn.cursor()
 
     # Update the ItemMatchID for the matched item
@@ -697,6 +886,64 @@ def add_item():
 
     app.logger.warning("Invalid file type")
     return jsonify({'error': 'Invalid file type'}), 400
+
+
+@ app.route('/keyword-gen', methods=['POST'])
+def get_keywords():
+
+    # username = request.form.get('email')
+    # password = request.form.get('password')
+
+    # print("username:", username)
+    # print("password:", password)
+
+    # conn = create_connection_users()
+    # if not conn:
+    #     return jsonify({'error': 'Failed to connect to database'}), 500
+    # cur = conn.cursor()
+
+    # cur.execute('''
+    #     SELECT * FROM UserListing WHERE Email = ? AND Password = ? AND isDeleted = 0
+    # ''', (username, password))
+
+    # row = cur.fetchone()
+    # conn.close()
+    # if row is None:
+    #     return jsonify({'error': 'Invalid username or password'}), 401
+
+    if 'image' not in request.files:
+        app.logger.warning("keyword-gen: no image in request")
+        return jsonify({'error': 'No image file provided'}), 400
+    file = request.files['image']
+    if file.filename == '':
+        app.logger.warning("keyword-gen: empty file name provided")
+        return jsonify({'error': 'No selected file'}), 400
+    if not allowed_file(file.filename):
+        return jsonify({'error': 'Unsupported file type.'}), 400
+
+    try:
+        # Example: save the file temporarily, or process it further
+        file.save(os.path.join(UPLOAD_FOLDER, file.filename))
+        keywords_raw, logos_raw, status = image_keywords(
+            os.path.join(UPLOAD_FOLDER, file.filename))
+
+        keywords = parse_keywords(keywords_raw)
+        keywords_sorted_by_desc = get_sorted_descriptions_or_logos(keywords)
+        string_keywords = ', '.join(keywords_sorted_by_desc)
+
+        logos = parse_logos(logos_raw)
+        logos_sorted_by_desc = get_sorted_descriptions_or_logos(logos)
+        string_logos = ', '.join(logos_sorted_by_desc)
+
+        os.remove(os.path.join(UPLOAD_FOLDER, file.filename))
+        return jsonify({'keywords': string_keywords, 'logos': string_logos}), 200
+
+    except IOError:
+        app.logger.error("keyword-gen: File saving failed due to IOError")
+        return jsonify({'error': 'File saving failed'}), 500
+    except Exception as e:
+        app.logger.error(f"keyword-gen: Unexpected error occurred: {str(e)}")
+        return jsonify({'error': 'Unexpected error occurred'}), 500
 
 
 @ app.route('/signup', methods=['POST'])
@@ -839,7 +1086,9 @@ def password_reset():
             dbtime = float(row[2])
             if not row:
                 return jsonify({'error': 'User not found'}), 404
-            if 1 > (datetime.now().timestamp() - dbtime) / 3600:
+            print(type(datetime.now()), dbtime)
+            print((datetime.now().timestamp() - dbtime)/3600)
+            if 1 < (datetime.now().timestamp() - dbtime) / 3600:
                 return jsonify({'error': 'Token expired'}), 401
 
             if token != row[1]:
@@ -968,21 +1217,46 @@ def delete_acct():
         conn.close()
 
 
-
-
-
-# Function to read and encode an image file to base64
 def get_image_base64(image_path):
+    """
+    Reads an image file from the specified path and encodes it to a base64 string.
+
+    Parameters:
+    image_path (str): The file path to the image that needs to be encoded.
+
+    Returns:
+    str: The base64 encoded string representation of the image.
+    """
     with open(image_path, 'rb') as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
 
 # Endpoint to get all items
 
 
-
-
-@ app.route('/items', methods=['GET'])
+@app.route('/items', methods=['GET'])
 def view_all_items():
+    """
+    Fetches all items from the database and returns them as a JSON response.
+
+    This endpoint retrieves all items stored in the database. For each item, it checks if the image is stored in bytes format or if it is None.
+    If the image is in bytes, it encodes the image to a base64 string. If the image is None, it uses a default placeholder image. Otherwise, it assumes the image is already in the correct format.
+
+    Returns:
+        A JSON response containing a list of items, where each item is represented as a dictionary with the following keys:
+        - ItemID: The unique identifier of the item.
+        - ItemName: The name of the item.
+        - Color: The color of the item.
+        - Brand: The brand of the item.
+        - LocationFound: The location where the item was found.
+        - LocationTurnedIn: The location where the item was turned in.
+        - Description: A description of the item.
+        - ImageURL: The base64-encoded image data or a default image URL.
+        - ItemStatus: The status of the item (e.g., found, returned).
+        - Date: The date when the item was added to the database.
+
+    Status Codes:
+        200: OK - The request was successful and items are returned.
+    """
     app.logger.info("Fetching all items")
     items = get_all_items()
     items_list = []
@@ -1294,8 +1568,9 @@ def view_found_items():
     return jsonify(result), 200
 
 
-@app.route('/get-user-email', methods=['GET'])
+@ app.route('/get-user-email', methods=['GET'])
 def get_user_email():
+    '''returns the user email'''
     return jsonify({"user_email": GLOBAL_USER_EMAIL}), 200
 
 
@@ -1332,8 +1607,7 @@ def get_all_claimrequests_student(email):
 @ app.route('/allclaim-requests-student/<string:emailId>', methods=['GET'])
 def view_all_requests_student(emailId):
     app.logger.info("Fetching all claims")
-    id = emailId
-    claims = get_all_claimrequests_student(id)
+    claims = get_all_claimrequests_student(emailId)
     claims_list = []
 
     for item in claims:
@@ -1555,7 +1829,7 @@ def approve_claim(claim_id):
         conn.close()
 
 
-@app.route('/get-processed-claims', methods=['GET'])
+@ app.route('/get-processed-claims', methods=['GET'])
 def get_processed_claims():
     conn = create_connection_items(PROCESSED_CLAIMS_DB)
     cursor = conn.cursor()
@@ -1583,7 +1857,8 @@ def get_processed_claims():
     finally:
         conn.close()
 
-@app.route('/get-processed-claim/<int:claim_id>', methods=['GET'])
+
+@ app.route('/get-processed-claim/<int:claim_id>', methods=['GET'])
 def get_processed_claim(claim_id):
     conn = create_connection_items(PROCESSED_CLAIMS_DB)
     cursor = conn.cursor()
@@ -1605,8 +1880,9 @@ def get_processed_claim(claim_id):
         return jsonify({'error': f'Database error: {str(e)}'}), 500
     finally:
         conn.close()
-        
-@app.route('/edit-processed-claim/<int:claim_id>', methods=['PUT'])
+
+
+@ app.route('/edit-processed-claim/<int:claim_id>', methods=['PUT'])
 def edit_processed_claim(claim_id):
     data = request.json
     date_claimed = data.get('dateClaimed')
@@ -1633,7 +1909,8 @@ def edit_processed_claim(claim_id):
     finally:
         conn.close()
 
-@app.route('/get-release-form/<int:claim_id>', methods=['GET'])
+
+@ app.route('/get-release-form/<int:claim_id>', methods=['GET'])
 def get_release_form(claim_id):
     conn = create_connection_items(PROCESSED_CLAIMS_DB)
     cursor = conn.cursor()
@@ -1685,7 +1962,7 @@ def get_release_form(claim_id):
 # Route to reject a claim request
 
 
-@app.route('/submit-release-form', methods=['POST'])
+@ app.route('/submit-release-form', methods=['POST'])
 def submit_release_form():
 
     data = request.json
@@ -1726,8 +2003,8 @@ def submit_release_form():
         item_conn = create_connection_items(ITEMS_DB)
         item_cursor = item_conn.cursor()
         item_cursor.execute('''
-            SELECT ItemName, Color, Brand, Description, Photo 
-            FROM FOUNDITEMS 
+            SELECT ItemName, Color, Brand, Description, Photo
+            FROM FOUNDITEMS
             WHERE ItemID = ?
         ''', (claim_id,))
 
@@ -1742,7 +2019,8 @@ def submit_release_form():
             qr_code = "uploads/care.png"  # Default QR code path
 
             # Call the `insertPreRegisteredItem` function to insert the item into the PREREGISTERED table
-            insert_preregistered_item(item_name, color, brand, description, image_data, current_date, qr_code, user_email_id)
+            insert_preregistered_item(
+                item_name, color, brand, description, image_data, current_date, qr_code, user_email_id)
 
             return jsonify({'message': 'Release form data submitted and item added to preregistered successfully'}), 201
         else:
@@ -1756,7 +2034,7 @@ def submit_release_form():
             item_conn.close()
 
 
-@app.route('/individual-request-staff/<int:claim_id>/reject', methods=['POST'])
+@ app.route('/individual-request-staff/<int:claim_id>/reject', methods=['POST'])
 def reject_claim(claim_id):
     # Get the rationale from the request
     rationale = request.json.get('rationale', '')
@@ -1803,7 +2081,7 @@ def reject_claim(claim_id):
         conn.close()
 
 
-@app.route('/individual-request-staff/<int:claim_id>/request-more-info', methods=['POST'])
+@ app.route('/individual-request-staff/<int:claim_id>/request-more-info', methods=['POST'])
 def reject_claim_more_info(claim_id):
     rationale = 'Please provide more information.'
     conn = create_connection_items(CLAIMS_DB)
@@ -1849,7 +2127,7 @@ def reject_claim_more_info(claim_id):
         conn.close()
 
 
-@app.route('/dispute-claim/<int:item_id>', methods=['POST'])
+@ app.route('/dispute-claim/<int:item_id>', methods=['POST'])
 def dispute_claim(item_id):
     try:
         # Connect to the disputes database
@@ -1913,12 +2191,16 @@ def dispute_claim(item_id):
         if conn:
             conn.close()
 
-@app.route('/api/categories', methods=['GET'])
+
+@ app.route('/api/categories', methods=['GET'])
 def get_categories():
     conn = create_connection_items(ITEMS_DB)
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT CategoryName, ItemCount FROM CATEGORIES ORDER BY ItemCount DESC")
+        cursor.execute(
+            "SELECT CategoryName, ItemCount FROM CATEGORIES ORDER BY ItemCount DESC")
+        cursor.execute(
+            "SELECT CategoryName, ItemCount FROM CATEGORIES ORDER BY ItemCount DESC")
         categories = cursor.fetchall()
         categories_list = [
             {"CategoryName": row[0], "ItemCount": row[1]} for row in categories
@@ -1930,38 +2212,52 @@ def get_categories():
         if conn:
             conn.close()
 
+
 @app.route('/api/staff-analytics', methods=['GET'])
 def get_staff_analytics():
+    """
+    Retrieve staff analytics data, including the count of claimed and unclaimed items,
+    the most frequent missing locations, and the most common categories.
+
+    Returns:
+        A JSON response containing:
+        - claimedCount: Number of items that have been claimed.
+        - unclaimedCount: Number of items that have not been claimed.
+        - missingLocations: A list of the top 5 most frequent locations where items were found.
+        - commonCategories: A list of the top 5 most common item categories.
+    """
     conn = create_connection_items(ITEMS_DB)
     cursor = conn.cursor()
     try:
         # Count claimed items
-        cursor.execute("SELECT COUNT(*) FROM FOUNDITEMS WHERE ItemStatus = 3")  # Assuming 1 = claimed
+        # Assuming 1 = claimed
+        cursor.execute("SELECT COUNT(*) FROM FOUNDITEMS WHERE ItemStatus = 3")
         claimed_count = cursor.fetchone()[0]
 
         # Count unclaimed items
-        cursor.execute("SELECT COUNT(*) FROM FOUNDITEMS WHERE ItemStatus = 1")  # Assuming 0 = unclaimed
+        # Assuming 0 = unclaimed
+        cursor.execute("SELECT COUNT(*) FROM FOUNDITEMS WHERE ItemStatus = 1")
         unclaimed_count = cursor.fetchone()[0]
 
         # Most frequent missing locations
         cursor.execute("""
-            SELECT LocationFound, COUNT(*) as Count 
-            FROM FOUNDITEMS 
-            GROUP BY LocationFound 
-            ORDER BY Count DESC 
+            SELECT LocationFound, COUNT(*) as Count
+            FROM FOUNDITEMS
+            GROUP BY LocationFound
+            ORDER BY Count DESC
             LIMIT 5
         """)
-        missing_locations = [{"Location": row[0], "Count": row[1]} for row in cursor.fetchall()]
-
+        missing_locations = [{"Location": row[0], "Count": row[1]}
+                             for row in cursor.fetchall()]
         # Most common categories
         cursor.execute("""
-            SELECT CategoryName, ItemCount 
-            FROM CATEGORIES 
-            ORDER BY ItemCount DESC 
+            SELECT CategoryName, ItemCount
+            FROM CATEGORIES
+            ORDER BY ItemCount DESC
             LIMIT 5
         """)
-        common_categories = [{"CategoryName": row[0], "ItemCount": row[1]} for row in cursor.fetchall()]
-
+        common_categories = [{"CategoryName": row[0],
+                              "ItemCount": row[1]} for row in cursor.fetchall()]
         analytics_data = {
             "claimedCount": claimed_count,
             "unclaimedCount": unclaimed_count,
@@ -1976,14 +2272,40 @@ def get_staff_analytics():
         if conn:
             conn.close()
 
+
 def create_connection_staff():
+    """
+    Creates a connection to the staff database.
+
+    Returns:
+        sqlite3.Connection: A connection object to the SQLite staff database.
+    """
     base_dir = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(base_dir, '../databases/StaffAccounts.db')
     conn = sqlite3.connect(db_path)
     return conn
 
-@app.route('/api/staff/signup', methods=['POST'])
+
+@ app.route('/api/staff/signup', methods=['POST'])
 def staff_signup():
+    """
+    Sign up a new staff member.
+
+    This endpoint allows a new staff member to register by providing their
+    email, password, name, and building department. Upon successful registration,
+    the staff account will be created and will await approval.
+
+    Request Body:
+        - email (str): The staff member's email address.
+        - password (str): The staff member's password.
+        - name (str): The staff member's name.
+        - buildingDept (str): The staff member's building department.
+
+    Returns:
+        - 201 OK: If the account is created successfully.
+        - 400 Bad Request: If required fields are missing or if the email already exists.
+        - 500 Internal Server Error: If a database error occurs.
+    """
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
@@ -2011,8 +2333,27 @@ def staff_signup():
 
     return jsonify({'message': 'Account created successfully. Awaiting approval.'}), 201
 
-@app.route('/api/staff/login', methods=['POST'])
+
+@ app.route('/api/staff/login', methods=['POST'])
 def staff_login():
+    """
+    Logs in a staff member.
+
+    This endpoint allows a staff member to log in by providing their
+    email, password, and building department. The login is successful only
+    if the account is approved.
+
+    Request Body:
+        - email (str): The staff member's email address.
+        - password (str): The staff member's password.
+        - buildingDept (str): The staff member's building department.
+
+    Returns:
+        - 200 OK: If the login is successful and the account is approved.
+        - 400 Bad Request: If required fields are missing.
+        - 401 Unauthorized: If the credentials are invalid.
+        - 403 Forbidden: If the account is not approved yet.
+    """
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
@@ -2040,8 +2381,23 @@ def staff_login():
     else:
         return jsonify({'error': 'Invalid credentials.'}), 401
 
+
 @app.route('/feedback', methods=['POST'])
 def submit_feedback():
+    """
+    Submits feedback from a logged-in user.
+
+    This endpoint allows a logged-in user to submit feedback by providing
+    a description. The feedback is associated with the user's email.
+
+    Request Body:
+        - description (str): The feedback description provided by the user.
+
+    Returns:
+        - 201 Created: If the feedback is submitted successfully.
+        - 400 Bad Request: If the feedback description is missing.
+        - 500 Internal Server Error: If there is an error submitting feedback.
+    """
     data = request.get_json()
     description = data.get('description', '')
 
@@ -2068,6 +2424,17 @@ def submit_feedback():
 
 @app.route('/feedback/user', methods=['GET'])
 def get_user_feedback():
+    """
+    Retrieves feedback for the logged-in user.
+
+    This endpoint allows a logged-in user to retrieve their feedback submissions.
+    Each feedback item contains an identifier, the description provided by the user,
+    and the timestamp at which the feedback was submitted.
+
+    Returns:
+        - 200 OK: A list of feedback items for the logged-in user.
+        - 500 Internal Server Error: If there is an error fetching the user feedback.
+    """
     try:
         conn = sqlite3.connect(FEEDBACK_DB)
         cursor = conn.cursor()
@@ -2081,7 +2448,8 @@ def get_user_feedback():
         conn.close()
 
         return jsonify([
-            {"FeedbackID": row[0], "Description": row[1], "SubmittedAt": row[2]}
+            {"FeedbackID": row[0], "Description": row[1],
+                "SubmittedAt": row[2]}
             for row in feedback_list
         ]), 200
 
@@ -2089,8 +2457,20 @@ def get_user_feedback():
         print(f"Database error: {e}")
         return jsonify({'error': 'Failed to fetch user feedback'}), 500
 
+
 @app.route('/feedback/all', methods=['GET'])
 def get_all_feedback():
+    """
+    Retrieves all feedback entries.
+
+    This endpoint allows authorized users to fetch all feedback entries in the system.
+    Each feedback item contains an identifier, the description provided by the user,
+    the timestamp at which the feedback was submitted, and the user's email.
+
+    Returns:
+        - 200 OK: A list of all feedback items.
+        - 500 Internal Server Error: If there is an error fetching all feedback.
+    """
     try:
         conn = sqlite3.connect(FEEDBACK_DB)
         cursor = conn.cursor()
@@ -2104,7 +2484,8 @@ def get_all_feedback():
         conn.close()
 
         return jsonify([
-            {"FeedbackID": row[0], "Description": row[1], "SubmittedAt": row[2], "UserEmail": row[3]}
+            {"FeedbackID": row[0], "Description": row[1],
+                "SubmittedAt": row[2], "UserEmail": row[3]}
             for row in feedback_list
         ]), 200
 

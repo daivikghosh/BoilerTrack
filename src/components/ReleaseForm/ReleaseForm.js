@@ -1,23 +1,23 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import './ReleaseForm.css';
+import React, { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import "./ReleaseForm.css";
 
 const ReleaseForm = () => {
   const { claimId } = useParams();
   const [formData, setFormData] = useState({
-    dateClaimed: new Date().toISOString().split('T')[0],
-    userEmailID: '',
-    staffName: '',
-    studentID: ''
+    dateClaimed: new Date().toISOString().split("T")[0],
+    userEmailID: "",
+    staffName: "",
+    studentID: "",
   });
   const [errors, setErrors] = useState({});
-  const [submissionMessage, setSubmissionMessage] = useState('');
+  const [submissionMessage, setSubmissionMessage] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: '' });
+    setErrors({ ...errors, [e.target.name]: "" });
   };
 
   const validateForm = () => {
@@ -25,19 +25,19 @@ const ReleaseForm = () => {
     let isValid = true;
 
     if (!formData.dateClaimed) {
-      formErrors.dateClaimed = 'Date claimed is required';
+      formErrors.dateClaimed = "Date claimed is required";
       isValid = false;
     }
     if (!formData.userEmailID) {
-      formErrors.userEmailID = 'User email is required';
+      formErrors.userEmailID = "User email is required";
       isValid = false;
     }
     if (!formData.staffName) {
-      formErrors.staffName = 'Staff name is required';
+      formErrors.staffName = "Staff name is required";
       isValid = false;
     }
     if (!formData.studentID) {
-      formErrors.studentID = 'Student ID is required';
+      formErrors.studentID = "Student ID is required";
       isValid = false;
     }
 
@@ -51,28 +51,32 @@ const ReleaseForm = () => {
 
     try {
       // Submit release form data
-      await axios.post('/submit-release-form', {
+      await axios.post("/submit-release-form", {
         ...formData,
-        claimId
+        claimId,
       });
 
       // Call endpoint to remove the request from CLAIMREQUETS table
       await axios.post(`/individual-request-staff/${claimId}/approve`);
 
-      setSubmissionMessage('Release form submitted and claim approved successfully!');
-      
+      setSubmissionMessage(
+        "Release form submitted and claim approved successfully!",
+      );
+
       // Navigate to another page or refresh
-      setTimeout(() => navigate('/all-request-staff'), 1500);
+      setTimeout(() => navigate("/all-request-staff"), 1500);
     } catch (error) {
-      console.error('Error processing the request:', error);
-      setSubmissionMessage('Failed to process the request. Please try again.');
+      console.error("Error processing the request:", error);
+      setSubmissionMessage("Failed to process the request. Please try again.");
     }
   };
 
   return (
     <div className="form-container">
       <h2>Release Form</h2>
-      {submissionMessage && <p className="submission-message">{submissionMessage}</p>}
+      {submissionMessage && (
+        <p className="submission-message">{submissionMessage}</p>
+      )}
       <form onSubmit={handleSubmit}>
         <div className="form-input">
           <label>Date Claimed</label>
@@ -83,7 +87,9 @@ const ReleaseForm = () => {
             onChange={handleChange}
             required
           />
-          {errors.dateClaimed && <p className="error-text">{errors.dateClaimed}</p>}
+          {errors.dateClaimed && (
+            <p className="error-text">{errors.dateClaimed}</p>
+          )}
         </div>
 
         <div className="form-input">
@@ -96,7 +102,9 @@ const ReleaseForm = () => {
             placeholder="Enter user's email"
             required
           />
-          {errors.userEmailID && <p className="error-text">{errors.userEmailID}</p>}
+          {errors.userEmailID && (
+            <p className="error-text">{errors.userEmailID}</p>
+          )}
         </div>
 
         <div className="form-input">
@@ -125,7 +133,9 @@ const ReleaseForm = () => {
           {errors.studentID && <p className="error-text">{errors.studentID}</p>}
         </div>
 
-        <button type="submit" className="submit-button">Submit Release Form</button>
+        <button type="submit" className="submit-button">
+          Submit Release Form
+        </button>
       </form>
     </div>
   );

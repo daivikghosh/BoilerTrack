@@ -41,6 +41,7 @@ import FeedbackForm from "./components/FeedbackForm/FeedbackForm.js";
 import AllFeedback from "./components/FeedbackForm/AllFeedback.js";
 import UserFeedback from "./components/FeedbackForm/UserFeedback.js";
 import UnclaimedItemTemplate from "./components/UnclaimedItemTemplate/UnclaimedItemTemplate.js";
+import PreRegItemForm from "./components/PreRegItemForm/PreRegItemForm.js";
 
 const App = () => {
   return (
@@ -129,6 +130,8 @@ const App = () => {
           path="/unclaimed-item-template"
           element={<UnclaimedItemTemplate />}
         />
+        {/* Pre-registered item form */}
+        <Route path="/add-registered-item" element={<PreRegItemForm />} />
       </Routes>
     </Router>
   );
