@@ -154,6 +154,12 @@ function AllItemsPage() {
         <Link to="/help-desk" className="page-button">
           Help Desk
         </Link>
+        <Link to="/report-found-item" className="page-button">
+          Report Found Item
+        </Link>
+        <Link to="/found-item-reports" className="page-button">
+          Found Item Reports
+        </Link>
         <Link to="/map-view" className="page-button">
           View Map
         </Link>

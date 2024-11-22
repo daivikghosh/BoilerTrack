@@ -9,6 +9,7 @@ function AllItemsPage() {
   const [filter, setFilter] = useState({
     sortAlphabetically: false,
     locations: [],
+    locationsTurnedIn: [],
     dates: [],
     keywords: [],
     timeFilter: "all", // New time filter state
@@ -102,6 +103,12 @@ function AllItemsPage() {
     if (filter.locations.length > 0) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
         filter.locations.includes(item.LocationFound),
+      );
+    }
+
+    if (filter.locationsTurnedIn.length > 0) {
+      nonPinnedItems = nonPinnedItems.filter((item) =>
+        filter.locationsTurnedIn.includes(item.LocationTurnedIn),
       );
     }
 
@@ -219,6 +226,7 @@ function AllItemsPage() {
                 />
                 <h3>{item.ItemName}</h3>
                 <p>{item.Description}</p>
+                <p>{item.LocationTurnedIn}</p>
                 <div className="keywords-container">
                   <span className="keyword">Tag1</span>
                   <span className="keyword">Tag2</span>

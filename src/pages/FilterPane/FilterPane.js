@@ -12,6 +12,8 @@ function FilterPane({ onFilterChange }) {
   const [keywordInput, setKeywordInput] = useState("");
   const [locations, setLocations] = useState([]);
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
+  const [locationsTurnedIn, setLocationsTurnedIn] = useState([]);
+  const [isTurnedInLocationDropdownOpen, setIsTurnedInLocationDropdownOpen] = useState(false);
 
   // Handle sorting toggle
   const handleSortToggle = () => {
@@ -108,6 +110,28 @@ function FilterPane({ onFilterChange }) {
     onFilterChange({ locations: updatedLocations });
   };
 
+
+  const toggleTurnedInLocationDropdown = () => {
+    setIsTurnedInLocationDropdownOpen(!isTurnedInLocationDropdownOpen);
+  };
+
+  const handleAddTurnedInLocation = (locationCode) => {
+    if (!locationsTurnedIn.includes(locationCode)) {
+      const updatedLocationsTurnedIn = [...locationsTurnedIn, locationCode];
+      setLocationsTurnedIn(updatedLocationsTurnedIn);
+      onFilterChange({ locationsTurnedIn: updatedLocationsTurnedIn });
+    }
+    setIsTurnedInLocationDropdownOpen(false); // Close dropdown after selection
+  };
+  
+  const handleRemoveTurnedInLocation = (locationCode) => {
+    const updatedLocationsTurnedIn = locationsTurnedIn.filter(
+      (code) => code !== locationCode,
+    );
+    setLocationsTurnedIn(updatedLocationsTurnedIn);
+    onFilterChange({ locationsTurnedIn: updatedLocationsTurnedIn });
+  };
+
   return (
     <div className="filter-pane">
       <h3>Filters</h3>
@@ -168,7 +192,7 @@ function FilterPane({ onFilterChange }) {
 
       {/* Location Filter */}
       <div className="filter-option">
-        <h4>Filter by Location</h4>
+        <h4>Filter by Location Found</h4>
         <div className="dropdown">
           <button className="dropdown-toggle" onClick={toggleLocationDropdown}>
             {locations.length > 0
@@ -194,6 +218,41 @@ function FilterPane({ onFilterChange }) {
             <span key={code} className="location-tag">
               {code}
               <button onClick={() => handleRemoveLocation(code)}>x</button>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="filter-option">
+        <h4>Filter by Location Turned-In</h4>
+        <div className="dropdown">
+          <button
+            className="dropdown-toggle"
+            onClick={toggleTurnedInLocationDropdown}
+          >
+            {locationsTurnedIn.length > 0
+              ? "Select another location"
+              : "Select Turned-In Location"}
+          </button>
+          {isTurnedInLocationDropdownOpen && (
+            <div className="dropdown-menu">
+              {Object.entries(building_codes).map(([code, building]) => (
+                <div
+                  key={code}
+                  className="dropdown-item"
+                  onClick={() => handleAddTurnedInLocation(code)}
+                >
+                  {building.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="location-list">
+          {locationsTurnedIn.map((code) => (
+            <span key={code} className="location-tag">
+              {code}
+              <button onClick={() => handleRemoveTurnedInLocation(code)}>x</button>
             </span>
           ))}
         </div>

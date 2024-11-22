@@ -51,6 +51,9 @@ import HelpDeskPage from "./pages/HelpDeskPage";
 import StudentMessages from "./components/Messages/StudentMessages.js";
 import StaffMessages from "./components/Messages/StaffMessages.js";
 
+import FoundItemReportForm from "./components/FoundItemReportForm/FoundItemReportForm";
+import FoundItemReportsPage from './pages/FoundItemReportsPage';
+
 const App = () => {
   return (
     <Router>
@@ -150,6 +153,9 @@ const App = () => {
         <Route path="/help-desk" element={<HelpDeskPage />} />
         <Route path="/student-messages/:id" element={<StudentMessages />} />
         <Route path="/staff-messages/:id" element={<StaffMessages />} />
+
+        <Route path="/report-found-item" element={<FoundItemReportForm />} />
+        <Route path="/found-item-reports" element={<FoundItemReportsPage />} />
       </Routes>
     </Router>
   );

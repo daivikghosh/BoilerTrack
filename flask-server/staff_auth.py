@@ -1,7 +1,8 @@
 import sqlite3
 import threading
 
-DATABASE_PATH = "../databases/StaffAccounts.db"
+# DATABASE_PATH = "../databases/StaffAccounts.db"
+DATABASE_PATH = "databases\StaffAccounts.db"
 
 def approve_staff_account(staff_id):
     conn = sqlite3.connect(DATABASE_PATH)
