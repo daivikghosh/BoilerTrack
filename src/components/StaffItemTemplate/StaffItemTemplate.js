@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./StaffItemTemplate.css";
 
@@ -7,6 +7,7 @@ const StaffItemTemplate = () => {
   const navigate = useNavigate();
   const item = location.state?.item; // Get the passed item from state
   const canvasRef = useRef(null);
+  const [imageURL, setImageURL] = useState(""); // Store the generated image URL
 
   if (!item) {
     // If no item is passed, redirect back to the AllItemsPage
@@ -18,13 +19,11 @@ const StaffItemTemplate = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
 
-    // Set up canvas dimensions and background
     canvas.width = 1080;
     canvas.height = 1080;
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Helper function to draw centered text
     const drawCenteredText = (text, y, fontSize, fontColor = "#000") => {
       ctx.font = `${fontSize}px Arial`;
       ctx.fillStyle = fontColor;
@@ -33,18 +32,15 @@ const StaffItemTemplate = () => {
     };
 
     let y = 50;
-
-    // Title
     drawCenteredText("Item Turned In", y, 36, "#222");
     y += 190;
 
-    // Draw item image if it exists
     if (item.ImageURL) {
       const img = new Image();
       img.src = `data:image/jpeg;base64,${item.ImageURL}`;
       img.onload = () => {
         const imageWidth = 400;
-        const imageHeight = (img.height / img.width) * imageWidth; // Maintain aspect ratio
+        const imageHeight = (img.height / img.width) * imageWidth;
         ctx.drawImage(
           img,
           (canvas.width - imageWidth) / 2,
@@ -52,23 +48,19 @@ const StaffItemTemplate = () => {
           imageWidth,
           imageHeight,
         );
-        y += imageHeight + 80; // Add spacing after the image
-
-        // Draw details after the image is loaded
+        y += imageHeight + 80;
         drawDetails(y);
+        setImageURL(canvas.toDataURL("image/png"));
       };
     } else {
-      // If no image, draw details immediately
       drawDetails(y);
+      setImageURL(canvas.toDataURL("image/png"));
     }
 
-    // Function to draw item details
     const drawDetails = (startY) => {
       let detailsY = startY;
-
       drawCenteredText(`Item Name: ${item.ItemName}`, detailsY, 28, "#444");
-      detailsY += 50; // Add spacing between lines
-
+      detailsY += 50;
       drawCenteredText(
         `Description: ${item.Description}`,
         detailsY,
@@ -76,7 +68,6 @@ const StaffItemTemplate = () => {
         "#555",
       );
       detailsY += 50;
-
       drawCenteredText(
         `Location Turned In: ${item.LocationTurnedIn}`,
         detailsY,
@@ -84,7 +75,6 @@ const StaffItemTemplate = () => {
         "#555",
       );
       detailsY += 50;
-
       drawCenteredText("#BoilerTrack", canvas.height - 50, 20, "#777");
     };
   }, [item]);
@@ -101,12 +91,9 @@ const StaffItemTemplate = () => {
   return (
     <div className="template-page">
       <div className="template-container">
-        {/* Live preview on the left */}
         <div className="preview-section">
           <canvas ref={canvasRef} className="template-canvas" />
         </div>
-
-        {/* Options on the right */}
         <div className="options-section">
           <h1>Generate Template for {item.ItemName}</h1>
           <button
@@ -121,6 +108,36 @@ const StaffItemTemplate = () => {
           >
             Download as JPEG
           </button>
+
+          {/* Social Media Links */}
+          <div className="social-links">
+            <h3>Share this to: </h3>
+            <a
+              href="https://twitter.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="social-button twitter"
+            >
+              Twitter
+            </a>
+            <a
+              href="https://www.facebook.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="social-button facebook"
+            >
+              Facebook
+            </a>
+            <a
+              href="https://www.instagram.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="social-button instagram"
+            >
+              Instagram
+            </a>
+          </div>
+
           <button onClick={() => navigate(-1)} className="back-button">
             Back
           </button>

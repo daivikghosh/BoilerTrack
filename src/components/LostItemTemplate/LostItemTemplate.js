@@ -67,7 +67,7 @@ const LostItemTemplate = ({ item, setSelectedItem, goBack }) => {
           }`,
           y,
           24, // Increased from 20 to 24
-          "#777"
+          "#777",
         );
       } else {
         drawCenteredText("If found, reach out!", y, 24, "#777"); // Increased from 20 to 24
@@ -94,7 +94,7 @@ const LostItemTemplate = ({ item, setSelectedItem, goBack }) => {
           20,
           canvas.height - logoSize - 20,
           logoSize,
-          logoSize
+          logoSize,
         );
       };
     }
@@ -142,6 +142,34 @@ const LostItemTemplate = ({ item, setSelectedItem, goBack }) => {
         <button className="template-button" onClick={saveAsJPEG}>
           Download as JPEG
         </button>
+
+        <div className="social-links">
+          <h3>Share this to: </h3>
+          <a
+            href="https://twitter.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="social-button twitter"
+          >
+            Twitter
+          </a>
+          <a
+            href="https://www.facebook.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="social-button facebook"
+          >
+            Facebook
+          </a>
+          <a
+            href="https://www.instagram.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="social-button instagram"
+          >
+            Instagram
+          </a>
+        </div>
       </div>
 
       <div className="input-fields">
