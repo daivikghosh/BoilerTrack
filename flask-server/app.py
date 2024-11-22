@@ -333,6 +333,8 @@ def home():
 
     :return: A JSON response with a welcome message.
     """
+    session['email'] = None
+    
     app.logger.info("Accessed root route")
     return jsonify({"message": "Welcome to the Lost and Found API"}), 200
 

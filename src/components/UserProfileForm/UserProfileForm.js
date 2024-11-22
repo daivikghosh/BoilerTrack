@@ -76,6 +76,12 @@ const UserProfileForm = ({
         >
           My Feedback
         </button>
+        <button
+          onClick={() => navigate("/")} // Use navigate to logout
+          className="action-button"
+        >
+          Logout
+        </button>
       </div>
     </div>
   );
