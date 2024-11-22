@@ -46,6 +46,7 @@ import TimelineView from "./components/ViewAllHistoryStaff/HistoryViewStaff.js";
 import StaffQRCodeUploadForm from "./components/StaffQRCodeUploadForm/StaffQRCodeUploadForm.js";
 
 import UnclaimedItemTemplate from "./components/UnclaimedItemTemplate/UnclaimedItemTemplate.js";
+import HelpDeskPage from './pages/HelpDeskPage';
 
 const App = () => {
   return (
@@ -142,6 +143,7 @@ const App = () => {
           path="/unclaimed-item-template"
           element={<UnclaimedItemTemplate />}
         />
+        <Route path="/help-desk" element={<HelpDeskPage />} />
       </Routes>
     </Router>
   );
