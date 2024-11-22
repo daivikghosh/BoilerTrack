@@ -21,14 +21,40 @@ const MapView = () => {
   const [foundItems, setFoundItems] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("Buildings");
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
-  // Fetch data from the backend
+  // Preset categories based on ItemName keywords
+  const categories = {
+    Jewelry: ["ring", "necklace", "bracelet"],
+    Electronics: ["phone", "laptop", "tablet", "headphones"],
+    Clothing: ["jacket", "hat", "shirt", "gloves"],
+    Accessories: ["bag", "wallet", "key"],
+  };
+
+  // Function to assign category to an item
+  const categorizeItem = (item) => {
+    for (const [category, keywords] of Object.entries(categories)) {
+      if (
+        keywords.some((keyword) =>
+          item.ItemName.toLowerCase().includes(keyword),
+        )
+      ) {
+        return category;
+      }
+    }
+    return "Other"; // Default category
+  };
+
+  // Fetch data from the backend and assign categories
   useEffect(() => {
     fetch("http://localhost:5000/found-items")
       .then((response) => response.json())
       .then((data) => {
-        console.log("Fetched Items:", data); // Print response to the console
-        setFoundItems(data);
+        const categorizedItems = data.map((item) => ({
+          ...item,
+          Category: categorizeItem(item),
+        }));
+        setFoundItems(categorizedItems);
       })
       .catch((error) => console.error("Error fetching found items:", error));
   }, []);
@@ -46,16 +72,21 @@ const MapView = () => {
     return acc;
   }, {});
 
-  // Filtered results based on active tab
+  // Filtered results based on active tab and selected category
   const filteredResults =
     activeTab === "Buildings"
       ? Object.entries(itemsByBuilding).filter(([code, items]) => {
           const buildingName = building_codes[code]?.name || "";
           return buildingName.toLowerCase().includes(searchQuery.toLowerCase());
         })
-      : foundItems.filter((item) =>
-          item.ItemName.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+      : foundItems.filter((item) => {
+          const matchesSearch = item.ItemName.toLowerCase().includes(
+            searchQuery.toLowerCase(),
+          );
+          const matchesCategory =
+            selectedCategory === "All" || item.Category === selectedCategory;
+          return matchesSearch && matchesCategory;
+        });
 
   return (
     <div className="map-container">
@@ -83,6 +114,21 @@ const MapView = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+
+        {activeTab === "Items" && (
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="category-dropdown"
+          >
+            <option value="All">All Categories</option>
+            {Object.keys(categories).map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        )}
 
         {activeTab === "Buildings" ? (
           <ul>
