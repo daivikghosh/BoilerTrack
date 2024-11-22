@@ -6,13 +6,14 @@
   height: 100vh;
   font-family: Arial, sans-serif;
   background-color: #f5f5f5;
+  padding: 20px;
 }
 
 /* Flexbox container for the template and options */
 .template-container {
   display: flex;
-  gap: 40px;
-  width: 80%;
+  gap: 40px; /* Adjust spacing between preview and options */
+  width: 100%; /* Allow full width of the container */
   max-width: 1200px;
   align-items: flex-start;
 }
@@ -31,6 +32,7 @@
 
 .template-canvas {
   max-width: 100%;
+  max-height: 800px; /* Keep the canvas scaled */
   border: 1px solid #ddd;
   border-radius: 8px;
 }
@@ -48,23 +50,34 @@
 }
 
 .options-section h1 {
-  font-size: 24px;
-  margin-bottom: 20px;
+  font-size: 22px;
+  margin-bottom: 15px;
   color: #333;
+  text-align: left; /* Align header to the left */
+}
+
+/* Horizontal button container */
+.button-container {
+  display: flex;
+  gap: 10px; /* Spacing between buttons */
+  margin-top: 10px;
+}
+
+.big-container {
+  display: flex;
+  margin: 1rem;
 }
 
 /* Buttons for downloads and navigation */
 .template-button,
 .back-button {
-  display: inline-block;
   padding: 10px 20px;
-  margin-bottom: 15px;
   background: #007bff;
   color: #fff;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .template-button:hover,
@@ -80,6 +93,7 @@
   background: #5a6268;
 }
 
+/* Social buttons */
 .social-links {
   margin-top: 20px;
 }
@@ -90,12 +104,13 @@
 
 .social-button {
   display: inline-block;
-  margin-right: 10px;
   padding: 10px 20px;
   border-radius: 5px;
   text-decoration: none;
   color: #fff;
   font-weight: bold;
+  font-size: 14px;
+  margin-right: 10px;
 }
 
 .social-button.twitter {

@@ -186,7 +186,7 @@ function AllItemsPage() {
           View Feedback
         </Link>
         <Link to="/unclaimed-item-template" className="page-button">
-          Share to Instagram
+          Post weekly Update
         </Link>
 
         <Link to="/allitemhistory-staff" className="page-button">
@@ -227,10 +227,10 @@ function AllItemsPage() {
                 <h3>{item.ItemName}</h3>
                 <p>{item.Description}</p>
                 <p>{item.LocationTurnedIn}</p>
-                <div className="keywords-container">
+                {/* <div className="keywords-container">
                   <span className="keyword">Tag1</span>
                   <span className="keyword">Tag2</span>
-                </div>
+                </div> */}
                 <div className="buttons-container-2">
                   <Link to={`/item/${item.ItemID}`}>
                     <button className="button view-button">View</button>
@@ -247,10 +247,12 @@ function AllItemsPage() {
                   </Link>
                 </div>
                 <div className="buttons-container-2"></div>
-                  <Link to={`/staff-messages/${item.ItemID}`}>
-                      <button className="button modify-button">Check Dispute Messages</button>
-                  </Link>
-                </div>
+                <Link to={`/staff-messages/${item.ItemID}`}>
+                  <button className="button modify-button">
+                    Check Dispute Messages
+                  </button>
+                </Link>
+              </div>
             ))
           ) : (
             <p>No items found.</p>

@@ -90,7 +90,7 @@ const StaffItemTemplate = () => {
 
   return (
     <div className="template-page">
-      <div className="template-container">
+      <div className="big-container">
         <div className="preview-section">
           <canvas ref={canvasRef} className="template-canvas" />
         </div>

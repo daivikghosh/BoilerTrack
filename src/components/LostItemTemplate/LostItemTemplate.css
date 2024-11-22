@@ -52,6 +52,7 @@ input[type="file"] {
 }
 .social-links {
   margin-top: 20px;
+  display: flex;
 }
 
 .social-links h3 {
@@ -60,8 +61,8 @@ input[type="file"] {
 
 .social-button {
   display: inline-block;
-  margin-right: 10px;
-  padding: 10px 20px;
+  /* margin-right: 10px;
+  padding: 10px 20px; */
   border-radius: 5px;
   text-decoration: none;
   color: #fff;
@@ -78,4 +79,8 @@ input[type="file"] {
 
 .social-button.instagram {
   background-color: #e1306c;
+}
+
+.big-container {
+  display: flex;
 }

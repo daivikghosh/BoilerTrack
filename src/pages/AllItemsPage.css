@@ -276,6 +276,7 @@
   display: flex;
   gap: 0.5rem; /* Add space between buttons */
   margin-top: auto; /* Push the buttons to the bottom */
+  margin-bottom: 5px;
   width: 100%; /* Full width for buttons */
 }
 

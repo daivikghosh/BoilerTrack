@@ -130,7 +130,7 @@ const LostItemTemplate = ({ item, setSelectedItem, goBack }) => {
   };
 
   return (
-    <div className="template-container">
+    <div className="big-container">
       <div className="template-preview">
         <canvas
           ref={canvasRef}
@@ -143,8 +143,8 @@ const LostItemTemplate = ({ item, setSelectedItem, goBack }) => {
           Download as JPEG
         </button>
 
+        <h3>Share this to: </h3>
         <div className="social-links">
-          <h3>Share this to: </h3>
           <a
             href="https://twitter.com/"
             target="_blank"
