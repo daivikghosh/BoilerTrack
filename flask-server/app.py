@@ -501,6 +501,7 @@ def fetch_all_items():
         app.logger.error(f"Error fetching all items: {e}")
         return jsonify({"error": "Failed to fetch found items"}), 500
 
+
 @app.route('/delete-pre-reg-item', methods=['POST'])
 def delete_pre_reg_item():
     try:
@@ -516,7 +517,8 @@ def delete_pre_reg_item():
         # Perform database operation
         conn = sqlite3.connect(PREREG_DB)
         cursor = conn.cursor()
-        cursor.execute('DELETE FROM PREREGISTERED WHERE pre_reg_item_id = ?', (item_id,))
+        cursor.execute(
+            'DELETE FROM PREREGISTERED WHERE pre_reg_item_id = ?', (item_id,))
         conn.commit()
         conn.close()
 
@@ -525,7 +527,7 @@ def delete_pre_reg_item():
         app.logger.error(f"Error deleting item: {e}")
         return jsonify({"error": str(e)}), 500
 
-    
+
 @ app.route('/pre-registered-items', methods=['GET'])
 def get_pre_registered_items():
     """
@@ -906,7 +908,7 @@ def check_lost_item_request():
         foundItemId (int): The unique identifier for the found item.
 
     Returns:
-        JSON response: 
+        JSON response:
             - If a match is found, returns a success message with the matching_item_id.
             - If no match is found, returns a failure message.
 
@@ -1034,6 +1036,11 @@ def add_item():
         turned_in_at = request.form.get('turnedInAt')
         description = request.form.get('description')
 
+        email = session['email']
+
+        if email is None:
+            return jsonify({'error': 'please log in'}), 401
+
         try:
             new_item_id = insertItem(item_name, color, brand, found_at, turned_in_at,
                                      description, file_path, 1, datetime.today().strftime('%Y-%m-%d'))
@@ -1041,9 +1048,9 @@ def add_item():
             app.logger.info(
                 f"New item added: {item_name}, {color}, {brand}, {found_at}, {turned_in_at}, {description}")
             app.logger.info(f"Image saved at: {file_path}")
-            
-            inserthistory(new_item_id, GLOBAL_USER_EMAIL, "Item added on " + datetime.today().strftime('%Y-%m-%d') + "\n\nInitital Details;\n" + 
-                "Name: " + item_name + "\nLocation: " + turned_in_at + "\nDescription: " + description)
+
+            inserthistory(new_item_id, email, "Item added on " + datetime.today().strftime('%Y-%m-%d') + "\n\nInitital Details;\n" +
+                          "Name: " + item_name + "\nLocation: " + turned_in_at + "\nDescription: " + description)
 
             # Remove the file after it's been inserted into the database
             os.remove(file_path)
@@ -1500,6 +1507,10 @@ def view_item(item_id):
 
 @ app.route('/item/archive/<int:item_id>', methods=['POST'])
 def archive_item_endpoint(item_id):
+    email = session['email']
+    if email is None:
+        return jsonify({'error': "please log in"}), 401
+
     try:
         conn = sqlite3.connect(ITEMS_DB)
         cursor = conn.cursor()
@@ -1508,7 +1519,8 @@ def archive_item_endpoint(item_id):
         conn.commit()
         cursor.close()
         conn.close()
-        inserthistory(item_id, GLOBAL_USER_EMAIL, "Item archived on " + datetime.today().strftime('%Y-%m-%d'))
+        inserthistory(item_id, email,
+                      "Item archived on " + datetime.today().strftime('%Y-%m-%d'))
         return jsonify({'message': 'Item archived successfully'}), 200
     except Exception as e:
         app.logger.error(f"Error archiving item: {e}")
@@ -1519,6 +1531,9 @@ def archive_item_endpoint(item_id):
 
 @ app.route('/item/unarchive/<int:item_id>', methods=['POST'])
 def unarchive_item_endpoint(item_id):
+    email = session['email']
+    if email is None:
+        return jsonify({'error': "please log in"}), 401
     try:
         conn = sqlite3.connect(ITEMS_DB)
         cursor = conn.cursor()
@@ -1527,7 +1542,8 @@ def unarchive_item_endpoint(item_id):
         conn.commit()
         cursor.close()
         conn.close()
-        inserthistory(item_id, GLOBAL_USER_EMAIL, "Item un-archived on " + datetime.today().strftime('%Y-%m-%d'))
+        inserthistory(item_id, email,
+                      "Item un-archived on " + datetime.today().strftime('%Y-%m-%d'))
         return jsonify({'message': 'Item unarchived successfully'}), 200
     except Exception as e:
         app.logger.error(f"Error unarchiving item: {e}")
@@ -1540,6 +1556,10 @@ def update_item(item_id):
 
     conn = create_connection_items(ITEMS_DB)
     cursor = conn.cursor()
+
+    email = session['email']
+    if email is None:
+        return jsonify({'error': "please log in"}), 401
 
     try:
         # Fetch the current item data
@@ -1576,10 +1596,10 @@ def update_item(item_id):
         ''', (item_name, color, brand, found_at, turned_in_at, description, image_data, item_id))
 
         conn.commit()
-        
-        inserthistory(item_id, GLOBAL_USER_EMAIL, "Item modified on " + datetime.today().strftime('%Y-%m-%d') + "\n\nUpdated Details;\n" + 
-            "Name: " + item_name + "\nLocation: " + turned_in_at + "\nDescription: " + description)
-        
+
+        inserthistory(item_id, email, "Item modified on " + datetime.today().strftime('%Y-%m-%d') + "\n\nUpdated Details;\n" +
+                      "Name: " + item_name + "\nLocation: " + turned_in_at + "\nDescription: " + description)
+
         return jsonify({'message': 'Item updated successfully'}), 200
 
     except Exception as e:
@@ -1790,6 +1810,7 @@ def get_all_claimrequests_student(email):
     conn.close()
     return claim_requests
 
+
 def get_all_itemhistory_staff():
     conn = create_connection_items(ITEMS_DB)
     cursor = conn.cursor()
@@ -1986,8 +2007,8 @@ def view_claim(item_id):
         app.logger.warning("Claim with ID %(item_id)s not found", {
                            "item_id": item_id})
         return jsonify({'error': 'Item not found'}), 404
-    
-    
+
+
 @ app.route('/allitemhistory-staff', methods=['GET'])
 def view_all_history():
     app.logger.info("Fetching all history")
@@ -2005,6 +2026,7 @@ def view_all_history():
         })
 
     return jsonify(hist_list), 200
+
 
 @ app.route('/individual-itemhistory-staff/<int:item_id>', methods=['GET'])
 def view_history(item_id):
@@ -2032,6 +2054,11 @@ def approve_claim(claim_id):
     location = item[5]
     name = item[1]
     claimed_email = claim[3]
+
+    email = session['email']
+    if email is None:
+        return jsonify({'error': "please log in"}), 401
+
     try:
         # Update claim status to 'approved'
         cursor.execute(
@@ -2064,8 +2091,9 @@ def approve_claim(claim_id):
 
         mail.send(msg)
         app.logger.info("Message sent!")
-        
-        inserthistory(claim_id, GLOBAL_USER_EMAIL, "Item claimed on " + datetime.today().strftime('%Y-%m-%d'))
+
+        inserthistory(claim_id, email,
+                      "Item claimed on " + datetime.today().strftime('%Y-%m-%d'))
 
         return jsonify({'message': 'Claim approved and item removed successfully'}), 200
     except sqlite3.Error:
