@@ -26,6 +26,18 @@ const ViewClaimRequests = () => {
     fetchClaimRequests();
   }, []);
 
+  const getItemStatus = (status) => {
+    const statusMapping = {
+      0: "Preregistered item",
+      1: "Unclaimed item",
+      2: "Claim request has been sent",
+      3: "Item has been claimed",
+      4: "Item dispute in progress",
+      5: "Archived",
+    };
+    return statusMapping[status] || "Unknown status";
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -65,7 +77,7 @@ const ViewClaimRequests = () => {
                 <strong>Date Found:</strong> {item.Date}
               </p>
               <p>
-                <strong>Status:</strong> Claim request submitted
+                <strong>Status:</strong> {getItemStatus(item.ItemStatus)}
               </p>
             </div>
             <div className="claim-details">

@@ -18,4 +18,15 @@
   .back-button:hover {
     background-color: #45a049;
   }
+
+  .instructions-link {
+    color: #0056b3;
+    text-decoration: underline;
+    font-weight: bold;
+  }
+  
+  .instructions-link:hover {
+    color: #003a8c;
+  }
+  
   
