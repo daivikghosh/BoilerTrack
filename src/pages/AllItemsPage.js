@@ -220,6 +220,9 @@ function AllItemsPage() {
         >
           View Your Claim Requests
         </Link>
+        <Link to="/help-desk" className="page-button">
+          Help Desk
+        </Link>
         <Link to="/FeedbackForm" className="page-button">
           Leave Feedback
         </Link>

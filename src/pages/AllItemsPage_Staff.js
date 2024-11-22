@@ -176,6 +176,14 @@ function AllItemsPage() {
         <Link to="/unclaimed-item-template" className="page-button">
           Share to Instagram
         </Link>
+
+        <Link to="/allitemhistory-staff" className="page-button">
+          Item History Logs
+        </Link>
+
+        <Link to="/upload-qr-code" className="page-button">
+          Scan Pre-registered QR code
+        </Link>
       </div>
 
       <div className="main-content">
