@@ -239,7 +239,7 @@ function AllItemsPage() {
                   </Link>
                 </div>
                 <div className="buttons-container-2"></div>
-                  <Link to={`/messages/${item.ItemID}`}>
+                  <Link to={`/staff-messages/${item.ItemID}`}>
                       <button className="button modify-button">Check Dispute Messages</button>
                   </Link>
                 </div>

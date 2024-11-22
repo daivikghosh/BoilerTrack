@@ -3377,7 +3377,7 @@ def upload_qr_code():
     
 @app.route('/messages/<int:dispute_id>', methods=['GET', 'POST'])
 def handle_messages(dispute_id):
-    conn = sqlite3.connect(DISPUTES_DB)
+    conn = sqlite3.connect(ITEMS_DB)
     cursor = conn.cursor()
     
     if request.method == 'GET':
@@ -3399,65 +3399,81 @@ def handle_messages(dispute_id):
         return jsonify({"message": "Message sent successfully"}), 201
 
 @app.route('/messages/<int:dispute_id>', methods=['POST'])
-def send_message(dispute_id):
+def student_send_message(dispute_id):
     """
-    Handle sending a message related to a specific dispute.
-
-    Args:
-        dispute_id (int): The ID of the dispute the message is related to.
-
-    Returns:
-        Response: A JSON response indicating success or failure.
+    Handle student sending a message for a dispute.
+    Saves the message in the database without sending an email.
     """
-    conn = sqlite3.connect(DISPUTES_DB)
+    conn = sqlite3.connect(ITEMS_DB)
     cursor = conn.cursor()
 
     try:
-        # Get the JSON data from the request
         data = request.json
         text = data.get('message', '').strip()
 
-        # Validate message content
+        # Validate the message
         if not text:
             return jsonify({"error": "Message cannot be empty"}), 400
-
-        # Determine the sender (user or staff)
-        sender = 'user' if 'email' in session else 'staff'
 
         # Insert the message into the database
         cursor.execute(
             "INSERT INTO Messages (DisputeID, Sender, Text) VALUES (?, ?, ?)",
-            (dispute_id, sender, text)
+            (dispute_id, "user", text),
         )
         conn.commit()
-
-        # Fetch recipient email based on sender
-        if sender == 'user':
-            cursor.execute(
-                "SELECT staff_email FROM Disputes WHERE DisputeID = ?", (dispute_id,)
-            )
-            recipient = cursor.fetchone()
-        else:  # Sender is staff
-            cursor.execute(
-                "SELECT user_email FROM Disputes WHERE DisputeID = ?", (dispute_id,)
-            )
-            recipient = cursor.fetchone()
-
-        if not recipient:
-            return jsonify({"error": "Dispute not found or recipient unavailable"}), 404
-
-        recipient_email = recipient[0]
-
-        # Send an email notification about the new message
-        subject = "New Message Regarding Your Dispute"
-        message_body = f"You have received a new message regarding dispute #{dispute_id}:<br><br>{text}"
-        send_mail([(recipient_email, message_body)], subject)
-
         return jsonify({"message": "Message sent successfully"}), 201
     except sqlite3.Error as e:
         return jsonify({"error": f"Database error: {e}"}), 500
     finally:
         conn.close()
+
+@app.route('/staff-messages/<int:item_id>', methods=['POST'])
+def staff_messages(item_id):
+    """
+    Handle staff sending a response for an item dispute.
+    Sends the response as an email and saves it to the database.
+    """
+    conn = sqlite3.connect(ITEMS_DB)
+    cursor = conn.cursor()
+
+    try:
+        data = request.json
+        text = data.get('message', '').strip()
+
+        # Validate the message
+        if not text:
+            return jsonify({"error": "Message cannot be empty"}), 400
+
+        # Insert the message into the Messages table
+        cursor.execute(
+            "INSERT INTO Messages (DisputeID, Sender, Text) VALUES (?, ?, ?)",
+            (item_id, "staff", text),
+        )
+        conn.commit()
+
+        # Fetch the email of the student who filed the dispute
+        cursor.execute(
+            "SELECT DisputeBy FROM ClaimDisputes WHERE ItemID = ?", (item_id,)
+        )
+        recipient = cursor.fetchone()
+        if not recipient:
+            return jsonify({"error": "Recipient not found"}), 404
+
+        student_email = recipient[0]
+
+        # Send an email notification
+        subject = f"Response to Your Item Dispute #{item_id}"
+        message_body = f"Staff has responded to your dispute with the following message:<br><br>{text}"
+        send_mail([(student_email, message_body)], subject)
+
+        return jsonify({"message": "Message sent and email notification delivered"}), 201
+
+    except sqlite3.Error as e:
+        app.logger.error(f"Database error: {e}")
+        return jsonify({"error": f"Database error: {e}"}), 500
+    finally:
+        conn.close()
+
 
 if __name__ == '__main__':
     if not os.path.exists(os.path.dirname(USERS_DB)):

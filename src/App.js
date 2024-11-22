@@ -48,7 +48,8 @@ import StaffQRCodeUploadForm from "./components/StaffQRCodeUploadForm/StaffQRCod
 import UnclaimedItemTemplate from "./components/UnclaimedItemTemplate/UnclaimedItemTemplate.js";
 import StaffItemTemplate from "./components/StaffItemTemplate/StaffItemTemplate.js";
 import HelpDeskPage from "./pages/HelpDeskPage";
-import Messages from "./components/Messages/Messages.js";
+import StudentMessages from "./components/Messages/StudentMessages.js";
+import StaffMessages from "./components/Messages/StaffMessages.js";
 
 const App = () => {
   return (
@@ -147,7 +148,8 @@ const App = () => {
         />
         <Route path="/template/:itemId" element={<StaffItemTemplate />} />
         <Route path="/help-desk" element={<HelpDeskPage />} />
-        <Route path="/messages/:itemId" element={<Messages />} />
+        <Route path="/student-messages/:id" element={<StudentMessages />} />
+        <Route path="/staff-messages/:id" element={<StaffMessages />} />
       </Routes>
     </Router>
   );

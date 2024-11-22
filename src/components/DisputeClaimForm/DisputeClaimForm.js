@@ -116,7 +116,7 @@ const DisputeClaimForm = () => {
 
       <button
         className="message-button"
-        onClick={() => navigate(`/messages/${id}`)}
+        onClick={() => navigate(`/student-messages/${id}`)}
       >
         Communicate with Help Desk
       </button>
