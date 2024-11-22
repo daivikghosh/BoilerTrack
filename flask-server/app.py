@@ -1830,9 +1830,9 @@ def get_itemhistory_by_id(item_id):
 
 
 @ app.route('/allclaim-requests-student/<string:emailId>', methods=['GET'])
-def view_all_requests_student(email_id):
+def view_all_requests_student(emailId):
     app.logger.info("Fetching all claims")
-    claims = get_all_claimrequests_student(email_id)
+    claims = get_all_claimrequests_student(emailId)
     claims_list = []
 
     for item in claims:
