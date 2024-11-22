@@ -108,11 +108,7 @@ const UserProfilePage = () => {
         handleSaveClick={handleSaveClick}
       />
 
-      <div className="additional-buttons">
-        <button onClick={handleViewClaimRequests}>View Claim Requests</button>
-        {/* You can add the "My Registered Items" button similarly */}
-        <button onClick={handleViewRegistedItems}>My Registered Items</button>
-      </div>
+      
     </div>
   );
 };
