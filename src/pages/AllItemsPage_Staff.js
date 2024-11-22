@@ -219,6 +219,7 @@ function AllItemsPage() {
                 />
                 <h3>{item.ItemName}</h3>
                 <p>{item.Description}</p>
+                <p>{item.LocationTurnedIn}</p>
                 <div className="keywords-container">
                   <span className="keyword">Tag1</span>
                   <span className="keyword">Tag2</span>
