@@ -6,3 +6,5 @@ python-dotenv==1.0.1
 apscheduler==3.10.4
 flask_mail==0.10.0
 google-cloud-vision==3.8.1
+cachelib==0.13.0
+Flask-Session[cachelib]==0.8.0

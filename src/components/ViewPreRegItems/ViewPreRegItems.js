@@ -18,7 +18,9 @@ const ViewPreRegItems = () => {
         setLoading(false);
       } catch (err) {
         console.error("Error fetching pre-registered items:", err);
-        setError("Failed to load pre-registered items. Please try again later.");
+        setError(
+          "Failed to load pre-registered items. Please try again later.",
+        );
         setLoading(false);
       }
     };
@@ -33,14 +35,15 @@ const ViewPreRegItems = () => {
       await axios.post(
         "/delete-pre-reg-item",
         { itemId },
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } },
       );
       alert("Item deleted successfully!");
       // if error
 
-
       // Update the UI by filtering out the deleted item
-      setPreRegItems(preRegItems.filter((item) => item.pre_reg_item_id !== itemId));
+      setPreRegItems(
+        preRegItems.filter((item) => item.pre_reg_item_id !== itemId),
+      );
     } catch (err) {
       console.error("Error deleting item:", err);
       alert("Failed to delete item. Please try again later.");
@@ -106,16 +109,15 @@ const ViewPreRegItems = () => {
                 >
                   Download QR Code
                 </a>
-              
-              <button
-                className="delete-button"
-                onClick={() => deleteItem(item.pre_reg_item_id)}
-              >
-                Delete Item
-              </button>
-            </div>
-            </div>
 
+                <button
+                  className="delete-button"
+                  onClick={() => deleteItem(item.pre_reg_item_id)}
+                >
+                  Delete Item
+                </button>
+              </div>
+            </div>
           ))
         ) : (
           <p>No pre-registered items found.</p>
