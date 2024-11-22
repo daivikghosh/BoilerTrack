@@ -27,6 +27,8 @@ from keyword_gen import (get_sorted_descriptions_or_logos, image_keywords,
                          parse_keywords, parse_logos)
 from PreregistedItemsdb import insert_preregistered_item
 from werkzeug.utils import secure_filename
+from AddItemHistory import inserthistory
+
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -499,7 +501,31 @@ def fetch_all_items():
         app.logger.error(f"Error fetching all items: {e}")
         return jsonify({"error": "Failed to fetch found items"}), 500
 
+@app.route('/delete-pre-reg-item', methods=['POST'])
+def delete_pre_reg_item():
+    try:
+        # Parse the JSON body
+        data = request.get_json()
+        app.logger.info(f"Received data: {data}")
 
+        # Validate itemId
+        item_id = data.get('itemId')
+        if not item_id:
+            return jsonify({"error": "Item ID is required"}), 400
+
+        # Perform database operation
+        conn = sqlite3.connect(PREREG_DB)
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM PREREGISTERED WHERE pre_reg_item_id = ?', (item_id,))
+        conn.commit()
+        conn.close()
+
+        return jsonify({"message": "Item deleted successfully"}), 200
+    except Exception as e:
+        app.logger.error(f"Error deleting item: {e}")
+        return jsonify({"error": str(e)}), 500
+
+    
 @ app.route('/pre-registered-items', methods=['GET'])
 def get_pre_registered_items():
     """
@@ -1015,6 +1041,9 @@ def add_item():
             app.logger.info(
                 f"New item added: {item_name}, {color}, {brand}, {found_at}, {turned_in_at}, {description}")
             app.logger.info(f"Image saved at: {file_path}")
+            
+            inserthistory(new_item_id, GLOBAL_USER_EMAIL, "Item added on " + datetime.today().strftime('%Y-%m-%d') + "\n\nInitital Details;\n" + 
+                "Name: " + item_name + "\nLocation: " + turned_in_at + "\nDescription: " + description)
 
             # Remove the file after it's been inserted into the database
             os.remove(file_path)
@@ -1479,6 +1508,7 @@ def archive_item_endpoint(item_id):
         conn.commit()
         cursor.close()
         conn.close()
+        inserthistory(item_id, GLOBAL_USER_EMAIL, "Item archived on " + datetime.today().strftime('%Y-%m-%d'))
         return jsonify({'message': 'Item archived successfully'}), 200
     except Exception as e:
         app.logger.error(f"Error archiving item: {e}")
@@ -1497,6 +1527,7 @@ def unarchive_item_endpoint(item_id):
         conn.commit()
         cursor.close()
         conn.close()
+        inserthistory(item_id, GLOBAL_USER_EMAIL, "Item un-archived on " + datetime.today().strftime('%Y-%m-%d'))
         return jsonify({'message': 'Item unarchived successfully'}), 200
     except Exception as e:
         app.logger.error(f"Error unarchiving item: {e}")
@@ -1545,6 +1576,10 @@ def update_item(item_id):
         ''', (item_name, color, brand, found_at, turned_in_at, description, image_data, item_id))
 
         conn.commit()
+        
+        inserthistory(item_id, GLOBAL_USER_EMAIL, "Item modified on " + datetime.today().strftime('%Y-%m-%d') + "\n\nUpdated Details;\n" + 
+            "Name: " + item_name + "\nLocation: " + turned_in_at + "\nDescription: " + description)
+        
         return jsonify({'message': 'Item updated successfully'}), 200
 
     except Exception as e:
@@ -1755,6 +1790,23 @@ def get_all_claimrequests_student(email):
     conn.close()
     return claim_requests
 
+def get_all_itemhistory_staff():
+    conn = create_connection_items(ITEMS_DB)
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT ItemID FROM ITEMHISTORY")
+    claim_requests = cursor.fetchall()
+    conn.close()
+    return claim_requests
+
+
+def get_itemhistory_by_id(item_id):
+    conn = create_connection_items(ITEMS_DB)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM ITEMHISTORY WHERE ItemID = ?", (item_id,))
+    claim_request = cursor.fetchall()
+    conn.close()
+    return claim_request
+
 
 @ app.route('/allclaim-requests-student/<string:emailId>', methods=['GET'])
 def view_all_requests_student(email_id):
@@ -1934,6 +1986,40 @@ def view_claim(item_id):
         app.logger.warning("Claim with ID %(item_id)s not found", {
                            "item_id": item_id})
         return jsonify({'error': 'Item not found'}), 404
+    
+    
+@ app.route('/allitemhistory-staff', methods=['GET'])
+def view_all_history():
+    app.logger.info("Fetching all history")
+    hist = get_all_itemhistory_staff()
+    hist_list = []
+
+    for item in hist:
+
+        item_deets = get_item_by_id(item[0])
+        item_name = item_deets[1]
+
+        hist_list.append({
+            'ItemID': item[0],
+            'ItemName': item_name
+        })
+
+    return jsonify(hist_list), 200
+
+@ app.route('/individual-itemhistory-staff/<int:item_id>', methods=['GET'])
+def view_history(item_id):
+    hist = get_itemhistory_by_id(item_id)
+    hist_list = []
+
+    for item in hist:
+
+        hist_list.append({
+            'ItemID': item[0],
+            'UserEmail': item[1],
+            'Change': item[2]
+        })
+
+    return jsonify(hist_list), 200
 
 
 @ app.route('/individual-request-staff/<int:claim_id>/approve', methods=['POST'])
@@ -1978,6 +2064,8 @@ def approve_claim(claim_id):
 
         mail.send(msg)
         app.logger.info("Message sent!")
+        
+        inserthistory(claim_id, GLOBAL_USER_EMAIL, "Item claimed on " + datetime.today().strftime('%Y-%m-%d'))
 
         return jsonify({'message': 'Claim approved and item removed successfully'}), 200
     except sqlite3.Error:

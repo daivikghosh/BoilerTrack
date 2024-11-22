@@ -1,0 +1,19 @@
+:root {
+  /* Primary Colors */
+  --primary-gold: #d4a72b;
+  --primary-black: #1c1c1c;
+
+  /* Secondary Colors */
+  --secondary-gray: #b3b3b3;
+  --secondary-light-gray: #f0f0f0;
+  --secondary-dark-gray: #707070;
+
+  /* Accent Colors */
+  --accent-yellow: #f1c232;
+  --accent-white: #ffffff;
+  --accent-blue: #2a82da;
+
+  /* Status Colors */
+  --success-green: #5ba960;
+  --error-red: #e04b48;
+}

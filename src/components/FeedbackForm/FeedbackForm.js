@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import "./FeedbackForm.css";
+import "../../styles/colors.css";
 
 function FeedbackForm() {
   const [description, setDescription] = useState("");
@@ -19,9 +20,13 @@ function FeedbackForm() {
     }
 
     try {
-      await axios.post("/feedback", { description }, {
-        headers: { "Content-Type": "application/json" },
-      });
+      await axios.post(
+        "/feedback",
+        { description },
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      );
 
       alert("Feedback submitted successfully!");
       setDescription(""); // Clear the form

@@ -102,3 +102,21 @@
 .instructions-button:hover {
   background-color: #000000;
 }
+
+.delete-button {
+  display: inline-block;
+    margin-top: 8px; /* Add some space between the QR code and the button */
+    padding: 8px 12px;
+    background-color: #ff4d4f;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 55%;
+}
+
+.delete-button:hover {
+  background-color: #d9363e;
+}
+
