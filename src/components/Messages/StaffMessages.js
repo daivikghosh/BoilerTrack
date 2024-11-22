@@ -37,11 +37,14 @@ const StaffMessages = () => {
     <div>
       <h2>Messages for Dispute #{id}</h2>
       <div>
-        {messages.map((msg, index) => (
-          <div key={index}>
-            <strong>{msg.sender === "user" ? "Student" : "You"}:</strong> {msg.text}
-          </div>
-        ))}
+      {messages.map((msg, index) => (
+        <div key={index}>
+          <strong>
+            {msg.sender === "user" ? `Student (${msg.email})` : "You"}:
+          </strong>{" "}
+          {msg.text}
+        </div>
+      ))}
       </div>
       <textarea
         value={newMessage}

@@ -3379,59 +3379,57 @@ def upload_qr_code():
 def handle_messages(dispute_id):
     conn = sqlite3.connect(ITEMS_DB)
     cursor = conn.cursor()
-    
-    if request.method == 'GET':
-        cursor.execute("SELECT Sender, Text, Timestamp FROM Messages WHERE DisputeID = ? ORDER BY Timestamp", (dispute_id,))
-        messages = cursor.fetchall()
-        conn.close()
-        return jsonify([{"sender": msg[0], "text": msg[1], "timestamp": msg[2]} for msg in messages]), 200
-    
-    if request.method == 'POST':
-        data = request.json
-        sender = 'user' if 'email' in session else 'staff'
-        text = data.get('message', '').strip()
-        if not text:
-            conn.close()
-            return jsonify({"error": "Message cannot be empty"}), 400
-        cursor.execute("INSERT INTO Messages (DisputeID, Sender, Text) VALUES (?, ?, ?)", (dispute_id, sender, text))
-        conn.commit()
-        conn.close()
-        return jsonify({"message": "Message sent successfully"}), 201
-
-@app.route('/messages/<int:dispute_id>', methods=['POST'])
-def student_send_message(dispute_id):
-    """
-    Handle student sending a message for a dispute.
-    Saves the message in the database without sending an email.
-    """
-    conn = sqlite3.connect(ITEMS_DB)
-    cursor = conn.cursor()
 
     try:
-        data = request.json
-        text = data.get('message', '').strip()
+        if request.method == 'GET':
+            # Retrieve all messages for the dispute
+            cursor.execute(
+                "SELECT Sender, Text, Timestamp, Email FROM Messages WHERE DisputeID = ? ORDER BY Timestamp",
+                (dispute_id,),
+            )
+            messages = cursor.fetchall()
+            conn.close()
+            return jsonify(
+                [
+                    {
+                        "sender": msg[0],
+                        "text": msg[1],
+                        "timestamp": msg[2],
+                        "email": msg[3],
+                    }
+                    for msg in messages
+                ]
+            ), 200
 
-        # Validate the message
-        if not text:
-            return jsonify({"error": "Message cannot be empty"}), 400
+        if request.method == 'POST':
+            # Add a new message to the Messages table
+            data = request.json
+            sender = "user" if "email" in session else "staff"
+            text = data.get("message", "").strip()
+            if not text:
+                return jsonify({"error": "Message cannot be empty"}), 400
 
-        # Insert the message into the database
-        cursor.execute(
-            "INSERT INTO Messages (DisputeID, Sender, Text) VALUES (?, ?, ?)",
-            (dispute_id, "user", text),
-        )
-        conn.commit()
-        return jsonify({"message": "Message sent successfully"}), 201
+            sender_email = session.get("email") if sender == "user" else None
+
+            cursor.execute(
+                "INSERT INTO Messages (DisputeID, Sender, Text, Email) VALUES (?, ?, ?, ?)",
+                (dispute_id, sender, text, sender_email),
+            )
+            conn.commit()
+            return jsonify({"message": "Message sent successfully"}), 201
+
     except sqlite3.Error as e:
+        app.logger.error(f"Database error: {e}")
         return jsonify({"error": f"Database error: {e}"}), 500
     finally:
         conn.close()
+
 
 @app.route('/staff-messages/<int:item_id>', methods=['POST'])
 def staff_messages(item_id):
     """
     Handle staff sending a response for an item dispute.
-    Sends the response as an email and saves it to the database.
+    Sends the response as an email to all students who have messaged about the item.
     """
     conn = sqlite3.connect(ITEMS_DB)
     cursor = conn.cursor()
@@ -3451,22 +3449,23 @@ def staff_messages(item_id):
         )
         conn.commit()
 
-        # Fetch the email of the student who filed the dispute
+        # Fetch emails of all students who have disputes for the item
         cursor.execute(
-            "SELECT DisputeBy FROM ClaimDisputes WHERE ItemID = ?", (item_id,)
+            "SELECT DISTINCT DisputeBy FROM ClaimDisputes WHERE ItemID = ?", (item_id,)
         )
-        recipient = cursor.fetchone()
-        if not recipient:
-            return jsonify({"error": "Recipient not found"}), 404
+        recipients = cursor.fetchall()
 
-        student_email = recipient[0]
+        if not recipients:
+            return jsonify({"error": "No recipients found for this item"}), 404
 
-        # Send an email notification
+        # Send an email to each student
         subject = f"Response to Your Item Dispute #{item_id}"
         message_body = f"Staff has responded to your dispute with the following message:<br><br>{text}"
-        send_mail([(student_email, message_body)], subject)
+        for recipient in recipients:
+            student_email = recipient[0]
+            send_mail([(student_email, message_body)], subject)
 
-        return jsonify({"message": "Message sent and email notification delivered"}), 201
+        return jsonify({"message": "Message sent and email notifications delivered"}), 201
 
     except sqlite3.Error as e:
         app.logger.error(f"Database error: {e}")

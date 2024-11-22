@@ -163,6 +163,9 @@ function AllItemsPage() {
         <Link to="/map-view" className="page-button">
           View Map
         </Link>
+        <Link to="/FeedbackForm" className="page-button">
+          Leave Feedback
+        </Link>
       </div>
 
       <div className="main-content">
