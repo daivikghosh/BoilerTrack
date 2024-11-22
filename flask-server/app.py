@@ -1820,14 +1820,24 @@ def send_request():
 
         # Get other form data
         itemid = request.form.get('itemId')
+
         comments = request.form.get('comments')
 
         item = get_item_by_id(itemid)
         staffemail = item[5] + "@googlemail.com"
-        status = 1
+        status = 2
 
         try:
             insertclaim(itemid, comments, file_path, email, status)
+            # connect to founditems db and change to status to 2
+            conn = sqlite3.connect(ITEMS_DB)
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE FOUNDITEMS SET ItemStatus = 2 WHERE ItemID = ?", (itemid,))
+            conn.commit()
+            cursor.close()
+            conn.close()    
+            
 
             # Sending an email
             emailstr1 = f"Hello there<br><br>A new claim request has been submitted and is awaiting review...<br><br>Item Id: {itemid}<br><br>Reason Given: {comments}"
