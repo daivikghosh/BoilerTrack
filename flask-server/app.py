@@ -118,7 +118,19 @@ def allowed_file(filename):
 
 
 def get_all_claim_requests(email):
-    """Fetch all claim requests from the ClaimRequest database."""
+    """
+    Fetch all claim requests from the ClaimRequest database for a specific user.
+
+    Args:
+        email (str): The email address of the user whose claim requests are to be fetched.
+
+    Returns:
+        list: A list of tuples, where each tuple represents a claim request. 
+              The structure of each tuple corresponds to the columns in the CLAIMREQUETS table.
+
+    Raises:
+        sqlite3.Error: An error occurred while connecting to or querying the database.
+    """
     conn = create_connection_items(CLAIMS_DB)
     cursor = conn.cursor()
     cursor.execute(
@@ -335,7 +347,7 @@ def home():
     :return: A JSON response with a welcome message.
     """
     session['email'] = None
-    
+
     app.logger.info("Accessed root route")
     return jsonify({"message": "Welcome to the Lost and Found API"}), 200
 
@@ -507,6 +519,18 @@ def fetch_all_items():
 
 @app.route('/delete-pre-reg-item', methods=['POST'])
 def delete_pre_reg_item():
+    """
+    Deletes a pre-registered item from the database based on the provided item ID.
+
+    This function expects a POST request with a JSON body containing the key 'itemId'.
+    It attempts to delete the corresponding item from the PREREGISTERED table in the database.
+
+    If the item ID is not provided, it returns a 400 Bad Request response.
+    If an error occurs during the database operation, it returns a 500 Internal Server Error response.
+
+    :return: A JSON response indicating the success or failure of the operation.
+    :rtype: Flask Response
+    """
     try:
         # Parse the JSON body
         data = request.get_json()
@@ -1012,6 +1036,24 @@ def update_item_match():
 
 @ app.route('/items', methods=['POST'])
 def add_item():
+    """
+    Adds a new item to the database along with its associated image and metadata.
+
+    The function expects a POST request with form data containing item details and an image file.
+    It checks if the image file is provided and valid, saves the image to the configured upload folder,
+    and extracts other item details from the form data. It then attempts to insert the item into the database
+    and log the transaction.
+
+    Returns:
+        On success, a JSON response with a success message, filename, and item ID.
+        On failure, a JSON response with an error message and appropriate status code.
+
+    Raises:
+        400: If no image file is provided, the filename is empty, or the file type is invalid.
+        401: If the user is not logged in (i.e., no email in the session).
+        500: If there is an error inserting the item into the database.
+
+    """
     app.logger.info("Received POST request to /items")
     app.logger.debug(f"Request form data: {request.form}")
     app.logger.debug(f"Request files: {request.files}")
@@ -1069,26 +1111,29 @@ def add_item():
 
 @ app.route('/keyword-gen', methods=['POST'])
 def get_keywords():
+    """
+    Adds a new item to the database along with its associated image and metadata.
 
-    # username = request.form.get('email')
-    # password = request.form.get('password')
+    The function expects a POST request with form data containing item details and an image file.
+    It checks if the image file is provided and valid, saves the image to the configured upload folder,
+    and extracts other item details from the form data. It then attempts to insert the item into the database
+    and log the transaction.
 
-    # print("username:", username)
-    # print("password:", password)
+    Returns:
+        On success, a JSON response with a success message, filename, and item ID.
+        On failure, a JSON response with an error message and appropriate status code.
 
-    # conn = create_connection_users()
-    # if not conn:
-    #     return jsonify({'error': 'Failed to connect to database'}), 500
-    # cur = conn.cursor()
+    Raises:
+        400: If no image file is provided, the filename is empty, or the file type is invalid.
+        401: If the user is not logged in (i.e., no email in the session).
+        500: If there is an error inserting the item into the database.
 
-    # cur.execute('''
-    #     SELECT * FROM UserListing WHERE Email = ? AND Password = ? AND isDeleted = 0
-    # ''', (username, password))
+    """
 
-    # row = cur.fetchone()
-    # conn.close()
-    # if row is None:
-    #     return jsonify({'error': 'Invalid username or password'}), 401
+    email = session['email']
+
+    if email is None:
+        return jsonify({'error': 'please log in'}), 401
 
     if 'image' not in request.files:
         app.logger.warning("keyword-gen: no image in request")
@@ -1127,6 +1172,22 @@ def get_keywords():
 
 @ app.route('/signup', methods=['POST'])
 def signup():
+    """
+    Handles user signup by creating a new user in the database.
+
+    This function expects a JSON payload with the following fields:
+    - email (str): The user's email address.
+    - password (str): The user's password.
+    - name (str): The user's name.
+    - isStudent (bool, optional): Indicates if the user is a student. Defaults to False.
+    - isStaff (bool, optional): Indicates if the user is staff. Defaults to False.
+
+    Returns:
+    - If successful, returns a JSON response with a success message and status code 201.
+    - If required fields are missing, returns a JSON response with an error message and status code 400.
+    - If the email already exists, returns a JSON response with an error message and status code 400.
+    - If a database error occurs, returns a JSON response with an error message and status code 500.
+    """
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
@@ -1162,6 +1223,22 @@ def signup():
 
 @ app.route('/login', methods=['POST'])
 def login():
+    """
+    Handle user login.
+
+    This function processes a POST request to log in a user. It expects a JSON payload
+    containing the user's email and password. If the provided credentials are valid
+    and the user is not deleted, it logs the user in and returns their details.
+
+    Parameters:
+    - request (flask.Request): A Flask request object containing the user's email
+                               and password in the JSON body.
+
+    Returns:
+    - flask.Response: A Flask response object containing a JSON payload with a success
+                      message and user details if login is successful, or an error message
+                      if login fails.
+    """
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
@@ -1195,6 +1272,31 @@ def login():
 
 @ app.route('/profile', methods=['GET', 'POST'])
 def user_profile():
+    """
+    Handle requests to get or update a user's profile.
+
+    This endpoint supports both GET and POST methods:
+    - GET: Fetches the profile details (name and pronouns) for a user given their email.
+    - POST: Updates the profile details (name and pronouns) for a user given their email.
+
+    Parameters:
+    - For GET requests: 'email' as a query parameter.
+    - For POST requests: 'email', 'name', and 'pronouns' in the JSON body.
+
+    Returns:
+    - For GET requests:
+      * A JSON object with the user's name and pronouns if the user is found.
+      * A JSON object with an error message if the user is not found or the email is missing.
+
+    - For POST requests:
+      * A JSON object with a success message if the profile is updated.
+      * A JSON object with an error message if the user is not found, the email is missing, or no changes were made.
+
+    Raises:
+    - 400: If the email is not provided.
+    - 404: If the user is not found or no rows are updated in a POST request.
+    - 500: If a database error occurs.
+    """
     if request.method == 'GET':
         email = request.args.get('email')
     else:  # POST
@@ -1417,8 +1519,6 @@ def get_image_base64(image_path):
     with open(image_path, 'rb') as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
 
-# Endpoint to get all items
-
 
 @app.route('/items', methods=['GET'])
 def view_all_items():
@@ -1474,6 +1574,31 @@ def view_all_items():
 
 @ app.route('/item/<int:item_id>', methods=['GET'])
 def view_item(item_id):
+    """
+    Fetches details for a specific item by its ID and returns the item data in JSON format.
+
+    Parameters:
+    item_id (int): The ID of the item to fetch details for.
+
+    Returns:
+    jsonify: A JSON response containing the item data if the item is found, 
+             or an error message if the item is not found.
+
+    The response includes the following fields:
+    - ItemID: The unique identifier of the item.
+    - ItemName: The name of the item.
+    - Color: The color of the item.
+    - Brand: The brand of the item.
+    - LocationFound: The location where the item was found.
+    - LocationTurnedIn: The location where the item was turned in.
+    - Description: A description of the item.
+    - ImageURL: The base64 encoded image data or a placeholder if no image is available.
+    - Archived: A boolean indicating whether the item is archived.
+    - ItemStatus: The current status of the item.
+    - Date: The date the item was recorded.
+
+    If the item with the specified ID is not found, a 404 error is returned with a message.
+    """
     app.logger.info(f"Fetching details for item ID: {item_id}")
     item = get_item_by_id(item_id)
 
@@ -1505,11 +1630,21 @@ def view_item(item_id):
         return jsonify({'error': 'Item not found'}), 404
 
 
-# archive item
-
-
 @ app.route('/item/archive/<int:item_id>', methods=['POST'])
 def archive_item_endpoint(item_id):
+    """
+    Archives a specific item by setting its 'Archived' status to 1 in the database.
+
+    Parameters:
+    - item_id (int): The ID of the item to be archived.
+
+    Returns:
+    - jsonify: A JSON response indicating the success or failure of the operation.
+
+    Raises:
+    - 401 Unauthorized: If the user is not logged in.
+    - 500 Internal Server Error: If an error occurs while updating the database.
+    """
     email = session['email']
     if email is None:
         return jsonify({'error': "please log in"}), 401
@@ -1529,11 +1664,24 @@ def archive_item_endpoint(item_id):
         app.logger.error(f"Error archiving item: {e}")
         return jsonify({'error': 'Failed to archive item'}), 500
 
-# endpoint to unarchive item
-
 
 @ app.route('/item/unarchive/<int:item_id>', methods=['POST'])
 def unarchive_item_endpoint(item_id):
+    """
+    Unarchives a specified item in the database.
+
+    Args:
+        item_id (int): The ID of the item to be unarchived.
+
+    Returns:
+        jsonify: A JSON response indicating the success or failure of the unarchiving process.
+
+    Raises:
+        Exception: If there is an error during the database operation, it is logged and a 500 error is returned.
+
+    This endpoint requires the user to be logged in. It updates the `Archived` field of the specified item
+    in the `FOUNDITEMS` table to 0, effectively unarchiving it. It also logs the action in the history with the current date.
+    """
     email = session['email']
     if email is None:
         return jsonify({'error': "please log in"}), 401
@@ -1555,6 +1703,28 @@ def unarchive_item_endpoint(item_id):
 
 @ app.route('/item/<int:item_id>', methods=['PUT'])
 def update_item(item_id):
+    """
+    Update an existing item in the database based on the provided item ID.
+
+    This endpoint allows authenticated users to update various attributes of an
+    item, including its name, color, brand, location found, location turned in,
+    description, and image. Only the fields provided in the request will be
+    updated; existing fields will remain unchanged unless explicitly specified.
+
+    Args:
+        item_id (int): The ID of the item to be updated.
+
+    Returns:
+        Response: A JSON response indicating the result of the update operation.
+            - 200 OK: If the item is successfully updated.
+            - 400 Bad Request: If an invalid file type is provided for the image.
+            - 401 Unauthorized: If the user is not logged in.
+            - 404 Not Found: If the item with the specified ID does not exist.
+            - 500 Internal Server Error: If an error occurs while updating the item in the database.
+
+    Raises:
+        Exception: If any error occurs during the database operations.
+    """
     app.logger.info(f"Received PUT request to update item {item_id}")
 
     conn = create_connection_items(ITEMS_DB)
@@ -1616,6 +1786,17 @@ def update_item(item_id):
 
 @ app.route('/claim-item', methods=['POST'])
 def send_request():
+    """
+    Handle a POST request to claim an item.
+
+    This endpoint expects a POST request with form data containing 'itemId' and 'comments',
+    and a file upload for proof of ownership. It saves the file, inserts a claim request into
+    the database, and sends an email notification to both the user and the staff member responsible
+    for the item.
+
+    Returns:
+        jsonify: A JSON response indicating success or failure, along with an appropriate HTTP status code.
+    """
     app.logger.info("Received POST request to /items")
     app.logger.debug(f"Request form data: {request.form}")
     app.logger.debug(f"Request files: {request.files}")
@@ -1685,11 +1866,29 @@ def send_request():
     app.logger.warning("Invalid file type")
     return jsonify({'error': 'Invalid file type'}), 400
 
-# Endpoint to fetch claim requests and associated item details
-
 
 @ app.route('/claim-requests', methods=['GET'])
 def view_claim_requests():
+    """
+    Fetches all claim requests for the logged-in user and combines them with the corresponding found item details.
+
+    This function performs the following steps:
+    1. Retrieves the user's email from the session.
+    2. Checks if the user is logged in by verifying the email.
+    3. Fetches all claim requests associated with the user's email.
+    4. Extracts item IDs from the claim requests.
+    5. Fetches the corresponding found items using the item IDs.
+    6. Creates a map for easy access to found items by their IDs.
+    7. Combines each claim request with the corresponding found item details, including handling image encoding.
+    8. Returns a JSON response containing the combined claim request and found item details.
+
+    Returns:
+        A JSON response with a list of claim requests and their corresponding found item details.
+        If the user is not logged in, returns a JSON response with an error message and a 401 status code.
+
+    Raises:
+        Any database errors are logged internally.
+    """
     app.logger.info("Fetching all claim requests")
     email = session['email']
     if email is None:
@@ -1743,9 +1942,53 @@ def view_claim_requests():
     return jsonify(result), 200
 
 
-# Endpoint to fetch found items by list of item IDs
 @ app.route('/found-items', methods=['POST'])
 def view_found_items():
+    """
+    Fetches details of found items based on the provided item IDs.
+
+    This endpoint accepts a POST request with a JSON payload containing a list of item IDs.
+    It retrieves the details of the items from the database and returns them in a JSON format.
+    If an item's image is stored as bytes, it is base64-encoded. If there is no image, a default image is used.
+
+    Parameters:
+    ----------
+    itemIDs : list
+        A list of item IDs for which details are to be fetched.
+
+    Returns:
+    -------
+    JSON
+        A JSON response containing the details of the found items, including the item ID, name, color,
+        brand, location found, location turned in, description, image URL, item status, and date.
+        If no item IDs are provided, returns a 400 error with an appropriate message.
+
+    Example:
+    -------
+    POST /found-items
+    {
+        "itemIDs": [1, 2, 3]
+    }
+
+    Response:
+    {
+        [
+            {
+                "ItemID": 1,
+                "ItemName": "Laptop",
+                "Color": "Black",
+                "Brand": "Dell",
+                "LocationFound": "Library",
+                "LocationTurnedIn": "Lost and Found Office",
+                "Description": "A black Dell laptop.",
+                "ImageURL": "base64_encoded_string",
+                "ItemStatus": "Found",
+                "Date": "2023-10-01"
+            },
+            ...
+        ]
+    }
+    """
     item_ids = request.json.get('itemIDs', [])
     if not item_ids:
         return jsonify({'error': 'No item IDs provided'}), 400
@@ -1815,6 +2058,17 @@ def get_all_claimrequests_student(email):
 
 
 def get_all_itemhistory_staff():
+    """
+    Fetches a list of distinct ItemIDs from the ITEMHISTORY table.
+
+    This function establishes a connection to the ITEMS_DB database,
+    executes a query to retrieve all unique ItemIDs from the ITEMHISTORY table,
+    and then closes the database connection.
+
+    Returns:
+        list: A list of tuples, where each tuple contains a single ItemID.
+              For example: [(1,), (2,), (3,)]
+    """
     conn = create_connection_items(ITEMS_DB)
     cursor = conn.cursor()
     cursor.execute("SELECT DISTINCT ItemID FROM ITEMHISTORY")
@@ -1824,6 +2078,16 @@ def get_all_itemhistory_staff():
 
 
 def get_itemhistory_by_id(item_id):
+    """
+    Retrieves the history of claims for a specific item from the database.
+
+    Parameters:
+    item_id (int): The ID of the item for which to retrieve the claim history.
+
+    Returns:
+    list of tuples: A list containing tuples of claim history records for the specified item.
+                    Each tuple corresponds to a row in the ITEMHISTORY table.
+    """
     conn = create_connection_items(ITEMS_DB)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM ITEMHISTORY WHERE ItemID = ?", (item_id,))
@@ -1834,6 +2098,17 @@ def get_itemhistory_by_id(item_id):
 
 @ app.route('/allclaim-requests-student/<string:emailId>', methods=['GET'])
 def view_all_requests_student(emailId):
+    """
+    Fetches all claim requests associated with a student identified by the given email ID.
+
+    Parameters:
+    emailId (str): The email ID of the student for whom to fetch claim requests.
+
+    Returns:
+    jsonify: A JSON response containing a list of claim requests with details such as item ID, comments,
+             photo proof, claim status, item name, and location turned in. The response also includes an HTTP
+             status code of 200 indicating success.
+    """
     app.logger.info("Fetching all claims")
     claims = get_all_claimrequests_student(emailId)
     claims_list = []
@@ -1870,6 +2145,17 @@ def view_all_requests_student(emailId):
 
 
 def update_claim(claim_id, comments, file_path):
+    """
+    Updates a claim request in the database with provided comments, photo proof, and sets the claim status to 1.
+
+    Args:
+        claim_id (int): The unique identifier of the claim request to be updated.
+        comments (str): The comments to be added to the claim request.
+        file_path (str): The file path to the photo proof for the claim request.
+
+    Returns:
+        None
+    """
     conn = create_connection_items(CLAIMS_DB)
     cursor = conn.cursor()
     cursor.execute("UPDATE CLAIMREQUETS SET Comments = ?, PhotoProof = ?, ClaimStatus = 1 WHERE ItemID = ?",
@@ -1880,6 +2166,26 @@ def update_claim(claim_id, comments, file_path):
 
 @ app.route('/claim-modify-student/<int:claim_id>', methods=['PUT'])
 def modify_claim(claim_id):
+    """
+    Modify an existing claim by updating its comments and/or attaching a new file.
+
+    Args:
+        claim_id (int): The ID of the claim to be modified.
+
+    Returns:
+        jsonify: A JSON response indicating success or failure.
+
+    This function handles PUT requests to modify an existing claim. It accepts
+    a file and/or comments as input. If neither a file nor comments are provided,
+    it returns an error. The function updates the claim in the database, sends
+    an email notification to the user and the staff member responsible, and
+    returns a success message if the operation is successful. If any step fails,
+    it logs the error and returns a failure message.
+
+    Raises:
+        FileNotFoundError: If the file is not found or cannot be opened.
+        Exception: For any other exceptions that may occur during the process.
+    """
     app.logger.info(f"Received modify request for claim ID: {claim_id}")
     if 'file' not in request.files and 'comments' not in request.form:
         app.logger.warning("No file or comments provided in request")
@@ -1951,6 +2257,17 @@ def modify_claim(claim_id):
 
 @ app.route('/allclaim-requests-staff', methods=['GET'])
 def view_all_requests():
+    """
+    Fetches all claim requests from the database and returns them as a JSON response.
+
+    This endpoint retrieves all claim requests made by staff members, including details
+    such as item ID, comments, photo proof, user email, claim status, item name, and location
+    where the item was turned in. If a photo proof is stored in bytes, it is base64 encoded.
+    If no photo proof is available, a default placeholder image is used.
+
+    Returns:
+        tuple: A tuple containing the JSON response with the claims list and a status code of 200.
+    """
     app.logger.info("Fetching all claims")
     claims = get_all_claimrequests_staff()
     claims_list = []
@@ -1981,6 +2298,28 @@ def view_all_requests():
 
 @ app.route('/individual-request-staff/<int:item_id>', methods=['GET'])
 def view_claim(item_id):
+    """
+    Fetches details for a claim associated with a specific item ID.
+
+    Parameters:
+    item_id (int): The ID of the item for which the claim details are to be fetched.
+
+    Returns:
+    dict: A JSON response containing the claim details if the claim and item exist, or an error message if not found.
+
+    The response includes the following fields:
+    - ItemID (int): The ID of the item.
+    - ItemName (str): The name of the item.
+    - LocationTurnedIn (str): The location where the item was turned in.
+    - Comments (str): Comments related to the claim.
+    - UserEmail (str): The email of the user who made the claim.
+    - PhotoProof (str): Base64-encoded image data of the photo proof, or a placeholder if no image is available.
+    - ClaimStatus (str): The status of the claim.
+    - RejectRationale (str): The rationale for rejecting the claim, if applicable.
+
+    In case the claim is not found, the response will contain:
+    - error (str): A message indicating that the item was not found.
+    """
     app.logger.info("Fetching details for claim for item ID: %(item_id)s", {
                     'item_id': item_id})
     claim = get_claim_by_id(item_id)
@@ -2014,6 +2353,16 @@ def view_claim(item_id):
 
 @ app.route('/allitemhistory-staff', methods=['GET'])
 def view_all_history():
+    """
+    Fetches and returns a list of all item history records for staff.
+
+    This function retrieves all item history records from the database and
+    constructs a list of dictionaries, each containing the item ID and item name.
+
+    Returns:
+        tuple: A tuple containing a JSON response with the list of item history records
+               and an HTTP status code of 200 (OK).
+    """
     app.logger.info("Fetching all history")
     hist = get_all_itemhistory_staff()
     hist_list = []
@@ -2033,6 +2382,21 @@ def view_all_history():
 
 @ app.route('/individual-itemhistory-staff/<int:item_id>', methods=['GET'])
 def view_history(item_id):
+    """
+    Retrieve the history of changes for a specific item identified by item_id.
+
+    Parameters:
+    - item_id (int): The unique identifier of the item whose history is to be retrieved.
+
+    Returns:
+    - A JSON response containing a list of dictionaries, each representing a change in the item's history.
+      Each dictionary contains the following keys:
+        'ItemID' (int): The unique identifier of the item.
+        'UserEmail' (str): The email of the user who made the change.
+        'Change' (str): A description of the change made to the item.
+
+    - HTTP status code 200 on successful retrieval of the history.
+    """
     hist = get_itemhistory_by_id(item_id)
     hist_list = []
 
@@ -2049,6 +2413,26 @@ def view_history(item_id):
 
 @ app.route('/individual-request-staff/<int:claim_id>/approve', methods=['POST'])
 def approve_claim(claim_id):
+    """
+    Approves a claim request for a specific item by a staff member.
+
+    Parameters:
+    - claim_id (int): The unique identifier for the claim request to be approved.
+
+    Returns:
+    - jsonify: A JSON response with a success message and HTTP status code 200
+      if the claim is approved and the item's claim status is updated successfully.
+    - jsonify: A JSON response with an error message and HTTP status code 401
+      if the user is not logged in.
+    - jsonify: A JSON response with an error message and HTTP status code 500
+      if there is a database error during the claim approval process.
+
+    This function handles the approval of a claim request. It updates the claim
+    status of the specified item to 'approved', commits the change to the database,
+    sends an email notification to the requester, and logs the approval in the
+    system history. The function assumes that the staff member is logged in,
+    which is verified by checking the session for a valid email address.
+    """
     conn = create_connection_items(CLAIMS_DB)
     cursor = conn.cursor()
     claim = get_claim_by_id(claim_id)
@@ -2107,6 +2491,18 @@ def approve_claim(claim_id):
 
 @ app.route('/get-processed-claims', methods=['GET'])
 def get_processed_claims():
+    """
+    Fetches all processed claims from the RELEASED table in the processed claims database.
+
+    This endpoint queries the database to retrieve all claims that have been processed and released.
+    The claims are returned as a list of dictionaries, each containing the claim ID, date claimed,
+    user email ID, staff name, and student ID.
+
+    Returns:
+        jsonify(processed_claims_list), 200: A JSON response containing the list of processed claims.
+        jsonify([]), 200: An empty JSON response if no claims are found.
+        jsonify({'error': f'Database error: {str(e)}'}), 500: A JSON response with an error message if a database error occurs.
+    """
     conn = create_connection_items(PROCESSED_CLAIMS_DB)
     cursor = conn.cursor()
     try:
@@ -2136,6 +2532,18 @@ def get_processed_claims():
 
 @ app.route('/get-processed-claim/<int:claim_id>', methods=['GET'])
 def get_processed_claim(claim_id):
+    """
+    Retrieve a processed claim from the database by ClaimID.
+
+    Args:
+        claim_id (int): The ID of the claim to be retrieved.
+
+    Returns:
+        response (tuple): A tuple containing the response and the HTTP status code.
+        - If the claim is found, returns a JSON object with the claim data and a 200 status code.
+        - If the claim is not found, returns a JSON object with an error message and a 404 status code.
+        - If there is a database error, returns a JSON object with an error message and a 500 status code.
+    """
     conn = create_connection_items(PROCESSED_CLAIMS_DB)
     cursor = conn.cursor()
     try:
@@ -2160,6 +2568,28 @@ def get_processed_claim(claim_id):
 
 @ app.route('/edit-processed-claim/<int:claim_id>', methods=['PUT'])
 def edit_processed_claim(claim_id):
+    """
+    Update a processed claim in the database.
+
+    Args:
+        claim_id (int): The ID of the claim to be updated.
+
+    JSON Body:
+        - dateClaimed (str): The date the claim was made.
+        - userEmailID (str): The email ID of the user who made the claim.
+        - staffName (str): The name of the staff member handling the claim.
+        - studentID (int): The ID of the student associated with the claim.
+
+    Returns:
+        jsonify: A JSON response indicating the success or failure of the update operation.
+
+    On success:
+        - status code 200: {'message': 'Processed claim updated successfully'}
+
+    On error:
+        - status code 404: {'error': 'Processed claim not found or no changes made'}
+        - status code 500: {'error': 'Database error: <error message>'}
+    """
     data = request.json
     date_claimed = data.get('dateClaimed')
     user_email_id = data.get('userEmailID')
@@ -2188,6 +2618,21 @@ def edit_processed_claim(claim_id):
 
 @ app.route('/get-release-form/<int:claim_id>', methods=['GET'])
 def get_release_form(claim_id):
+    """
+    Retrieve a release form from the RELEASED table based on the claim ID.
+
+    Parameters:
+    claim_id (int): The unique identifier for the claim.
+
+    Returns:
+    JSON Response: A JSON response containing the release form data if found,
+                   or an error message if not found or if there's a database error.
+
+    HTTP Status Codes:
+    200: OK - Release form found and data returned.
+    404: Not Found - Release form not found for the given claim ID.
+    500: Internal Server Error - Database error occurred.
+    """
     conn = create_connection_items(PROCESSED_CLAIMS_DB)
     cursor = conn.cursor()
     try:
@@ -2240,6 +2685,29 @@ def get_release_form(claim_id):
 
 @ app.route('/submit-release-form', methods=['POST'])
 def submit_release_form():
+    """
+    Handles the submission of a release form via POST request.
+
+    The function expects a JSON payload containing:
+    - claimId (int): The ID of the claim.
+    - dateClaimed (str): The date the item was claimed.
+    - userEmailID (str): The email ID of the user claiming the item.
+    - staffName (str): The name of the staff member facilitating the claim.
+    - studentID (str): The ID of the student claiming the item.
+
+    The function performs the following steps:
+    1. Extracts necessary data from the JSON payload.
+    2. Connects to the database for processed claims.
+    3. Creates the `RELEASED` table if it doesn't exist.
+    4. Inserts the claim data into the `RELEASED` table.
+    5. Retrieves item details corresponding to the `claimId` (which is treated as `ItemID`).
+    6. If the item is found, it adds the item to the `PREREGISTERED` table with default QR code and photo if necessary.
+    7. Returns a success message if the operations are successful.
+    8. Returns an error message if the item is not found or if there is a database error.
+
+    Returns:
+        jsonify: A JSON response containing a success or error message along with an appropriate HTTP status code.
+    """
 
     data = request.json
     claim_id = data.get('claimId')
@@ -2312,6 +2780,17 @@ def submit_release_form():
 
 @ app.route('/individual-request-staff/<int:claim_id>/reject', methods=['POST'])
 def reject_claim(claim_id):
+    """
+    Rejects a claim request, updates its status to 'rejected', and sends an email to the claimant with the rejection rationale.
+
+    Parameters:
+    claim_id (int): The ID of the claim to be rejected.
+
+    Returns:
+    flask.Response: A JSON response indicating success or failure.
+        - On success: {'message': 'Claim rejected and rationale saved'} with status code 200.
+        - On failure: {'error': 'Failed to reject claim and save rationale'} with status code 500.
+    """
     # Get the rationale from the request
     rationale = request.json.get('rationale', '')
     conn = create_connection_items(CLAIMS_DB)
@@ -2359,6 +2838,17 @@ def reject_claim(claim_id):
 
 @ app.route('/individual-request-staff/<int:claim_id>/request-more-info', methods=['POST'])
 def reject_claim_more_info(claim_id):
+    """
+    Handles the request to reject a claim and ask for more information.
+
+    Parameters:
+    - claim_id (int): The ID of the claim to be rejected.
+
+    Returns:
+    - A JSON response indicating the success or failure of the operation.
+      If successful, returns a message indicating that the claim has been rejected and the rationale has been saved with a status code of 200.
+      If an error occurs, returns an error message with a status code of 500.
+    """
     rationale = 'Please provide more information.'
     conn = create_connection_items(CLAIMS_DB)
     cursor = conn.cursor()
@@ -2377,7 +2867,7 @@ def reject_claim_more_info(claim_id):
 
         emailstr1 = f"Hello there<br><br>Your claim request has been rejected<br><br>Item Id: {itemid}<br><br>"
         emailstr2 = f"Here is why your request for the {name} was rejected: <br><br> {rationale}"
-        emailstr3 = f"<br><br>Thank You!<br>~BoilerTrack Devs"
+        emailstr3 = "<br><br>Thank You!<br>~BoilerTrack Devs"
 
         msg = Message("BoilerTrack: Claim Request Rejected",
                       sender="shloksbairagi07@gmail.com",
@@ -2405,6 +2895,30 @@ def reject_claim_more_info(claim_id):
 
 @ app.route('/dispute-claim/<int:item_id>', methods=['POST'])
 def dispute_claim(item_id):
+    """
+    Handles the creation of a dispute claim for a specific item.
+
+    This function expects a POST request with item_id in the URL, and form data containing
+    the reason for the dispute, additional comments, and a dispute photo proof. It connects
+    to two databases: one for claims and another for disputes, to verify the claim and store
+    the dispute details respectively.
+
+    Parameters:
+    - item_id (int): The ID of the item for which the dispute is being claimed.
+
+    Form Data Expected:
+    - reason (str): The reason for the dispute.
+    - notes (str): Additional comments or details about the dispute.
+    - file (FileStorage): The dispute photo proof.
+
+    Returns:
+    - jsonify: A JSON response with a message indicating success or failure.
+        - Success: {"message": "Dispute claim submitted successfully"} with a 201 status code.
+        - Failure: Error messages with appropriate status codes (e.g., 400, 401, 404, 500).
+
+    Raises:
+    - sqlite3.Error: If a database error occurs.
+    """
     try:
         # Connect to the disputes database
         conn = sqlite3.connect(DISPUTES_DB)
@@ -2475,6 +2989,24 @@ def dispute_claim(item_id):
 
 @ app.route('/api/categories', methods=['GET'])
 def get_categories():
+    """
+    Handle the submission of a dispute claim for a specific item.
+
+    This function processes a POST request to submit a dispute claim for an item.
+    It requires the user to be logged in and includes a reason for the dispute, 
+    additional comments, and a dispute photo proof. The function connects to two 
+    databases: one for claims and another for disputes. It checks if the item has 
+    been claimed and then inserts the dispute details into the disputes database.
+
+    Parameters:
+    item_id (int): The ID of the item for which the dispute is being submitted.
+
+    Returns:
+    jsonify: A JSON response indicating the success or failure of the operation.
+             If successful, it returns a message indicating that the dispute claim
+             was submitted successfully. If not, it returns an error message with
+             the corresponding HTTP status code.
+    """
     conn = create_connection_items(ITEMS_DB)
     cursor = conn.cursor()
     try:
