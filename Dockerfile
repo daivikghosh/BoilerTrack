@@ -9,6 +9,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the backend code
 COPY flask-server /app/flask-server
+COPY databases /app/databases
+
+
+#install opencv dependency
+RUN apt update
+RUN apt install -y libglu1-mesa-dev
 
 # Expose the port the backend runs on
 EXPOSE 5000
@@ -25,16 +31,20 @@ WORKDIR /app/frontend
 # Copy package.json and package-lock.json
 COPY package*.json /app/frontend/
 
+
 # Install dependencies
 RUN npm install
 
 # Copy the rest of the frontend code
 COPY . /app/frontend
 
-RUN ["rm", "-rf", "flask-server"]
+RUN ["rm", "-rf", "flask-server", "databases"]
 
+RUN sed -i 's|"proxy": "http://127.0.0.1:5000"| "proxy": "http://backend:5000"|' /app/frontend/package.json
 # Build the frontend
-RUN npm run build
+# RUN npm run build
 
-RUN npm i -g serve
-CMD ["serve", "-s", "build", "-l", "3000"]
+# RUN npm i -g serve
+
+# CMD ["serve", "-s", "build", "-l", "3000"]
+CMD ["npm", "start"]
