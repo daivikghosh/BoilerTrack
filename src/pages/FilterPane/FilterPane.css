@@ -7,6 +7,7 @@
 /* Each filter option section */
 .filter-option {
   margin-bottom: 20px;
+  margin-right: 20px;
 }
 
 /* Styles for the toggle switch */
@@ -218,4 +219,123 @@ input:checked + .slider:before {
 
 .react-calendar--selectRange .react-calendar__tile--hover {
   background-color: #e6e6e6;
+}
+
+/* FilterPane.css */
+
+/* Style for the dropdown button */
+.dropdown-toggle {
+  background-color: #f5f5f5; /* Light gray background */
+  color: #000; /* Black text */
+  font-size: 14px;
+  padding: 8px 12px;
+  border: 1px solid #ccc; /* Border color */
+  border-radius: 4px; /* Rounded edges */
+  text-align: left;
+  width: 100%; /* Full width */
+  cursor: pointer;
+  display: inline-block;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Light shadow */
+}
+
+/* Dropdown menu container */
+.dropdown-menu {
+  background-color: #fff; /* White background */
+  border: 1px solid #ccc; /* Light grey border */
+  border-radius: 4px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  max-height: 200px; /* Limit height for scrollable content */
+  overflow-y: auto; /* Add scroll if content exceeds max height */
+  padding: 0;
+}
+
+/* Dropdown items */
+.dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #000;
+}
+
+/* Dropdown item hover */
+.dropdown-item:hover {
+  background-color: #f0f0f0; /* Light grey hover background */
+  color: #000; /* Black text on hover for clarity */
+}
+
+/* Style for the checkboxes */
+.dropdown-item input[type="checkbox"] {
+  margin-right: 8px; /* Spacing between checkbox and label */
+  accent-color: #007bff; /* Custom color for the checkbox */
+}
+
+/* Dropdown button text */
+.dropdown-toggle:after {
+  content: "▼"; /* Down arrow */
+  float: right; /* Align arrow to the right */
+  font-size: 12px;
+  color: #666; /* Gray color */
+  margin-left: 8px;
+}
+
+/* Optional: Style scrollbar for dropdown menu */
+.dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background-color: #ccc; /* Light grey scrollbar */
+  border-radius: 4px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background-color: #bbb; /* Darker grey on hover */
+}
+
+/* Overflow handling for selected locations */
+.dropdown-toggle {
+  background-color: #f0f0f0; /* Dark grey background */
+  color: #666; /* White text */
+  border: none;
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: block;
+  width: 100%; /* Full width button */
+  text-align: left; /* Align text to the left */
+}
+
+/* Location tags */
+.location-tag {
+  display: inline-flex; /* Use inline-flex for better alignment */
+  align-items: center; /* Center text and button vertically */
+  justify-content: center; /* Center content horizontally */
+  margin: 4px;
+  padding: 4px 12px; /* Reduce padding for a compact look */
+  background-color: #f9f9f9; /* Softer background color */
+  border: 1px solid #dcdcdc; /* Light border for subtle definition */
+  border-radius: 20px; /* Fully rounded corners */
+  font-size: 14px; /* Adjust font size */
+  font-weight: 500; /* Slightly bolder text for better readability */
+  color: #333; /* Neutral text color */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+.location-tag button {
+  margin-left: 8px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: #666;
+}
+
+.location-tag button:hover {
+  color: #ff0000; /* Red color on hover for clear action */
+}
+.location-list {
+  display: flex; /* Flexbox for horizontal alignment */
+  flex-wrap: wrap; /* Wrap tags to the next line if needed */
+  gap: 8px; /* Consistent spacing between tags */
+  margin-top: 8px; /* Space between dropdown and tags */
 }

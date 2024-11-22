@@ -4,47 +4,42 @@ import "./UnclaimedItemTemplate.css";
 
 const UnclaimedItemTemplate = () => {
   const [unclaimedItems, setUnclaimedItems] = useState([]);
+  const [timeRange, setTimeRange] = useState("week");
   const canvasRef = useRef(null);
+  const [imageURL, setImageURL] = useState("");
 
-  // Fetch all items and filter unclaimed items turned in the last week
   useEffect(() => {
     const fetchUnclaimedItems = async () => {
       try {
-        const response = await axios.get("/items"); // Fetch all items
+        const response = await axios.get("/items");
         const allItems = response.data;
 
-        allItems.forEach((item) => {
-          console.log(
-            "Item DateFound:",
-            item.Date,
-            "Parsed:",
-            new Date(item.Date),
-          );
-        });
+        const currentDate = new Date();
+        let startDate;
 
-        // Get the date one week ago
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 700);
+        switch (timeRange) {
+          case "week":
+            startDate = new Date();
+            startDate.setDate(currentDate.getDate() - 7);
+            break;
+          case "month":
+            startDate = new Date();
+            startDate.setMonth(currentDate.getMonth() - 1);
+            break;
+          case "year":
+            startDate = new Date();
+            startDate.setFullYear(currentDate.getFullYear() - 1);
+            break;
+          default:
+            startDate = new Date(0);
+        }
 
-        console.log("One week ago:", oneWeekAgo);
-
-        // Filter items for unclaimed status and DateFound within the last week
-        const recentUnclaimedItems = allItems.filter((item) => {
-          // Parse DateFound using Date constructor
+        const filteredItems = allItems.filter((item) => {
           const itemDate = new Date(item.Date);
-
-          // Validate that itemDate is a valid date
-          if (isNaN(itemDate.getTime())) {
-            console.error("Invalid date format for item:", item);
-            return false;
-          }
-
-          return itemDate >= oneWeekAgo && item.ItemStatus === 1; // 1 = Unclaimed
+          return itemDate >= startDate && item.ItemStatus === 1;
         });
 
-        console.log("Filtered unclaimed items:", recentUnclaimedItems);
-
-        setUnclaimedItems(recentUnclaimedItems);
+        setUnclaimedItems(filteredItems);
       } catch (error) {
         console.error("Error fetching items:", error);
         alert("Failed to fetch unclaimed items.");
@@ -52,21 +47,18 @@ const UnclaimedItemTemplate = () => {
     };
 
     fetchUnclaimedItems();
-  }, []);
+  }, [timeRange]);
 
-  // Draw the template on the canvas
   useEffect(() => {
     if (canvasRef.current && unclaimedItems.length > 0) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
 
-      // Set canvas size and background
       canvas.width = 1080;
-      canvas.height = 1350; // Adjust based on item count
+      canvas.height = 1350;
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw title
       const drawCenteredText = (text, y, fontSize, fontColor, fontWeight) => {
         ctx.font = `${fontWeight || "normal"} ${fontSize}px Arial`;
         ctx.fillStyle = fontColor || "#000";
@@ -75,10 +67,15 @@ const UnclaimedItemTemplate = () => {
       };
 
       let y = 80;
-      drawCenteredText("Unclaimed Items (Last Week)", y, 40, "#222", "bold");
+      drawCenteredText(
+        `Unclaimed Items (${timeRange === "all" ? "All Time" : `Last ${timeRange}`})`,
+        y,
+        40,
+        "#222",
+        "bold",
+      );
       y += 60;
 
-      // Loop through unclaimed items and render details
       unclaimedItems.forEach((item, index) => {
         if (y > canvas.height - 100) {
           drawCenteredText("...and more items not displayed.", y, 28, "#444");
@@ -94,16 +91,16 @@ const UnclaimedItemTemplate = () => {
           "#555",
         );
         y += 30;
-        drawCenteredText(`Date Found: ${item.DateFound}`, y, 24, "#555");
+        drawCenteredText(`Date Found: ${item.Date}`, y, 24, "#555");
         y += 50;
       });
 
-      // Footer
       drawCenteredText("#BoilerTrack", canvas.height - 50, 24, "#777");
-    }
-  }, [unclaimedItems]);
 
-  // Save canvas as PNG or JPEG
+      setImageURL(canvas.toDataURL("image/png"));
+    }
+  }, [unclaimedItems, timeRange]);
+
   const saveAsImage = (format) => {
     const canvas = canvasRef.current;
     const imageURL = canvas.toDataURL(`image/${format}`);
@@ -115,35 +112,74 @@ const UnclaimedItemTemplate = () => {
 
   return (
     <div className="template-container">
-      <h1>Unclaimed Items Template</h1>
-      {unclaimedItems.length > 0 ? (
-        <>
-          <div className="template-preview">
-            <canvas
-              ref={canvasRef}
-              style={{
-                display: "block",
-                marginBottom: "20px",
-                maxWidth: "100%",
-              }}
-            />
-            <button
-              className="template-button"
-              onClick={() => saveAsImage("png")}
+      <h1 className="template-header">Unclaimed Items</h1>
+      <div className="content-container">
+        <div className="preview-section">
+          <canvas
+            ref={canvasRef}
+            style={{
+              display: "block",
+              marginBottom: "20px",
+              maxWidth: "100%",
+            }}
+          />
+        </div>
+        <div className="options-section">
+          <label htmlFor="timeRange" className="time-range-label">
+            Select Time Range:
+          </label>
+          <select
+            id="timeRange"
+            className="time-range-select"
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
+          >
+            <option value="week">Last Week</option>
+            <option value="month">Last Month</option>
+            <option value="year">Last Year</option>
+            <option value="all">All Time</option>
+          </select>
+          <button
+            className="template-button"
+            onClick={() => saveAsImage("png")}
+          >
+            Download as PNG
+          </button>
+          <button
+            className="template-button"
+            onClick={() => saveAsImage("jpeg")}
+          >
+            Download as JPEG
+          </button>
+          <div className="social-links">
+            <h3>Visit Social Media Platforms</h3>
+            <a
+              href="https://twitter.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="social-button twitter"
             >
-              Download as PNG
-            </button>
-            <button
-              className="template-button"
-              onClick={() => saveAsImage("jpeg")}
+              Twitter
+            </a>
+            <a
+              href="https://www.facebook.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="social-button facebook"
             >
-              Download as JPEG
-            </button>
+              Facebook
+            </a>
+            <a
+              href="https://www.instagram.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="social-button instagram"
+            >
+              Instagram
+            </a>
           </div>
-        </>
-      ) : (
-        <p>Loading unclaimed items...</p>
-      )}
+        </div>
+      </div>
     </div>
   );
 };
