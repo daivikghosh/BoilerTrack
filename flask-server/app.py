@@ -3374,7 +3374,90 @@ def upload_qr_code():
         
     else:
         return jsonify({'error': 'Invalid file type'}), 400
+    
+@app.route('/messages/<int:dispute_id>', methods=['GET', 'POST'])
+def handle_messages(dispute_id):
+    conn = sqlite3.connect(DISPUTES_DB)
+    cursor = conn.cursor()
+    
+    if request.method == 'GET':
+        cursor.execute("SELECT Sender, Text, Timestamp FROM Messages WHERE DisputeID = ? ORDER BY Timestamp", (dispute_id,))
+        messages = cursor.fetchall()
+        conn.close()
+        return jsonify([{"sender": msg[0], "text": msg[1], "timestamp": msg[2]} for msg in messages]), 200
+    
+    if request.method == 'POST':
+        data = request.json
+        sender = 'user' if 'email' in session else 'staff'
+        text = data.get('message', '').strip()
+        if not text:
+            conn.close()
+            return jsonify({"error": "Message cannot be empty"}), 400
+        cursor.execute("INSERT INTO Messages (DisputeID, Sender, Text) VALUES (?, ?, ?)", (dispute_id, sender, text))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Message sent successfully"}), 201
 
+@app.route('/messages/<int:dispute_id>', methods=['POST'])
+def send_message(dispute_id):
+    """
+    Handle sending a message related to a specific dispute.
+
+    Args:
+        dispute_id (int): The ID of the dispute the message is related to.
+
+    Returns:
+        Response: A JSON response indicating success or failure.
+    """
+    conn = sqlite3.connect(DISPUTES_DB)
+    cursor = conn.cursor()
+
+    try:
+        # Get the JSON data from the request
+        data = request.json
+        text = data.get('message', '').strip()
+
+        # Validate message content
+        if not text:
+            return jsonify({"error": "Message cannot be empty"}), 400
+
+        # Determine the sender (user or staff)
+        sender = 'user' if 'email' in session else 'staff'
+
+        # Insert the message into the database
+        cursor.execute(
+            "INSERT INTO Messages (DisputeID, Sender, Text) VALUES (?, ?, ?)",
+            (dispute_id, sender, text)
+        )
+        conn.commit()
+
+        # Fetch recipient email based on sender
+        if sender == 'user':
+            cursor.execute(
+                "SELECT staff_email FROM Disputes WHERE DisputeID = ?", (dispute_id,)
+            )
+            recipient = cursor.fetchone()
+        else:  # Sender is staff
+            cursor.execute(
+                "SELECT user_email FROM Disputes WHERE DisputeID = ?", (dispute_id,)
+            )
+            recipient = cursor.fetchone()
+
+        if not recipient:
+            return jsonify({"error": "Dispute not found or recipient unavailable"}), 404
+
+        recipient_email = recipient[0]
+
+        # Send an email notification about the new message
+        subject = "New Message Regarding Your Dispute"
+        message_body = f"You have received a new message regarding dispute #{dispute_id}:<br><br>{text}"
+        send_mail([(recipient_email, message_body)], subject)
+
+        return jsonify({"message": "Message sent successfully"}), 201
+    except sqlite3.Error as e:
+        return jsonify({"error": f"Database error: {e}"}), 500
+    finally:
+        conn.close()
 
 if __name__ == '__main__':
     if not os.path.exists(os.path.dirname(USERS_DB)):

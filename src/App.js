@@ -48,6 +48,7 @@ import StaffQRCodeUploadForm from "./components/StaffQRCodeUploadForm/StaffQRCod
 import UnclaimedItemTemplate from "./components/UnclaimedItemTemplate/UnclaimedItemTemplate.js";
 import StaffItemTemplate from "./components/StaffItemTemplate/StaffItemTemplate.js";
 import HelpDeskPage from "./pages/HelpDeskPage";
+import Messages from "./components/Messages/Messages.js";
 
 const App = () => {
   return (
@@ -146,6 +147,7 @@ const App = () => {
         />
         <Route path="/template/:itemId" element={<StaffItemTemplate />} />
         <Route path="/help-desk" element={<HelpDeskPage />} />
+        <Route path="/messages/:itemId" element={<Messages />} />
       </Routes>
     </Router>
   );

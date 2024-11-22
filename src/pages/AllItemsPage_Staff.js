@@ -234,7 +234,10 @@ function AllItemsPage() {
                   </Link>
                 </div>
                 <div className="buttons-container-2"></div>
-              </div>
+                  <Link to={`/messages/${item.ItemID}`}>
+                      <button className="button modify-button">Check Dispute Messages</button>
+                  </Link>
+                </div>
             ))
           ) : (
             <p>No items found.</p>

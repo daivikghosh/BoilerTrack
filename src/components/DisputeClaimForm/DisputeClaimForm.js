@@ -114,6 +114,13 @@ const DisputeClaimForm = () => {
     <div className="dispute-form-container">
       <h2>Dispute Claim Form</h2>
 
+      <button
+        className="message-button"
+        onClick={() => navigate(`/messages/${id}`)}
+      >
+        Communicate with Help Desk
+      </button>
+
       {/* Display item information */}
       {item && (
         <div className="item-info">
