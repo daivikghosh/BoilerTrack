@@ -43,8 +43,9 @@ import UserFeedback from "./components/FeedbackForm/UserFeedback.js";
 import PreRegItemForm from "./components/PreRegItemForm/PreRegItemForm.js";
 import ListViewItemHistory from "./components/ViewAllHistoryStaff/ViewAllHistoryStaff.js";
 import TimelineView from "./components/ViewAllHistoryStaff/HistoryViewStaff.js";
-
+import FoundItemReportForm from "./components/FoundItemReportForm/FoundItemReportForm";
 import UnclaimedItemTemplate from "./components/UnclaimedItemTemplate/UnclaimedItemTemplate.js";
+import FoundItemReportsPage from './pages/FoundItemReportsPage';
 
 const App = () => {
   return (
@@ -140,6 +141,8 @@ const App = () => {
           path="/unclaimed-item-template"
           element={<UnclaimedItemTemplate />}
         />
+        <Route path="/report-found-item" element={<FoundItemReportForm />} />
+        <Route path="/found-item-reports" element={<FoundItemReportsPage />} />
       </Routes>
     </Router>
   );

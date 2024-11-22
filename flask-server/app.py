@@ -2582,6 +2582,67 @@ def get_all_feedback():
         print(f"Database error: {e}")
         return jsonify({'error': 'Failed to fetch all feedback'}), 500
 
+@app.route('/api/report-found-item', methods=['POST'])
+def report_found_item():
+    data = request.get_json()
+    location_found = data.get('locationFound')
+    description = data.get('description')
+    additional_details = data.get('additionalDetails', '')
+    email = data.get('email')
+
+    try:
+        conn = sqlite3.connect('../databases/FoundReports.db')
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO FoundReports (location_found, item_description, additional_details, email)
+            VALUES (?, ?, ?, ?)
+        """, (location_found, description, additional_details, email))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Report submitted successfully."}), 201
+    except Exception as e:
+        print(e)
+        return jsonify({"message": "Failed to submit report."}), 500
+
+# Add the following route to app.py
+
+@app.route('/api/found-reports', methods=['GET'])
+def get_found_reports():
+    try:
+        conn = sqlite3.connect('../databases/FoundReports.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT ReportID, item_description, location_found FROM FoundReports")
+        reports = cursor.fetchall()
+        conn.close()
+        return jsonify([
+            {"ReportID": row[0], "ItemDescription": row[1], "LocationFound": row[2]}
+            for row in reports
+        ]), 200
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return jsonify({'error': 'Failed to fetch found reports'}), 500
+
+@app.route('/api/found-reports/<int:report_id>', methods=['GET'])
+def get_found_report(report_id):
+    try:
+        conn = sqlite3.connect('../databases/FoundReports.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM FoundReports WHERE ReportID = ?", (report_id,))
+        report = cursor.fetchone()
+        conn.close()
+        if report:
+            return jsonify({
+                "ReportID": report[0],
+                "LocationFound": report[1],
+                "ItemDescription": report[2],
+                "AdditionalDetails": report[3],
+                "UserEmail": report[4]
+            }), 200
+        else:
+            return jsonify({'error': 'Report not found'}), 404
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return jsonify({'error': 'Failed to fetch the report'}), 500
 
 if __name__ == '__main__':
     if not os.path.exists(os.path.dirname(USERS_DB)):

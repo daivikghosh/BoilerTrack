@@ -223,6 +223,12 @@ function AllItemsPage() {
         <Link to="/FeedbackForm" className="page-button">
           Leave Feedback
         </Link>
+        <Link to="/report-found-item" className="page-button">
+          Report Found Item
+        </Link>
+        <Link to="/found-item-reports" className="page-button">
+          Found Item Reports
+        </Link>
       </div>
 
       <div className="main-content">
