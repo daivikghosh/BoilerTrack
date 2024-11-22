@@ -1148,7 +1148,7 @@ def get_keywords():
     try:
         # Example: save the file temporarily, or process it further
         file.save(os.path.join(UPLOAD_FOLDER, file.filename))
-        keywords_raw, logos_raw, status = image_keywords(
+        keywords_raw, logos_raw, _status = image_keywords(
             os.path.join(UPLOAD_FOLDER, file.filename))
 
         keywords = parse_keywords(keywords_raw)
@@ -3322,9 +3322,8 @@ def get_all_feedback():
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         return jsonify({'error': 'Failed to fetch all feedback'}), 500
-    
-    
-    
+
+
 @app.route('/upload-qr-code', methods=['POST'])
 def upload_qr_code():
     if 'file' not in request.files:
@@ -3337,13 +3336,13 @@ def upload_qr_code():
 
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        
+
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
 
         try:
             item_id, email = decodeqrcode(filepath)
-            
+
             # Sending an email
             emailstr1 = f"Hello there!<br><br>One of your pre-registered items that was lost has been found<br><br>Pre-registered Item Id: {item_id}"
             emailstr2 = "<br><br>Thank You!<br>~BoilerTrack Devs"
@@ -3363,15 +3362,14 @@ def upload_qr_code():
 
             mail.send(msg)
             app.logger.info("Message sent!")
-            
-            
+
             return jsonify({
                 'item_id': item_id,
                 'email': email
             }), 200
         except Exception as e:
             return jsonify({'error': f'Error decoding QR code: {str(e)}'}), 500
-        
+
     else:
         return jsonify({'error': 'Invalid file type'}), 400
     

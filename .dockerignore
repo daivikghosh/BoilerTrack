@@ -1,0 +1,13 @@
+.git
+.gitignore
+.gitattributes
+
+flask-server/.venv
+node_modules
+
+flask-server/__pycache__
+flask-server/.pytest_cache
+flask-server/test_*.py
+flask-server/sandbox.py
+
+.github
