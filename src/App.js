@@ -43,6 +43,7 @@ import UserFeedback from "./components/FeedbackForm/UserFeedback.js";
 import PreRegItemForm from "./components/PreRegItemForm/PreRegItemForm.js";
 import ListViewItemHistory from "./components/ViewAllHistoryStaff/ViewAllHistoryStaff.js";
 import TimelineView from "./components/ViewAllHistoryStaff/HistoryViewStaff.js";
+import StaffQRCodeUploadForm from "./components/StaffQRCodeUploadForm/StaffQRCodeUploadForm.js";
 
 import UnclaimedItemTemplate from "./components/UnclaimedItemTemplate/UnclaimedItemTemplate.js";
 
@@ -77,6 +78,7 @@ const App = () => {
         <Route path="/claim/:id" element={<ClaimForm />} />
         <Route path="/modify-item/:id" element={<ModifyItemForm />} />
         <Route path="all-items-staff" element={<AllItemsPage_Staff />} />
+        <Route path="/upload-qr-code" element={<StaffQRCodeUploadForm />} />
         <Route path="ClaimRequests" element={<ViewClaimRequests />} />{" "}
         {/* Add this route */}
         <Route path="/dispute/:id" element={<DisputeClaimForm />} />
