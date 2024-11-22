@@ -7,21 +7,18 @@ import StaffItemTemplate from "../components/StaffItemTemplate/StaffItemTemplate
 
 function AllItemsPage() {
   const [filter, setFilter] = useState({
-    includePast: false,
-    categories: [],
-    keywords: [],
     sortAlphabetically: false,
     locations: [],
     dates: [],
-    locationstatusToggle: false,
+    keywords: [],
+    timeFilter: "all", // New time filter state
+    filterDate: null, // Date reference for time-based filtering
   });
   const [search, setSearch] = useState("");
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [pinnedItems, setPinnedItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
-
-  const staffLocation = "hicKs";
 
   const fakeItems = [
     {
@@ -67,7 +64,8 @@ function AllItemsPage() {
   }, []);
 
   const handleFilterChange = (newFilter) => {
-    setFilter({ ...filter, ...newFilter });
+    console.log("Filter change detected:", newFilter);
+    setFilter((prevFilter) => ({ ...prevFilter, ...newFilter }));
   };
 
   const handlePinItem = (itemID) => {
@@ -84,55 +82,62 @@ function AllItemsPage() {
     );
     let pinned = items.filter((item) => pinnedItems.includes(item.ItemID));
 
-    if (filter.categories.length > 0) {
-      nonPinnedItems = nonPinnedItems.filter((item) =>
-        filter.categories.some((category) =>
-          item.ItemName.toLowerCase().includes(category.toLowerCase()),
-        ),
-      );
+    // Apply "Items Older Than" filter
+    if (filter.timeFilter && filter.timeFilter !== "all") {
+      nonPinnedItems = nonPinnedItems.filter((item) => {
+        const itemDate = new Date(item.Date); // Parse item date
+        const filterDate = new Date(filter.filterDate); // Parse filter date
+        if (isNaN(itemDate.getTime())) {
+          console.warn(
+            `Invalid DateFound for item: ${item.ItemID}`,
+            item.DateFound,
+          );
+          return false; // Exclude items with invalid dates
+        }
+        return itemDate >= filterDate;
+      });
     }
 
-    if (filter.locationstatusToggle) {
-      nonPinnedItems = nonPinnedItems.filter(
-        (item) =>
-          item.LocationTurnedIn.toLowerCase() === staffLocation.toLowerCase(),
-      );
-    }
-
-    if (filter.locations && filter.locations.length > 0) {
+    // Apply location filter
+    if (filter.locations.length > 0) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
         filter.locations.includes(item.LocationFound),
       );
     }
 
-    if (filter.sortOlderThanWeek) {
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
+    // Apply date range filter
+    if (filter.dates.length === 2) {
+      const [startDate, endDate] = filter.dates.map((date) => new Date(date)); // Convert to Date objects
       nonPinnedItems = nonPinnedItems.filter((item) => {
-        const itemDate = new Date(item.DateFound);
-        return itemDate < oneWeekAgo;
+        const itemDate = new Date(item.Date); // Ensure item.DateFound is used correctly
+        return itemDate >= startDate && itemDate <= endDate; // Check if within range
       });
     }
 
+    // Apply keyword filter
+    if (filter.keywords.length > 0) {
+      nonPinnedItems = nonPinnedItems.filter((item) =>
+        filter.keywords.some(
+          (keyword) =>
+            item.ItemName.toLowerCase().includes(keyword.toLowerCase()) ||
+            item.Description.toLowerCase().includes(keyword.toLowerCase()),
+        ),
+      );
+    }
+
+    // Apply search filter
     if (search) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
         item.ItemName.toLowerCase().includes(search.toLowerCase()),
       );
     }
 
-    if (filter.keywords && filter.keywords.length > 0) {
-      nonPinnedItems = nonPinnedItems.filter((item) =>
-        filter.keywords.some((keyword) =>
-          item.Description.toLowerCase().includes(keyword.toLowerCase()),
-        ),
-      );
-    }
-
+    // Apply alphabetical sorting
     if (filter.sortAlphabetically) {
       nonPinnedItems.sort((a, b) => a.ItemName.localeCompare(b.ItemName));
     }
 
+    // Combine pinned items with filtered non-pinned items
     setFilteredItems([...pinned, ...nonPinnedItems]);
   }, [filter, search, items, pinnedItems]);
 

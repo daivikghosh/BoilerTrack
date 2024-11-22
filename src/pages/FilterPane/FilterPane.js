@@ -1,198 +1,116 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "./FilterPane.css";
+import building_codes from "../../buildingdata"; // Assuming this file contains building codes and names
 
 function FilterPane({ onFilterChange }) {
-  const [includePast, setIncludePast] = useState(false);
-  const [categories, setCategories] = useState([]);
-  const [keyword, setKeyword] = useState("");
-  const [keywords, setKeywords] = useState([]);
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
-
-  const [locationstatusToggle, setLocationToggle] = useState(false);
-
-  const [sortOlderThanWeek, setSortOlderThanWeek] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
+  const [timeFilter, setTimeFilter] = useState("all");
+  const [selectedDates, setSelectedDates] = useState([]);
+  const [keywords, setKeywords] = useState([]);
+  const [keywordInput, setKeywordInput] = useState("");
   const [locations, setLocations] = useState([]);
-  const [selectedDates, setSelectedDates] = useState([]); // State for selected dates
-  const dropdownRef = useRef(null);
-  const locationDropdownRef = useRef(null);
+  const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
 
-  useEffect(() => {
-    // Close dropdowns when clicking outside
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
-      if (
-        locationDropdownRef.current &&
-        !locationDropdownRef.current.contains(event.target)
-      ) {
-        setIsLocationDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const handleIncludePastChange = () => {
-    setIncludePast(!includePast);
-    onFilterChange({
-      includePast: !includePast,
-      categories,
-      keywords,
-      sortAlphabetically,
-      locations,
-      dates: selectedDates,
-    });
+  // Handle sorting toggle
+  const handleSortToggle = () => {
+    const newState = !sortAlphabetically;
+    setSortAlphabetically(newState);
+    onFilterChange({ sortAlphabetically: newState });
   };
 
-  const handleCategoryChange = (category) => {
-    const updatedCategories = categories.includes(category)
-      ? categories.filter((c) => c !== category)
-      : [...categories, category];
-    setCategories(updatedCategories);
-    onFilterChange({
-      includePast,
-      categories: updatedCategories,
-      keywords,
-      sortAlphabetically,
-      locations,
-      dates: selectedDates,
-    });
+  // Handle time filter selection
+  const handleTimeFilterChange = (e) => {
+    const selected = e.target.value;
+    setTimeFilter(selected);
+    const filterDate = new Date();
+    switch (selected) {
+      case "24hrs":
+        filterDate.setDate(filterDate.getDate() - 1);
+        break;
+      case "week":
+        filterDate.setDate(filterDate.getDate() - 7);
+        break;
+      case "month":
+        filterDate.setMonth(filterDate.getMonth() - 1);
+        break;
+      default:
+        filterDate.setTime(0); // All Time
+    }
+    onFilterChange({ timeFilter: selected, filterDate });
   };
 
-  const handleLocationChange = (location) => {
-    const updatedLocations = locations.includes(location)
-      ? locations.filter((l) => l !== location)
-      : [...locations, location];
-    setLocations(updatedLocations);
-    onFilterChange({
-      includePast,
-      categories,
-      keywords,
-      sortAlphabetically,
-      locations: updatedLocations,
-      dates: selectedDates,
-    });
+  // Handle date selection from calendar
+  const handleDateChange = (range) => {
+    if (range && range.length === 2) {
+      // Ensure start and end dates are selected
+      const formattedDates = range.map(
+        (date) => date.toISOString().split("T")[0],
+      ); // Format to 'YYYY-MM-DD'
+      setSelectedDates(formattedDates); // Update local state
+      onFilterChange({ dates: formattedDates }); // Pass to parent
+    } else {
+      setSelectedDates([]);
+      onFilterChange({ dates: [] }); // Clear date filter in parent
+    }
   };
 
-  const handleKeywordChange = (e) => {
-    setKeyword(e.target.value);
+  // Handle keyword input and addition
+  const handleKeywordInput = (e) => {
+    setKeywordInput(e.target.value);
   };
 
   const handleAddKeyword = (e) => {
     if (
       e.key === "Enter" &&
-      keyword.trim() !== "" &&
-      !keywords.includes(keyword)
+      keywordInput.trim() !== "" &&
+      !keywords.includes(keywordInput)
     ) {
-      const updatedKeywords = [...keywords, keyword.trim()];
+      const updatedKeywords = [...keywords, keywordInput.trim()];
       setKeywords(updatedKeywords);
-      setKeyword("");
-      onFilterChange({
-        includePast,
-        categories,
-        keywords: updatedKeywords,
-        sortAlphabetically,
-        locations,
-        dates: selectedDates,
-      });
+      setKeywordInput("");
+      onFilterChange({ keywords: updatedKeywords });
     }
   };
 
-  const handleRemoveKeyword = (keywordToRemove) => {
-    const updatedKeywords = keywords.filter((kw) => kw !== keywordToRemove);
+  const handleRemoveKeyword = (keyword) => {
+    const updatedKeywords = keywords.filter((kw) => kw !== keyword);
     setKeywords(updatedKeywords);
-    onFilterChange({
-      includePast,
-      categories,
-      keywords: updatedKeywords,
-      sortAlphabetically,
-      locations,
-      dates: selectedDates,
-    });
+    onFilterChange({ keywords: updatedKeywords });
   };
 
-  const handleWeekOlderChange = () => {
-    setSortOlderThanWeek(!sortOlderThanWeek);
-    onFilterChange({
-      includePast,
-      categories,
-      keywords,
-      sortAlphabetically,
-      locations,
-      dates: selectedDates,
-      sortOlderThanWeek: !sortOlderThanWeek,
-    });
+  // Handle location filter
+  const toggleLocationDropdown = () => {
+    setIsLocationDropdownOpen(!isLocationDropdownOpen);
   };
-
-  const handleSortChange = () => {
-    setSortAlphabetically(!sortAlphabetically);
-    onFilterChange({
-      includePast,
-      categories,
-      keywords,
-      sortAlphabetically: !sortAlphabetically,
-      locations,
-      dates: selectedDates,
-    });
-  };
-
-  const handleLocationToggleChange = () => {
-    setLocationToggle(!locationstatusToggle);
-    onFilterChange({
-      includePast,
-      categories,
-      keywords,
-      sortAlphabetically,
-      locations,
-      dates: selectedDates,
-      locationstatusToggle: !locationstatusToggle, // Pass the toggle state
-    });
-  };
-
-  const handleDateClick = (date) => {
-    const dateString = date.toISOString().split("T")[0]; // Get date string in 'YYYY-MM-DD' format
-    let updatedDates;
-    if (selectedDates.includes(dateString)) {
-      // Date is already selected, remove it
-      updatedDates = selectedDates.filter((d) => d !== dateString);
-    } else {
-      // Add date to selectedDates
-      updatedDates = [...selectedDates, dateString];
+  const handleAddLocation = (locationCode) => {
+    if (!locations.includes(locationCode)) {
+      const updatedLocations = [...locations, locationCode];
+      setLocations(updatedLocations);
+      onFilterChange({ locations: updatedLocations });
     }
-    setSelectedDates(updatedDates);
-    onFilterChange({
-      includePast,
-      categories,
-      keywords,
-      sortAlphabetically,
-      locations,
-      dates: updatedDates,
-    });
+    setIsLocationDropdownOpen(false); // Close dropdown after selection
+  };
+
+  const handleLocationToggle = (location) => {
+    if (!locations.includes(locationCode)) {
+      const updatedLocations = [...locations, locationCode];
+      setLocations(updatedLocations);
+      onFilterChange({ locations: updatedLocations });
+    }
+    setIsLocationDropdownOpen(false); // Close dropdown after selection
+  };
+
+  const handleRemoveLocation = (locationCode) => {
+    const updatedLocations = locations.filter((code) => code !== locationCode);
+    setLocations(updatedLocations);
+    onFilterChange({ locations: updatedLocations });
   };
 
   return (
     <div className="filter-pane">
       <h3>Filters</h3>
-
-      {/* Include past items */}
-      <div className="filter-option">
-        <label className="switch">
-          <input
-            type="checkbox"
-            checked={includePast}
-            onChange={handleIncludePastChange}
-          />
-          <span className="slider"></span>
-        </label>
-        <span>Include past items</span>
-      </div>
 
       {/* Sort Alphabetically */}
       <div className="filter-option">
@@ -200,49 +118,44 @@ function FilterPane({ onFilterChange }) {
           <input
             type="checkbox"
             checked={sortAlphabetically}
-            onChange={handleSortChange}
+            onChange={handleSortToggle}
           />
           <span className="slider"></span>
         </label>
-        <span>Sort items alphabetically</span>
+        <span>Sort Alphabetically</span>
       </div>
 
-      {/* New Location + Status Toggle */}
+      {/* Time Filter */}
       <div className="filter-option">
-        <label className="switch">
-          <input
-            type="checkbox"
-            checked={locationstatusToggle}
-            onChange={handleLocationToggleChange}
-          />
-          <span className="slider"></span>
-        </label>
-        <span>Item Status at your Location</span>
+        <h4>Show Items Turned In-</h4>
+        <select value={timeFilter} onChange={handleTimeFilterChange}>
+          <option value="24hrs">Last 24 Hours</option>
+          <option value="week">Last Week</option>
+          <option value="month">Last Month</option>
+          <option value="all">All Time</option>
+        </select>
       </div>
 
-      {/* Sort by Older than a Week*/}
+      {/* Date Range Filter */}
       <div className="filter-option">
-        <label className="switch">
-          <input
-            type="checkbox"
-            checked={sortOlderThanWeek}
-            onChange={handleWeekOlderChange}
-          />
-          <span className="slider"></span>
-        </label>
-        <span>Show only items older than 1 week</span>
+        <h4>Select Date Range</h4>
+        <Calendar
+          selectRange
+          onChange={(range) =>
+            handleDateChange(range instanceof Array ? range : [range])
+          }
+        />
       </div>
 
-      {/* Keyword Search Bar */}
+      {/* Keywords */}
       <div className="filter-option">
         <h4>Search by Keywords</h4>
         <input
           type="text"
           placeholder="Add a keyword and press Enter"
-          value={keyword}
-          onChange={handleKeywordChange}
+          value={keywordInput}
+          onChange={handleKeywordInput}
           onKeyDown={handleAddKeyword}
-          style={{ width: "92%" }}
         />
         <div className="keyword-list">
           {keywords.map((kw) => (
@@ -253,84 +166,37 @@ function FilterPane({ onFilterChange }) {
         </div>
       </div>
 
-      {/* Category Filters with Dropdown */}
+      {/* Location Filter */}
       <div className="filter-option">
-        <h4>Filter by Category</h4>
-        <div className="dropdown" ref={dropdownRef}>
-          <div
-            className="dropdown-header"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          >
-            {categories.length > 0
-              ? categories.join(", ")
-              : "Select Categories"}
-          </div>
-          {isDropdownOpen && (
-            <div className="dropdown-menu">
-              {["bottle", "laptop", "headphone", "wallet"].map((category) => (
-                <div key={category} className="dropdown-item">
-                  <input
-                    type="checkbox"
-                    id={category}
-                    value={category}
-                    checked={categories.includes(category)}
-                    onChange={() => handleCategoryChange(category)}
-                  />
-                  <label htmlFor={category}>{category}</label>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Location Filters with Dropdown */}
-      <div className="filter-option">
-        <h4>Filter by Location Found</h4>
-        <div className="dropdown" ref={locationDropdownRef}>
-          <div
-            className="dropdown-header"
-            onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
-          >
-            {locations.length > 0 ? locations.join(", ") : "Select Locations"}
-          </div>
+        <h4>Filter by Location</h4>
+        <div className="dropdown">
+          <button className="dropdown-toggle" onClick={toggleLocationDropdown}>
+            {locations.length > 0
+              ? "Select another location"
+              : "Select Location"}
+          </button>
           {isLocationDropdownOpen && (
             <div className="dropdown-menu">
-              {[
-                "Library",
-                "Study Hall",
-                "Gym",
-                "Cafeteria",
-                "Computer Lab",
-                "Gym Locker Room",
-              ].map((location) => (
-                <div key={location} className="dropdown-item">
-                  <input
-                    type="checkbox"
-                    id={location}
-                    value={location}
-                    checked={locations.includes(location)}
-                    onChange={() => handleLocationChange(location)}
-                  />
-                  <label htmlFor={location}>{location}</label>
+              {Object.entries(building_codes).map(([code, building]) => (
+                <div
+                  key={code}
+                  className="dropdown-item"
+                  onClick={() => handleAddLocation(code)}
+                >
+                  {building.name}
                 </div>
               ))}
             </div>
           )}
         </div>
-      </div>
-
-      {/* Date Filter with Calendar */}
-      <div className="filter-option">
-        <h4>Filter by Date Found</h4>
-        <Calendar
-          onClickDay={handleDateClick}
-          tileClassName={({ date, view }) => {
-            if (selectedDates.includes(date.toISOString().split("T")[0])) {
-              return "selected-date";
-            }
-          }}
-        />
+        <div className="location-list">
+          {locations.map((code) => (
+            <span key={code} className="location-tag">
+              {code}
+              <button onClick={() => handleRemoveLocation(code)}>x</button>
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
