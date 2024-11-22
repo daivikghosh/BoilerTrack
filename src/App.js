@@ -45,6 +45,7 @@ import ListViewItemHistory from "./components/ViewAllHistoryStaff/ViewAllHistory
 import TimelineView from "./components/ViewAllHistoryStaff/HistoryViewStaff.js";
 
 import UnclaimedItemTemplate from "./components/UnclaimedItemTemplate/UnclaimedItemTemplate.js";
+import StaffItemTemplate from "./components/StaffItemTemplate/StaffItemTemplate.js";
 
 const App = () => {
   return (
@@ -140,6 +141,7 @@ const App = () => {
           path="/unclaimed-item-template"
           element={<UnclaimedItemTemplate />}
         />
+        <Route path="/template/:itemId" element={<StaffItemTemplate />} />
       </Routes>
     </Router>
   );

@@ -168,10 +168,17 @@
 
 .button.view-button {
   background-color: var(--secondary-gray);
+  font-size: 12px; /* Smaller text */
 }
 
 .button.modify-button {
   background-color: var(--secondary-gray);
+  font-size: 12px; /* Smaller text */
+}
+
+.button.generate-template-button {
+  background-color: var(--secondary-gray);
+  font-size: 12px; /* Smaller text */
 }
 
 .button:hover {
@@ -265,6 +272,20 @@
   position: relative;
 }
 
+.buttons-container-2 {
+  display: flex;
+  gap: 0.5rem; /* Add space between buttons */
+  margin-top: auto; /* Push the buttons to the bottom */
+  width: 100%; /* Full width for buttons */
+}
+
+.buttons-container-2 .button {
+  flex: 1; /* Make buttons take equal space */
+  padding: 0.4rem; /* Adjust padding for consistent size */
+  border-radius: 5px;
+  text-align: center; /* Center-align the text */
+  font-size: 0.7rem; /* Slightly smaller text */
+}
 .item-image {
   width: 100%;
   height: auto;

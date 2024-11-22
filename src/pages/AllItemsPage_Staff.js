@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import FilterPane from "./FilterPane/FilterPane.js";
 import "./AllItemsPage.css";
+import StaffItemTemplate from "../components/StaffItemTemplate/StaffItemTemplate";
 
 function AllItemsPage() {
   const [filter, setFilter] = useState({
@@ -11,16 +12,15 @@ function AllItemsPage() {
     keywords: [],
     sortAlphabetically: false,
     locations: [],
-    dates: [], // Added dates to filter state
+    dates: [],
     locationstatusToggle: false,
   });
   const [search, setSearch] = useState("");
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
-  const [pinnedItems, setPinnedItems] = useState([]); // New state for pinned items
+  const [pinnedItems, setPinnedItems] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
 
-  // Specify a location string to filter by
-  // Need to make this dynamic after capturing user info
   const staffLocation = "hicKs";
 
   const fakeItems = [
@@ -33,7 +33,7 @@ function AllItemsPage() {
       LocationTurnedIn: "Reception",
       Description:
         "A blue stainless steel water bottle found near the library.",
-      ImageURL: "", // Base64 image string if needed
+      ImageURL: "",
       DateFound: "2023-10-01",
     },
     {
@@ -47,64 +47,9 @@ function AllItemsPage() {
       ImageURL: "",
       DateFound: "2023-10-02",
     },
-    {
-      ItemID: 3,
-      ItemName: "Headphones",
-      Color: "Red",
-      Brand: "Sony",
-      LocationFound: "Gym",
-      LocationTurnedIn: "Front Desk",
-      Description: "Red Sony headphones found at the gym front desk.",
-      ImageURL: "",
-      DateFound: "2023-10-03",
-    },
-    {
-      ItemID: 4,
-      ItemName: "Wallet",
-      Color: "Black",
-      Brand: "Gucci",
-      LocationFound: "Cafeteria",
-      LocationTurnedIn: "Lost and Found Office",
-      Description: "Black leather wallet found near the cafeteria.",
-      ImageURL: "",
-      DateFound: "2023-10-04",
-    },
-    {
-      ItemID: 5,
-      ItemName: "Laptop",
-      Color: "Silver",
-      Brand: "Apple",
-      LocationFound: "Computer Lab",
-      LocationTurnedIn: "IT Help Desk",
-      Description: "MacBook Pro found in the computer lab.",
-      ImageURL: "",
-      DateFound: "2023-10-05",
-    },
-    {
-      ItemID: 6,
-      ItemName: "Headphones",
-      Color: "White",
-      Brand: "Bose",
-      LocationFound: "Library",
-      LocationTurnedIn: "Library Desk",
-      Description: "White Bose headphones left in the library.",
-      ImageURL: "",
-      DateFound: "2023-10-06",
-    },
-    {
-      ItemID: 7,
-      ItemName: "Water Bottle",
-      Color: "Green",
-      Brand: "Nalgene",
-      LocationFound: "Gym Locker Room",
-      LocationTurnedIn: "Gym Front Desk",
-      Description: "Plastic water bottle found in the gym locker room.",
-      ImageURL: "",
-      DateFound: "2023-10-07",
-    },
+    // Additional fake items...
   ];
 
-  // Fetch items from the backend API
   useEffect(() => {
     const fetchItems = async () => {
       try {
@@ -133,14 +78,12 @@ function AllItemsPage() {
     }
   };
 
-  // Apply filters and search
   useEffect(() => {
     let nonPinnedItems = items.filter(
       (item) => !pinnedItems.includes(item.ItemID),
     );
     let pinned = items.filter((item) => pinnedItems.includes(item.ItemID));
 
-    // Apply category filter to non-pinned items
     if (filter.categories.length > 0) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
         filter.categories.some((category) =>
@@ -149,7 +92,6 @@ function AllItemsPage() {
       );
     }
 
-    // Location + Status toggle
     if (filter.locationstatusToggle) {
       nonPinnedItems = nonPinnedItems.filter(
         (item) =>
@@ -157,22 +99,12 @@ function AllItemsPage() {
       );
     }
 
-    // Location + Status toggle
-    if (filter.locationstatusToggle) {
-      nonPinnedItems = nonPinnedItems.filter(
-        (item) =>
-          item.LocationTurnedIn.toLowerCase() === staffLocation.toLowerCase(),
-      );
-    }
-
-    // Apply location filter
     if (filter.locations && filter.locations.length > 0) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
         filter.locations.includes(item.LocationFound),
       );
     }
 
-    // Apply date filter if filter.sortOlderThanWeek is true
     if (filter.sortOlderThanWeek) {
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -183,14 +115,12 @@ function AllItemsPage() {
       });
     }
 
-    // Apply search filter
     if (search) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
         item.ItemName.toLowerCase().includes(search.toLowerCase()),
       );
     }
 
-    // Apply keyword filter to non-pinned items
     if (filter.keywords && filter.keywords.length > 0) {
       nonPinnedItems = nonPinnedItems.filter((item) =>
         filter.keywords.some((keyword) =>
@@ -199,29 +129,27 @@ function AllItemsPage() {
       );
     }
 
-    // Sort non-pinned items alphabetically if the checkbox is checked
     if (filter.sortAlphabetically) {
       nonPinnedItems.sort((a, b) => a.ItemName.localeCompare(b.ItemName));
     }
 
-    // Combine pinned items (always at the top) with filtered non-pinned items
     setFilteredItems([...pinned, ...nonPinnedItems]);
   }, [filter, search, items, pinnedItems]);
 
-  // Function to translate item status
-  const getItemStatus = (status) => {
-    switch (status) {
-      case 1:
-        return "Un-Claimed";
-      case 3:
-        return "Claimed";
-      default:
-        return "~unknown~";
-    }
-  };
-
   return (
     <div className="all-items-page">
+      {/* Render StaffItemTemplate as a modal-like component */}
+      {selectedItem && (
+        <div className="overlay">
+          <div className="modal">
+            <StaffItemTemplate
+              item={selectedItem}
+              goBack={() => setSelectedItem(null)} // Clear selectedItem on back
+            />
+          </div>
+        </div>
+      )}
+
       <div className="search-bar-container">
         <input
           type="text"
@@ -236,19 +164,15 @@ function AllItemsPage() {
         <Link to="/StaffInputForm" className="page-button">
           Add New Item
         </Link>
-
         <Link to="/all-request-staff" className="page-button">
           All Claim Requests
         </Link>
-
         <Link to="/processed-claims" className="page-button">
           View Processed Claims
         </Link>
-
         <Link to="/AllFeedback" className="page-button">
           View Feedback
         </Link>
-
         <Link to="/unclaimed-item-template" className="page-button">
           Share to Instagram
         </Link>
@@ -256,7 +180,6 @@ function AllItemsPage() {
 
       <div className="main-content">
         <FilterPane onFilterChange={handleFilterChange} />
-
         <div className="items-container">
           {filteredItems.length > 0 ? (
             filteredItems.map((item) => (
@@ -287,14 +210,22 @@ function AllItemsPage() {
                   <span className="keyword">Tag1</span>
                   <span className="keyword">Tag2</span>
                 </div>
-                <div className="buttons-container">
+                <div className="buttons-container-2">
                   <Link to={`/item/${item.ItemID}`}>
                     <button className="button view-button">View</button>
                   </Link>
                   <Link to={`/modify-item/${item.ItemID}`}>
                     <button className="button modify-button">Modify</button>
                   </Link>
+                  <Link
+                    to={`/template/${item.ItemID}`}
+                    state={{ item }} // Pass the item as state
+                    className="button generate-template-button"
+                  >
+                    Template
+                  </Link>
                 </div>
+                <div className="buttons-container-2"></div>
               </div>
             ))
           ) : (
