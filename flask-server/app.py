@@ -3195,6 +3195,7 @@ def staff_login():
     conn.close()
 
     if user:
+        session['email'] = email
         _staff_id, is_approved = user
         if is_approved:
             return jsonify({'message': 'Login successful', 'isApproved': is_approved}), 200
