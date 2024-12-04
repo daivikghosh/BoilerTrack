@@ -2041,7 +2041,7 @@ def get_all_claimrequests_staff():
     """Fetch all claim requests from the ClaimRequest database."""
     conn = create_connection_items(CLAIMS_DB)
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM CLAIMREQUETS WHERE ClaimStatus = 1")
+    cursor.execute("SELECT * FROM CLAIMREQUETS WHERE ClaimStatus = 2")
     claim_requests = cursor.fetchall()
     conn.close()
     return claim_requests
