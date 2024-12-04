@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import "./LoginForm.css";
 
 const LoginForm = ({ onSignupClick, onForgotPasswordClick }) => {
@@ -86,6 +87,11 @@ const LoginForm = ({ onSignupClick, onForgotPasswordClick }) => {
           <a href="#" onClick={() => navigate("/token-reset")}>
             Have a token?
           </a>
+        </div>
+        <div className="staff-login">
+          <Link to="/staff-auth" className="link-button">
+            Staff Login/Sign Up
+          </Link>
         </div>
       </form>
     </div>
