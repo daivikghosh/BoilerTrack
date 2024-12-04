@@ -2444,7 +2444,9 @@ def approve_claim(claim_id):
     which is verified by checking the session for a valid email address.
     """
     conn = create_connection_items(CLAIMS_DB)
+    conn2 = create_connection_items(ITEMS_DB)
     cursor = conn.cursor()
+    cursor2 = conn2.cursor()
     claim = get_claim_by_id(claim_id)
     itemid = claim[0]
     item = get_item_by_id(itemid)
@@ -2467,6 +2469,12 @@ def approve_claim(claim_id):
 
         conn.commit()
         conn.close()
+
+        cursor2.execute(
+            "UPDATE FOUNDITEMS SET ItemStatus = 3 WHERE ItemID = ?", (itemid,))
+        
+        conn2.commit()
+        conn2.close()
 
         emailstr1 = f"Hello there<br><br>Your claim request has been approved<br><br>Item Id: {itemid}<br><br>"
         emailstr2 = f"Come pick up the {name} at {location} and bring your student ID"
@@ -2497,6 +2505,7 @@ def approve_claim(claim_id):
         return jsonify({'error': 'Failed to approve claim and remove item'}), 500
     finally:
         conn.close()
+        conn2.close()
 
 
 @ app.route('/get-processed-claims', methods=['GET'])
