@@ -2459,7 +2459,7 @@ def approve_claim(claim_id):
     try:
         # Update claim status to 'approved'
         cursor.execute(
-            "UPDATE CLAIMREQUETS SET ClaimStatus = 2 WHERE ItemID = ?", (claim_id,))
+            "UPDATE CLAIMREQUETS SET ClaimStatus = 1 WHERE ItemID = ?", (claim_id,))
 
         # Remove the claim from the claim requests table
         # cursor.execute(
