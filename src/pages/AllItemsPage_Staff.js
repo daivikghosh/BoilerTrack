@@ -196,6 +196,10 @@ function AllItemsPage() {
         <Link to="/upload-qr-code" className="page-button">
           Scan Pre-registered QR code
         </Link>
+
+        <Link to="/lost-items-staff" className="page-button">
+          All Lost Item Requests
+        </Link>
       </div>
 
       <div className="main-content">

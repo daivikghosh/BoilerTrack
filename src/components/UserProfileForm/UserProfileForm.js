@@ -82,6 +82,16 @@ const UserProfileForm = ({
         >
           Logout
         </button>
+
+        <button
+          onClick={() => navigate("/close-account")}
+          className="action-button"
+          style={{
+            backgroundColor: "red",
+          }}
+        >
+          Close Account
+        </button>
       </div>
     </div>
   );
