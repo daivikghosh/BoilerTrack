@@ -106,7 +106,7 @@ const building_codes = {
   },
   CL50: {
     name: "Class of 1950 Lecture Hall",
-    coordinates: { lat: 0, lng: 0 },
+    coordinates: { lat: 40.42650334845706, lng: -86.91505590325947 },
   },
   COMP: {
     name: "Composites Laboratory",

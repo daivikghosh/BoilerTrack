@@ -206,10 +206,10 @@ function AllItemsPage() {
               <div key={item.ItemID} className="item-card">
                 <div
                   className={`item-status-badge ${
-                    item.ItemStatus === 1 ? "unclaimed" : "claimed"
+                    item.ItemStatus === 3 ? "claimed" : "unclaimed"
                   }`}
                 >
-                  {item.ItemStatus === 1 ? "Unclaimed" : "Claimed"}
+                  {item.ItemStatus === 3 ? "Claimed" : "Unclaimed"}
                 </div>
                 <button
                   className={`pin-button ${
